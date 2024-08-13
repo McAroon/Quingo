@@ -1,0 +1,48 @@
+﻿@page "/game/setup/packs"
+
+@inject ApplicationDbContext Db
+
+<PageTitle>Packs</PageTitle>
+
+<h1>Packs</h1>
+
+@if (Packs == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <a href="game/setup/pack" class="btn btn-primary">New Pack</a>
+    </div>
+    <div class="row">
+        @foreach (var pack in Packs)
+        {
+            <div class="col-sm-1 col-md-3">
+                <div class="card">
+                    @if (pack.ImageUrl != null)
+                    {
+                        <img src="@pack.ImageUrl" class="card-img-top" alt="Logo">
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@pack.Name</h5>
+                        @if (pack.Description != null)
+                        {
+                            <p class="card-text">@pack.Description</p>
+                        }
+                        
+                        <a href="game/setup/pack/@pack.Id" class="btn btn-primary">Edit</a> @* todo: allow edit only owned packs *@
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+@code {
+    public List<Pack>? Packs { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Packs = await Db.Packs.ToListAsync();
+    }
+}
