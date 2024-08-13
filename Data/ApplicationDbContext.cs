@@ -2,10 +2,11 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Quingo.Data.Entities;
+using System.Security.Claims;
 
 namespace Quingo.Data
 {
-    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IHttpContextAccessor contextAccessor) : IdentityDbContext<ApplicationUser>(options)
     {
         public DbSet<Node> Nodes { get; set; }
         public DbSet<NodeLink> NodeLinks { get; set; }
@@ -34,6 +35,43 @@ namespace Quingo.Data
 
             builder.Entity<Pack>().HasMany(e => e.Nodes).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
         }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            SetFieldsOnSave();
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        private void SetFieldsOnSave()
+        {
+            var userId = contextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return;
+            }
+
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.Entity is EntityBase entity)
+                {
+                    if (entry.State == EntityState.Added)
+                    {
+                        entity.CreatedByUserId = userId;
+                        entity.UpdatedByUserId = userId;
+                    }
+                    else if (entry.State == EntityState.Modified)
+                    {
+                        entity.UpdatedByUserId = userId;
+                    }
+                    else if (entry.State == EntityState.Deleted)
+                    {
+                        entity.DeletedByUserId = userId;
+                        entity.DeletedAt = DateTime.UtcNow;
+                        entry.State = EntityState.Modified;
+                    }
+                }
+            }
+        }
     }
 
     public class EntityBaseConfiguration<TEntity> : IEntityTypeConfiguration<TEntity> where TEntity : EntityBase
@@ -45,6 +83,10 @@ namespace Quingo.Data
                 .Metadata.SetAfterSaveBehavior(Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Save);
             builder.Property(e => e.UpdatedAt).ValueGeneratedOnAddOrUpdate()
                 .Metadata.SetAfterSaveBehavior(Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Save);
+            builder.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId);
+            builder.HasOne(e => e.UpdatedByUser).WithMany().HasForeignKey(e => e.UpdatedByUserId);
+            builder.HasOne(e => e.DeletedByUser).WithMany().HasForeignKey(e => e.DeletedByUserId);
+            builder.HasQueryFilter(e => e.DeletedAt == null);
         }
     }
 }
