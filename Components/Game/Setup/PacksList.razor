@@ -1,6 +1,11 @@
 ﻿@page "/game/setup/packs"
 
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+
 @inject ApplicationDbContext Db
+
+@attribute [Authorize]
 
 <PageTitle>Packs</PageTitle>
 
@@ -13,14 +18,16 @@
 else
 {
     <div class="row">
-        <a href="game/setup/pack" class="btn btn-primary">New Pack</a>
+        <div class="mb-3 w-75">
+            <a href="game/setup/pack" class="btn btn-primary">New Pack</a>
+        </div>
     </div>
     <div class="row">
         @foreach (var pack in Packs)
         {
-            <div class="col-sm-1 col-md-3">
+            <div class="col-sm-12 col-md-6 col-lg-3 mb-3">
                 <div class="card">
-                    @if (pack.ImageUrl != null)
+                    @if (!string.IsNullOrEmpty(pack.ImageUrl))
                     {
                         <img src="@pack.ImageUrl" class="card-img-top" alt="Logo">
                     }
@@ -30,8 +37,11 @@ else
                         {
                             <p class="card-text">@pack.Description</p>
                         }
-                        
-                        <a href="game/setup/pack/@pack.Id" class="btn btn-primary">Edit</a> @* todo: allow edit only owned packs *@
+
+                        @if (pack.CreatedByUserId == UserId)
+                        {
+                            <a href="game/setup/pack/@pack.Id" class="btn btn-primary">Edit</a>
+                        }
                     </div>
                 </div>
             </div>
@@ -39,10 +49,16 @@ else
     </div>
 }
 @code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
     public List<Pack>? Packs { get; set; }
+
+    public string? UserId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         Packs = await Db.Packs.ToListAsync();
+        UserId = HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
     }
 }

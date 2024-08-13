@@ -1,10 +1,46 @@
 ﻿@page "/game/setup/pack"
 @page "/game/setup/pack/{PackId:int}"
 
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using System.ComponentModel.DataAnnotations
+
 @inject ApplicationDbContext Db
 @inject NavigationManager NavigationManager
 
-<h1>@(PackId != null ? "Edit" : "Create") Pack</h1>
+@attribute [Authorize]
+
+<h1>@(IsCreate ? "Create" : "Edit") Pack</h1>
+
+<div class="row">
+    <div class="col-md-4">
+        <EditForm Model="Input" method="post" OnValidSubmit="SavePack" FormName="save">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="form-floating mb-3"> 
+                <InputText @bind-Value="Input.Name" class="form-control" aria-required="true" />
+                <label for="name">Pack Name</label>
+                <ValidationMessage For="() => Input.Name" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.Description" class="form-control" />
+                <label for="name">Description</label>
+                <ValidationMessage For="() => Input.Description" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.ImageUrl" class="form-control" />
+                <label for="name">Image Url</label>
+                <ValidationMessage For="() => Input.ImageUrl" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-lg btn-primary">Save</button>
+        </EditForm>
+    </div>
+</div>
+
+@if (!IsCreate)
+{
+    <p>todo: nodes</p>
+}
 
 @code {
     [CascadingParameter]
@@ -15,13 +51,54 @@
 
     public Pack? Pack { get; set; }
 
+    public string? UserId { get; set; }
+
+    [SupplyParameterFromForm]
+    private PackModel Input { get; set; } = new();
+
+    private bool IsCreate => PackId == null;
+
     protected override async Task OnInitializedAsync()
     {
-        Pack = await Db.Packs.FirstOrDefaultAsync(x => x.Id == PackId);
-        // todo: check owner
-        if (Pack == null)
+        Pack = PackId != null ? await Db.Packs.FirstOrDefaultAsync(x => x.Id == PackId) : null;
+        UserId = HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (PackId != null && (Pack == null || UserId != Pack.CreatedByUserId))
         {
             NavigationManager.NavigateTo("game/setup/pack");
         }
+
+        Input.Name ??= Pack?.Name ?? "";
+        Input.Description ??= Pack?.Description ?? "";
+        Input.ImageUrl ??= Pack?.ImageUrl ?? "";
+    }
+
+    public async Task SavePack(EditContext editContext)
+    {
+        Pack ??= new Pack();
+        Pack.Name = Input.Name;
+        Pack.Description = Input.Description;
+        Pack.ImageUrl = Input.ImageUrl;
+
+        Db.Update(Pack);
+        await Db.SaveChangesAsync();
+
+        if (IsCreate)
+        {
+            NavigationManager.NavigateTo($"game/setup/pack/{Pack.Id}");
+        }
+    }
+
+    private class PackModel
+    {
+        [Required]
+        [Display(Name = "Name")]
+        public string? Name { get; set; }
+
+        [Display(Name = "Description")]
+        public string? Description { get; set; }
+
+        [Display(Name = "ImageUrl")]
+        public string? ImageUrl { get; set; }
     }
 }
