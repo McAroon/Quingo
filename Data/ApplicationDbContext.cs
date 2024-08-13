@@ -56,17 +56,20 @@ namespace Quingo.Data
                 {
                     if (entry.State == EntityState.Added)
                     {
+                        entity.CreatedAt = DateTime.UtcNow;
+                        entity.UpdatedAt = DateTime.UtcNow;
                         entity.CreatedByUserId = userId;
                         entity.UpdatedByUserId = userId;
                     }
                     else if (entry.State == EntityState.Modified)
                     {
+                        entity.UpdatedAt = DateTime.UtcNow;
                         entity.UpdatedByUserId = userId;
                     }
                     else if (entry.State == EntityState.Deleted)
                     {
-                        entity.DeletedByUserId = userId;
                         entity.DeletedAt = DateTime.UtcNow;
+                        entity.DeletedByUserId = userId;
                         entry.State = EntityState.Modified;
                     }
                 }
@@ -79,10 +82,6 @@ namespace Quingo.Data
         public void Configure(EntityTypeBuilder<TEntity> builder)
         {
             builder.HasKey(e => e.Id);
-            builder.Property(e => e.CreatedAt).ValueGeneratedOnAdd()
-                .Metadata.SetAfterSaveBehavior(Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Save);
-            builder.Property(e => e.UpdatedAt).ValueGeneratedOnAddOrUpdate()
-                .Metadata.SetAfterSaveBehavior(Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Save);
             builder.HasOne(e => e.CreatedByUser).WithMany().HasForeignKey(e => e.CreatedByUserId);
             builder.HasOne(e => e.UpdatedByUser).WithMany().HasForeignKey(e => e.UpdatedByUserId);
             builder.HasOne(e => e.DeletedByUser).WithMany().HasForeignKey(e => e.DeletedByUserId);
