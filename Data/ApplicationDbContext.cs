@@ -13,6 +13,7 @@ namespace Quingo.Data
         public DbSet<NodeTag> NodeTags { get; set; }
         public DbSet<Pack> Packs { get; set; }
         public DbSet<Tag> Tags { get; set; }
+        public DbSet<NodeLinkType> NodeLinkTypes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -23,17 +24,20 @@ namespace Quingo.Data
             new EntityBaseConfiguration<NodeTag>().Configure(builder.Entity<NodeTag>());
             new EntityBaseConfiguration<Pack>().Configure(builder.Entity<Pack>());
             new EntityBaseConfiguration<Tag>().Configure(builder.Entity<Tag>());
+            new EntityBaseConfiguration<NodeLinkType>().Configure(builder.Entity<NodeLinkType>());
 
             builder.Entity<Node>().Ignore(e => e.NodeLinks);
             builder.Entity<Node>().Ignore(e => e.LinkedNodes);
 
-            builder.Entity<NodeLink>().HasOne(e => e.Node1).WithMany(e => e.NodeLinks1).HasForeignKey(e => e.Node1Id).IsRequired();
-            builder.Entity<NodeLink>().HasOne(e => e.Node2).WithMany(e => e.NodeLinks2).HasForeignKey(e => e.Node2Id).IsRequired();
+            builder.Entity<NodeLink>().HasOne(e => e.NodeFrom).WithMany(e => e.NodeLinks1).HasForeignKey(e => e.NodeFromId).IsRequired();
+            builder.Entity<NodeLink>().HasOne(e => e.NodeTo).WithMany(e => e.NodeLinks2).HasForeignKey(e => e.NodeToId).IsRequired();
 
             builder.Entity<NodeTag>().HasOne(e => e.Node).WithMany(e => e.NodeTags).HasForeignKey(e => e.NodeId).IsRequired();
             builder.Entity<NodeTag>().HasOne(e => e.Tag).WithMany(e => e.NodeTags).HasForeignKey(e => e.TagId).IsRequired();
 
             builder.Entity<Pack>().HasMany(e => e.Nodes).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
+            builder.Entity<Pack>().HasMany(e => e.NodeLinkTypes).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
+            builder.Entity<Pack>().HasMany(e => e.Tags).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

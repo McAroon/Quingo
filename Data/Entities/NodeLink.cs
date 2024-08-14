@@ -2,12 +2,16 @@
 {
     public class NodeLink : EntityBase
     {
-        public int Node1Id { get; set; }
+        public int NodeFromId { get; set; }
 
-        public int Node2Id { get; set; }
+        public int NodeToId { get; set; }
 
-        public Node Node1 { get; set; } = null!;
+        public Node NodeFrom { get; set; } = null!;
 
-        public Node Node2 { get; set; } = null!;
+        public Node NodeTo { get; set; } = null!;
+
+        public int NodeLinkTypeId { get; set; }
+
+        public required NodeLinkType NodeLinkType { get; set; }
     }
 }

@@ -18,6 +18,6 @@
 
         public List<NodeLink> NodeLinks => [.. NodeLinks1, .. NodeLinks2];
 
-        public List<Node> LinkedNodes => NodeLinks.Select(x => x.Node1).Concat(NodeLinks.Select(x => x.Node2)).Where(x => x != this).ToList();
+        public List<Node> LinkedNodes => NodeLinks.Select(x => x.NodeFrom).Concat(NodeLinks.Select(x => x.NodeTo)).Where(x => x != this).ToList();
     }
 }

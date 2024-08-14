@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Quingo.Data;
@@ -11,9 +12,11 @@ using Quingo.Data;
 namespace Quingo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240813231044_NodeLinkType")]
+    partial class NodeLinkType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -287,13 +290,13 @@ namespace Quingo.Migrations
                     b.Property<string>("DeletedByUserId")
                         .HasColumnType("text");
 
-                    b.Property<int>("NodeFromId")
+                    b.Property<int>("Node1Id")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Node2Id")
                         .HasColumnType("integer");
 
                     b.Property<int>("NodeLinkTypeId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("NodeToId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -308,11 +311,11 @@ namespace Quingo.Migrations
 
                     b.HasIndex("DeletedByUserId");
 
-                    b.HasIndex("NodeFromId");
+                    b.HasIndex("Node1Id");
+
+                    b.HasIndex("Node2Id");
 
                     b.HasIndex("NodeLinkTypeId");
-
-                    b.HasIndex("NodeToId");
 
                     b.HasIndex("UpdatedByUserId");
 
@@ -592,21 +595,21 @@ namespace Quingo.Migrations
                         .WithMany()
                         .HasForeignKey("DeletedByUserId");
 
-                    b.HasOne("Quingo.Data.Entities.Node", "NodeFrom")
+                    b.HasOne("Quingo.Data.Entities.Node", "Node1")
                         .WithMany("NodeLinks1")
-                        .HasForeignKey("NodeFromId")
+                        .HasForeignKey("Node1Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Quingo.Data.Entities.Node", "Node2")
+                        .WithMany("NodeLinks2")
+                        .HasForeignKey("Node2Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Quingo.Data.Entities.NodeLinkType", "NodeLinkType")
                         .WithMany("NodeLinks")
                         .HasForeignKey("NodeLinkTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Quingo.Data.Entities.Node", "NodeTo")
-                        .WithMany("NodeLinks2")
-                        .HasForeignKey("NodeToId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -618,11 +621,11 @@ namespace Quingo.Migrations
 
                     b.Navigation("DeletedByUser");
 
-                    b.Navigation("NodeFrom");
+                    b.Navigation("Node1");
+
+                    b.Navigation("Node2");
 
                     b.Navigation("NodeLinkType");
-
-                    b.Navigation("NodeTo");
 
                     b.Navigation("UpdatedByUser");
                 });

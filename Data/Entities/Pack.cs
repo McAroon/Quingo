@@ -9,5 +9,9 @@
         public string? ImageUrl { get; set; }
 
         public List<Node> Nodes { get; } = [];
+
+        public List<NodeLinkType> NodeLinkTypes { get; set; } = [];
+
+        public List<Tag> Tags { get; set; } = [];
     }
 }
