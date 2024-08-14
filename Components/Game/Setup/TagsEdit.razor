@@ -1,0 +1,55 @@
+﻿@inject ApplicationDbContext Db
+
+<h4>Tags</h4>
+
+<div class="row">
+    <div class="col-lg-4 col-md-6 col-sm-12">
+        @if (Pack?.Tags != null)
+        @foreach (var tag in Pack.Tags)
+        {
+            <LineItemEdit Id="@tag.Id" Value="@tag.Name" OnSave="SaveTag" OnDelete="DeleteTag" />
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    public Pack Pack { get; set; } = default!;
+
+    private async Task SaveTag(int id, string value)
+    {
+        if (id == 0)
+        {
+            var tag = new Tag
+                {
+                    Name = value,
+                    Pack = Pack
+                };
+            Db.Update(tag);
+        }
+        else
+        {
+            var tag = Pack.Tags.FirstOrDefault(x => x.Id == id);
+            if (tag == null)
+            {
+                throw new Exception("Tag not found"); // todo: proper error
+            }
+
+            tag.Name = value;
+            Db.Update(tag);
+        }
+        await Db.SaveChangesAsync();
+    }
+
+    private async Task DeleteTag(int id)
+    {
+        var tag = Pack.Tags.FirstOrDefault(x => x.Id == id);
+        if (tag == null)
+        {
+            throw new Exception("Tag not found"); // todo: proper error
+        }
+
+        Db.Remove(tag);
+        await Db.SaveChangesAsync();
+    }
+}

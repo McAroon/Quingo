@@ -1,0 +1,56 @@
+﻿@if (isEdit)
+{
+    <div class="row">
+        <div class="col-9">todo: input</div>
+        <div class="col-3">
+            <Button Clicked="Save"><Icon Name="IconName.Save" /></Button>
+            <Button Clicked="() => isEdit = false"><Icon Name="IconName.Undo" /></Button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-9">@Value</div>
+        <div class="col-3">
+            <Button Clicked="() => isEdit = true"><Icon Name="IconName.Pen" /></Button>
+            <Button Clicked="Delete"><Icon Name="IconName.Delete" /></Button>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [Parameter]
+    public string? Value { get; set; }
+
+    [Parameter]
+    public Func<int, string, Task>? OnSave { get; set; }
+
+    [Parameter]
+    public Func<int, Task>? OnDelete { get; set; }
+
+    private string value = "";
+
+    private bool isEdit;
+
+    protected override void OnInitialized()
+    {
+        value = Value ?? "";
+    }
+
+    private async Task Save()
+    {
+        if (OnSave != null)
+            await OnSave.Invoke(Id, value);
+    }
+
+    private async Task Delete()
+    {
+        if (OnDelete != null)
+            await OnDelete.Invoke(Id);
+    }
+}
