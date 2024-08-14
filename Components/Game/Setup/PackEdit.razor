@@ -19,7 +19,7 @@
     <div class="col-md-4">
         <EditForm Model="Input" method="post" OnValidSubmit="SavePack" FormName="save">
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
+            <Microsoft.AspNetCore.Components.Forms.ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.Name" class="form-control" aria-required="true" />
                 <label for="name">Pack Name</label>

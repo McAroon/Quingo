@@ -22,7 +22,7 @@
             <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
             <input type="hidden" name="RememberMe" value="@RememberMe" />
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
+            <Microsoft.AspNetCore.Components.Forms.ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.TwoFactorCode" class="form-control" autocomplete="off" />
                 <label for="two-factor-code" class="form-label">Authenticator code</label>

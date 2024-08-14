@@ -25,7 +25,7 @@
         </form>
         <EditForm Model="Input" FormName="change-email" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
+            <Microsoft.AspNetCore.Components.Forms.ValidationSummary class="text-danger" role="alert" />
             @if (isEmailConfirmed)
             {
                 <div class="form-floating mb-3 input-group">
