@@ -1,6 +1,64 @@
-﻿<h4>Link Types</h4>
+﻿@inject ApplicationDbContext Db
+
+<h4>
+    Link Types <Tooltip Text="Add Link Type"><Button Clicked="AddLinkType"><Icon Name="IconName.Add" /></Button></Tooltip>
+</h4>
+
+<div class="row">
+    <div class="col-lg-4 col-md-6 col-sm-12">
+        @if (Pack?.NodeLinkTypes != null)
+            @foreach (var link in Pack.NodeLinkTypes.Where(x => x.DeletedAt == null))
+            {
+                <LineItemEdit Id="@link.Id" Value="@link.Name" OnSave="SaveLinkType" OnDelete="DeleteLinkType" />
+            }
+    </div>
+</div>
 
 @code {
     [CascadingParameter]
-    public Pack? Pack { get; set; }
+    public Pack Pack { get; set; } = default!;
+
+    private async Task SaveLinkType(int id, string value)
+    {
+        if (id == 0)
+        {
+            var link = new NodeLinkType
+                {
+                    Name = value,
+                    Pack = Pack
+                };
+            Db.Update(link);
+        }
+        else
+        {
+            var link = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == id);
+            if (link == null)
+            {
+                throw new Exception("Link Type not found"); // todo: proper error
+            }
+
+            link.Name = value;
+            Db.Update(link);
+        }
+        await Db.SaveChangesAsync();
+        StateHasChanged();
+    }
+
+    private async Task DeleteLinkType(int id)
+    {
+        var link = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == id);
+        if (link == null)
+        {
+            throw new Exception("Link Type not found"); // todo: proper error
+        }
+
+        Db.Remove(link);
+        await Db.SaveChangesAsync();
+        StateHasChanged();
+    }
+
+    private async Task AddLinkType()
+    {
+        await SaveLinkType(0, "New Link Type");
+    }
 }

@@ -18,7 +18,9 @@
 <h4 class="mb-3">
     Pack Info @if (!IsEditMode)
     {
-        <Button Clicked="() => IsEditMode = true"><Icon Name="IconName.Pen" /></Button>
+        <Tooltip Text="Edit Pack">
+            <Button Clicked="() => IsEditMode = true"><Icon Name="IconName.Pen" /></Button>
+        </Tooltip>
     }
 </h4>
 
@@ -98,7 +100,14 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        Pack = PackId != null ? await Db.Packs.FirstOrDefaultAsync(x => x.Id == PackId) : null;
+        if (PackId != null)
+        {
+            Pack = await Db.Packs
+            .Include(x => x.Tags)
+            .Include(x => x.NodeLinkTypes)
+            .FirstOrDefaultAsync(x => x.Id == PackId);
+        }
+        
         if (AuthenticationState != null)
         {
             UserId = (await AuthenticationState)?.User?.FindFirstValue(ClaimTypes.NameIdentifier);

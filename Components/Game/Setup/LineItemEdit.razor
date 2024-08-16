@@ -1,10 +1,17 @@
 ﻿@if (isEdit)
 {
     <div class="row">
-        <div class="col-9">todo: input</div>
+        <div class="col-9">
+            <TextEdit @bind-Text="@value" />
+        </div>
         <div class="col-3">
-            <Button Clicked="Save"><Icon Name="IconName.Save" /></Button>
-            <Button Clicked="() => isEdit = false"><Icon Name="IconName.Undo" /></Button>
+            <Tooltip Text="Save">
+                <Button Clicked="Save"><Icon Name="IconName.Save" /></Button>
+            </Tooltip>
+            <Tooltip Text="Cancel">
+                <Button Clicked="() => isEdit = false"><Icon Name="IconName.Undo" /></Button>
+            </Tooltip>
+            
         </div>
     </div>
 }
@@ -13,8 +20,12 @@ else
     <div class="row">
         <div class="col-9">@Value</div>
         <div class="col-3">
-            <Button Clicked="() => isEdit = true"><Icon Name="IconName.Pen" /></Button>
-            <Button Clicked="Delete"><Icon Name="IconName.Delete" /></Button>
+            <Tooltip Text="Edit">
+                <Button Clicked="() => isEdit = true"><Icon Name="IconName.Pen" /></Button>
+            </Tooltip>
+            <Tooltip Text="Delete">
+                <Button Clicked="Delete"><Icon Name="IconName.Delete" /></Button>
+            </Tooltip>
         </div>
     </div>
 }
@@ -45,7 +56,10 @@ else
     private async Task Save()
     {
         if (OnSave != null)
+        {
             await OnSave.Invoke(Id, value);
+            isEdit = false;
+        }
     }
 
     private async Task Delete()
