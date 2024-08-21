@@ -1,0 +1,13 @@
+﻿<h3>NodeEdit</h3>
+
+@code {
+
+    [Parameter]
+    public Node Node { get; set; } = default!;
+
+    [Parameter]
+    public Func<int, NodesEdit.NodeModel, Task>? OnSave { get; set; }
+
+    [Parameter]
+    public Func<int, Task>? OnDelete { get; set; }
+}

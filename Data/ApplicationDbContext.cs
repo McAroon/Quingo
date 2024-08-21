@@ -29,8 +29,8 @@ namespace Quingo.Data
             builder.Entity<Node>().Ignore(e => e.NodeLinks);
             builder.Entity<Node>().Ignore(e => e.LinkedNodes);
 
-            builder.Entity<NodeLink>().HasOne(e => e.NodeFrom).WithMany(e => e.NodeLinks1).HasForeignKey(e => e.NodeFromId).IsRequired();
-            builder.Entity<NodeLink>().HasOne(e => e.NodeTo).WithMany(e => e.NodeLinks2).HasForeignKey(e => e.NodeToId).IsRequired();
+            builder.Entity<NodeLink>().HasOne(e => e.NodeFrom).WithMany(e => e.NodeLinksFrom).HasForeignKey(e => e.NodeFromId).IsRequired();
+            builder.Entity<NodeLink>().HasOne(e => e.NodeTo).WithMany(e => e.NodeLinksTo).HasForeignKey(e => e.NodeToId).IsRequired();
 
             builder.Entity<NodeTag>().HasOne(e => e.Node).WithMany(e => e.NodeTags).HasForeignKey(e => e.NodeId).IsRequired();
             builder.Entity<NodeTag>().HasOne(e => e.Tag).WithMany(e => e.NodeTags).HasForeignKey(e => e.TagId).IsRequired();

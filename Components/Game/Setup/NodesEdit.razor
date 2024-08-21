@@ -1,6 +1,208 @@
-﻿<h4>Pack Items</h4>
+﻿@using System.ComponentModel.DataAnnotations
+
+@inject ApplicationDbContext Db
+
+<h4>
+    Pack Items <Tooltip Text="Add Item"><Button Clicked="AddNode"><Icon Name="IconName.Add" /></Button></Tooltip>
+</h4>
+
+<div class="row">
+    <div class="col-lg-6 col-md-9 col-sm-12">
+        @if (Pack?.Nodes != null)
+            @foreach(var node in Pack.Nodes.Where(x => x.DeletedAt == null))
+            {
+                <NodeEdit Node="node" OnSave="SaveNode" OnDelete="DeleteNode" />
+            }
+    </div>
+</div>
 
 @code {
     [CascadingParameter]
-    public Pack? Pack { get; set; }
+    public Pack Pack { get; set; } = default!;
+
+    private async Task AddNode()
+    {
+        await SaveNode(0, new NodeModel());
+    }
+
+    private async Task SaveNode(int id, NodeModel model)
+    {
+        if (id == 0)
+        {
+            var node = new Node
+            {
+                Name = model.Name ?? "New Item",
+                Pack = Pack
+            };
+            Db.Update(node);
+        }
+        else
+        {
+            var node = Pack.Nodes.FirstOrDefault(x => x.Id == id);
+            if (node == null)
+            {
+                throw new Exception("Item not found"); // todo: proper error
+            }
+
+            node.Name = model.Name;
+            node.ImageUrl = model.ImageUrl;
+
+            foreach (var tagId in model.TagIds)
+            {
+                var nodeTag = node.NodeTags.FirstOrDefault(x => x.TagId == tagId);
+                if (nodeTag == null)
+                {
+                    var tag = Pack.Tags.FirstOrDefault(x => x.Id == tagId);
+                    if (tag == null)
+                    {
+                        throw new Exception("Tag not found"); // todo: proper error
+                    }
+
+                    nodeTag = new NodeTag
+                    {
+                        Node = node,
+                        Tag = tag
+                    };
+                    node.NodeTags.Add(nodeTag);
+                }
+            }
+
+            foreach (var nodeTag in node.NodeTags.Where(x => !model.TagIds.Contains(x.Id)))
+            {
+                Db.Remove(nodeTag);
+            }
+
+            foreach (var linkModel in model.NodeLinks)
+            {
+                if (linkModel.LinkDirection is NodeLinkDirection.From or NodeLinkDirection.Both)
+                {
+                    var link = node.NodeLinksFrom.FirstOrDefault(x => x.NodeToId == linkModel.LinkedNodeId);
+                    var linkType = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == linkModel.LinkTypeId);
+                    if (linkType == null)
+                    {
+                        throw new Exception("Link Type not found"); // todo: proper error
+                    }
+
+                    var linkedNode = Pack.Nodes.FirstOrDefault(x => x.Id == linkModel.LinkedNodeId);
+                    if (linkedNode == null)
+                    {
+                        throw new Exception("Linked Item not found"); // todo: proper error
+                    }
+
+                    if (link == null)
+                    {
+                        link = new NodeLink
+                        {
+                            NodeFrom = node,
+                            NodeTo = linkedNode,
+                            NodeLinkType = linkType
+                        };
+                        node.NodeLinksFrom.Add(link);
+                    }
+                    else if (link.NodeLinkTypeId != linkModel.LinkTypeId)
+                    {
+                        link.NodeLinkType = linkType;
+                    }
+                }
+
+                if (linkModel.LinkDirection is NodeLinkDirection.To or NodeLinkDirection.Both)
+                {
+                    var link = node.NodeLinksTo.FirstOrDefault(x => x.NodeFromId == linkModel.LinkedNodeId);
+                    var linkType = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == linkModel.LinkTypeId);
+                    if (linkType == null)
+                    {
+                        throw new Exception("Link Type not found"); // todo: proper error
+                    }
+
+                    var linkedNode = Pack.Nodes.FirstOrDefault(x => x.Id == linkModel.LinkedNodeId);
+                    if (linkedNode == null)
+                    {
+                        throw new Exception("Linked Item not found"); // todo: proper error
+                    }
+
+                    if (link == null)
+                    {
+                        link = new NodeLink
+                            {
+                                NodeFrom = linkedNode,
+                                NodeTo = node,
+                                NodeLinkType = linkType
+                            };
+                        node.NodeLinksTo.Add(link);
+                    }
+                    else if (link.NodeLinkTypeId != linkModel.LinkTypeId)
+                    {
+                        link.NodeLinkType = linkType;
+                    }
+                }
+            }
+
+            foreach (var nodeLink in node.NodeLinksFrom)
+            {
+                var linkModel = model.NodeLinks.FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeToId);
+                if (linkModel == null)
+                {
+                    Db.Remove(nodeLink);
+                }
+            }
+
+            foreach (var nodeLink in node.NodeLinksTo)
+            {
+                var linkModel = model.NodeLinks.FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeFromId);
+                if (linkModel == null)
+                {
+                    Db.Remove(nodeLink);
+                }
+            }
+        }
+
+        await Db.SaveChangesAsync();
+        StateHasChanged();
+    }
+
+    private async Task DeleteNode(int id)
+    {
+        var node = Pack.Nodes.FirstOrDefault(x => x.Id == id);
+        if (node == null)
+        {
+            throw new Exception("Item not found"); // todo: proper error
+        }
+
+        Db.Remove(node);
+        await Db.SaveChangesAsync();
+        StateHasChanged();
+    }
+
+    public class NodeModel
+    {
+        [Required]
+        [Display(Name = "Name")]
+        public string? Name { get; set; }
+
+        [Display(Name = "Image Url")]
+        public string? ImageUrl { get; set; }
+
+        public List<int> TagIds { get; set; } = [];
+
+        public List<NodeLinkModel> NodeLinks { get; set; } = [];
+    }
+
+    public class NodeLinkModel
+    {
+        [Required]
+        public int LinkedNodeId { get; set; }
+
+        [Required]
+        public int LinkTypeId { get; set; }
+
+        [Required]
+        public NodeLinkDirection LinkDirection { get; set; }
+    }
+
+    public enum NodeLinkDirection
+    {
+        From,
+        To,
+        Both
+    }
 }
