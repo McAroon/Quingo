@@ -20,13 +20,15 @@ else
 {
     <div class="row">
         <div class="mb-3 w-75">
-            <a href="game/setup/pack" class="btn btn-primary">New Pack</a>
+             <Tooltip Text="Test tooltip">
+                <a href="game/setup/pack" class="btn btn-primary"><Icon Name="IconName.Add" /> New Pack</a>
+            </Tooltip>
         </div>
     </div>
     <div class="row">
-        @foreach (var pack in Packs)
+        @foreach (var pack in Packs.Where(x => x.DeletedAt == null))
         {
-            <div class="col-sm-12 col-md-6 col-lg-3 mb-3">
+            <div class="col-sm-12 col-md-6 col-lg-3 mb-2">
                 <div class="card">
                     @if (!string.IsNullOrEmpty(pack.ImageUrl))
                     {
@@ -41,7 +43,8 @@ else
 
                         @if (pack.CreatedByUserId == UserId)
                         {
-                            <a href="game/setup/pack/@pack.Id" class="btn btn-primary">Edit</a>
+                            <a href="game/setup/pack/@pack.Id" class="btn btn-primary"><Icon Name="IconName.Pen" /> Edit</a>
+                            <Button Color="Color.Danger" Clicked="() => DeletePack(pack.Id)"><Icon Name="IconName.Delete" /> Delete</Button>
                         }
                     </div>
                 </div>
@@ -65,5 +68,17 @@ else
         {
             UserId = (await AuthenticationState)?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
         }
+    }
+
+    private async Task DeletePack(int packId)
+    {
+        var pack = await Db.Packs.FirstOrDefaultAsync(x => x.Id == packId);
+        if (pack == null)
+        {
+            throw new Exception("Pack not found");
+        }
+        Db.Remove(pack);
+        await Db.SaveChangesAsync();
+        StateHasChanged();
     }
 }

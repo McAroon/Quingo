@@ -18,13 +18,17 @@
 <h4 class="mb-3">
     Pack Info @if (!IsEditMode)
     {
-        <Tooltip Text="Edit Pack">
+        <Tooltip Text="Edit Pack info">
             <Button Clicked="() => IsEditMode = true"><Icon Name="IconName.Pen" /></Button>
         </Tooltip>
     }
 </h4>
 
-@if (IsEditMode)
+@if (Pack == null && !IsCreate)
+{
+    <p><em>Loading...</em></p>
+}
+else if (IsEditMode)
 {
     <div class="row">
         <div class="col-md-4">
@@ -71,7 +75,7 @@ else
 }
 
 
-@if (!IsCreate)
+@if (Pack != null && !IsCreate)
 {
     <CascadingValue Value="Pack">
         <TagsEdit />
@@ -105,6 +109,9 @@ else
             Pack = await Db.Packs
             .Include(x => x.Tags)
             .Include(x => x.NodeLinkTypes)
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeTags)
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo)
             .FirstOrDefaultAsync(x => x.Id == PackId);
         }
         

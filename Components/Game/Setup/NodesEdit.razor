@@ -65,9 +65,14 @@
                     };
                     node.NodeTags.Add(nodeTag);
                 }
+                else if (nodeTag.DeletedAt != null)
+                {
+                    nodeTag.DeletedAt = null;
+                    nodeTag.DeletedByUserId = null;
+                }
             }
 
-            foreach (var nodeTag in node.NodeTags.Where(x => !model.TagIds.Contains(x.Id)))
+            foreach (var nodeTag in node.NodeTags.Where(x => !model.TagIds.Contains(x.Tag.Id)))
             {
                 Db.Remove(nodeTag);
             }
@@ -99,9 +104,17 @@
                         };
                         node.NodeLinksFrom.Add(link);
                     }
-                    else if (link.NodeLinkTypeId != linkModel.LinkTypeId)
+                    else
                     {
-                        link.NodeLinkType = linkType;
+                        if (link.NodeLinkTypeId != linkModel.LinkTypeId)
+                        {
+                            link.NodeLinkType = linkType;
+                        }
+                        if (link.DeletedAt != null)
+                        {
+                            link.DeletedAt = null;
+                            link.DeletedByUserId = null;
+                        }
                     }
                 }
 
@@ -130,16 +143,24 @@
                             };
                         node.NodeLinksTo.Add(link);
                     }
-                    else if (link.NodeLinkTypeId != linkModel.LinkTypeId)
+                    else
                     {
-                        link.NodeLinkType = linkType;
+                        if (link.NodeLinkTypeId != linkModel.LinkTypeId)
+                        {
+                            link.NodeLinkType = linkType;
+                        }
+                        if (link.DeletedAt != null)
+                        {
+                            link.DeletedAt = null;
+                            link.DeletedByUserId = null;
+                        }
                     }
                 }
             }
 
             foreach (var nodeLink in node.NodeLinksFrom)
             {
-                var linkModel = model.NodeLinks.FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeToId);
+                var linkModel = model.NodeLinks.FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeTo.Id);
                 if (linkModel == null)
                 {
                     Db.Remove(nodeLink);
@@ -148,7 +169,7 @@
 
             foreach (var nodeLink in node.NodeLinksTo)
             {
-                var linkModel = model.NodeLinks.FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeFromId);
+                var linkModel = model.NodeLinks.FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeFrom.Id);
                 if (linkModel == null)
                 {
                     Db.Remove(nodeLink);
@@ -182,7 +203,7 @@
         [Display(Name = "Image Url")]
         public string? ImageUrl { get; set; }
 
-        public List<int> TagIds { get; set; } = [];
+        public IReadOnlyList<int> TagIds { get; set; } = [];
 
         public List<NodeLinkModel> NodeLinks { get; set; } = [];
     }

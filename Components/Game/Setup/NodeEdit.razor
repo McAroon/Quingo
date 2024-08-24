@@ -1,7 +1,89 @@
-﻿<h3>NodeEdit</h3>
+﻿<Card Class="mb-2">
+    <CardBody>
+        @if (IsEditMode)
+        {
+            <h5>Item info</h5>
+            <Field Horizontal>
+                <FieldLabel ColumnSize="ColumnSize.IsFull.OnTablet.Is3.OnDesktop" RequiredIndicator>Name</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsFull.OnTablet.Is9.OnDesktop">
+                    <TextEdit @bind-Text="@Model.Name" />
+                </FieldBody>
+            </Field>
+            <Field Horizontal>
+                <FieldLabel ColumnSize="ColumnSize.IsFull.OnTablet.Is3.OnDesktop">Image Url</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsFull.OnTablet.Is9.OnDesktop">
+                    <TextEdit @bind-Text="@Model.ImageUrl" />
+                </FieldBody>
+            </Field>
+            <Field Horizontal>
+                <FieldLabel ColumnSize="ColumnSize.IsFull.OnTablet.Is3.OnDesktop">Tags</FieldLabel>
+                <FieldBody ColumnSize="ColumnSize.IsFull.OnTablet.Is9.OnDesktop">
+                    <Select TValue="int" Multiple @bind-SelectedValues="@Model.TagIds">
+                        @foreach (var tag in Node.Pack.Tags)
+                        {
+                            <SelectItem Value="tag.Id">@tag.Name</SelectItem>
+                        }
+                    </Select>
+                </FieldBody>
+            </Field>
+
+            <h5>Item Links <Tooltip Text="Add Link"><Button Clicked="AddLink"><Icon Name="IconName.Add" /></Button></Tooltip></h5>
+            @foreach (var link in Model.NodeLinks)
+            {
+                <div class="mb-2">
+                    <Field Horizontal>
+                        <FieldLabel ColumnSize="ColumnSize.IsFull.OnTablet.Is3.OnDesktop">Link Direction</FieldLabel>
+                        <FieldBody ColumnSize="ColumnSize.IsFull.OnTablet.Is9.OnDesktop">
+                            <Select TValue="NodesEdit.NodeLinkDirection" @bind-SelectedValue="link.LinkDirection">
+                                <SelectItem Value="NodesEdit.NodeLinkDirection.From">➡️ From</SelectItem>
+                                <SelectItem Value="NodesEdit.NodeLinkDirection.To">⬅️ To</SelectItem>
+                                <SelectItem Value="NodesEdit.NodeLinkDirection.Both">↔️ Both</SelectItem>
+                            </Select>
+                        </FieldBody>
+                    </Field>
+                    <Field Horizontal>
+                        <FieldLabel ColumnSize="ColumnSize.IsFull.OnTablet.Is3.OnDesktop">Linked Item</FieldLabel>
+                        <FieldBody ColumnSize="ColumnSize.IsFull.OnTablet.Is9.OnDesktop">
+                            <Select TValue="int" @bind-SelectedValue="link.LinkedNodeId">
+                                @foreach (var node in LinkableNodes)
+                                {
+                                    <SelectItem Value="node.Id">@node.Name</SelectItem>
+                                }
+                            </Select>
+                        </FieldBody>
+                    </Field>
+                </div>
+            }
+
+            <Field Horizontal JustifyContent="JustifyContent.End">
+                <FieldBody ColumnSize="ColumnSize.Is9.Is3.WithOffset">
+                    <Button Color="Color.Primary" Clicked="Save">Save</Button>
+                    <Button Color="Color.Secondary" Outline Clicked="() => IsEditMode = false">Cancel</Button>
+                </FieldBody>
+            </Field>
+        }
+        else
+        {
+            <CardTitle Size="4">
+                @Model.Name <Tooltip Text="Edit Item">
+                    <Button Clicked="() => IsEditMode = true"><Icon Name="IconName.Pen" /></Button>
+                </Tooltip><Tooltip Text="Delete Item">
+                    <Button Clicked="Delete"><Icon Name="IconName.Delete" /></Button>
+                </Tooltip>
+            </CardTitle>
+            
+            <h5>Tags</h5>
+            <UnorderedList Unstyled>
+                @foreach (var tag in Node.NodeTags.Where(x => x.DeletedAt == null))
+                {
+                    <UnorderedListItem>@tag.Tag.Name</UnorderedListItem>
+                }
+            </UnorderedList>
+        }
+    </CardBody>
+</Card>
 
 @code {
-
     [Parameter]
     public Node Node { get; set; } = default!;
 
@@ -10,4 +92,71 @@
 
     [Parameter]
     public Func<int, Task>? OnDelete { get; set; }
+
+    private NodesEdit.NodeModel Model { get; set; } = default!;
+
+    private bool IsEditMode { get; set; }
+
+    private IEnumerable<Node> LinkableNodes => Node.Pack.Nodes.Where(
+        x => x.DeletedAt == null && x != Node && !Model.NodeLinks.Select(y => y.LinkedNodeId).Contains(x.Id));
+
+    protected override void OnParametersSet()
+    {
+        Model = MapModel();
+        StateHasChanged();
+    }
+
+    private NodesEdit.NodeModel MapModel()
+    {
+        var fromIds = Node.NodeLinksFrom.Where(x => x.DeletedAt == null).Select(x => (id: x.NodeToId, linkId: x.NodeLinkTypeId)).ToList();
+        var toIds = Node.NodeLinksTo.Where(x => x.DeletedAt == null).Select(x => (id: x.NodeFromId, linkId: x.NodeLinkTypeId)).ToList();
+        var bothIds = fromIds.Join(toIds, x => x.id, y => y.id, (x, y) => x).ToList();
+        var linksFrom = fromIds.Except(bothIds).Select(x => new NodesEdit.NodeLinkModel
+            {
+                LinkedNodeId = x.id,
+                LinkTypeId = x.linkId,
+                LinkDirection = NodesEdit.NodeLinkDirection.From
+            });
+        var linksTo = toIds.Except(bothIds).Select(x => new NodesEdit.NodeLinkModel
+            {
+                LinkedNodeId = x.id,
+                LinkTypeId = x.linkId,
+                LinkDirection = NodesEdit.NodeLinkDirection.To
+            });
+        var linksBoth = bothIds.Select(x => new NodesEdit.NodeLinkModel
+            {
+                LinkedNodeId = x.id,
+                LinkTypeId = x.linkId,
+                LinkDirection = NodesEdit.NodeLinkDirection.Both
+            });
+        return new NodesEdit.NodeModel
+            {
+                Name = Node.Name,
+                ImageUrl = Node.ImageUrl,
+                TagIds = Node.NodeTags.Where(x => x.DeletedAt == null).Select(x => x.TagId).ToList(),
+                NodeLinks = [..linksFrom, ..linksTo, ..linksBoth],
+            };
+    }
+
+    private void AddLink()
+    {
+        Model.NodeLinks.Add(new NodesEdit.NodeLinkModel());
+    }
+
+    private async Task Save()
+    {
+        if (OnSave != null)
+        {
+            Model.TagIds ??= [];
+            Model.NodeLinks ??= [];
+            await OnSave.Invoke(Node.Id, Model);
+            IsEditMode = false;
+        }
+    }
+
+    private async Task Delete()
+    {
+        if (OnDelete != null)
+            await OnDelete.Invoke(Node.Id);
+    }
 }
