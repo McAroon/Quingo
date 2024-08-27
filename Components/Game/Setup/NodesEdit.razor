@@ -203,21 +203,28 @@
         [Display(Name = "Image Url")]
         public string? ImageUrl { get; set; }
 
-        public IReadOnlyList<int> TagIds { get; set; } = [];
+        public IEnumerable<int> TagIds { get; set; } = [];
 
         public List<NodeLinkModel> NodeLinks { get; set; } = [];
     }
 
     public class NodeLinkModel
     {
-        [Required]
-        public int LinkedNodeId { get; set; }
+        public int LinkedNodeId => LinkedNode.Id;
+
+        public NodeInfoModel LinkedNode { get; set; } = default!;
 
         [Required]
         public int LinkTypeId { get; set; }
 
         [Required]
         public NodeLinkDirection LinkDirection { get; set; }
+    }
+
+    public class NodeInfoModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
     }
 
     public enum NodeLinkDirection

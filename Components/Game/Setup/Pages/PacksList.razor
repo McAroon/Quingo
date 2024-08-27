@@ -1,5 +1,4 @@
 ﻿@page "/game/setup/packs"
-@rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
@@ -20,9 +19,9 @@ else
 {
     <div class="row">
         <div class="mb-3 w-75">
-             <Tooltip Text="Test tooltip">
-                <a href="game/setup/pack" class="btn btn-primary"><Icon Name="IconName.Add" /> New Pack</a>
-            </Tooltip>
+             <MudTooltip Text="Test tooltip">
+                <MudButton Href="game/setup/pack" StartIcon="@Icons.Material.Filled.Add">New Pack</MudButton>
+            </MudTooltip>
         </div>
     </div>
     <div class="row">
@@ -43,8 +42,8 @@ else
 
                         @if (pack.CreatedByUserId == UserId)
                         {
-                            <a href="game/setup/pack/@pack.Id" class="btn btn-primary"><Icon Name="IconName.Pen" /> Edit</a>
-                            <Button Color="Color.Danger" Clicked="() => DeletePack(pack.Id)"><Icon Name="IconName.Delete" /> Delete</Button>
+                            <MudButton Href="@($"game/setup/pack/{pack.Id}")" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit">Edit</MudButton>
+                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" Clicked="() => DeletePack(pack.Id)">Delete</MudButton>
                         }
                     </div>
                 </div>
@@ -54,6 +53,7 @@ else
 }
 
 @code {
+    string abc = "abc";
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationState { get; set; }
 

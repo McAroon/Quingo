@@ -1,6 +1,5 @@
 ﻿@page "/game/setup/pack"
 @page "/game/setup/pack/{PackId:int}"
-@rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
@@ -18,9 +17,9 @@
 <h4 class="mb-3">
     Pack Info @if (!IsEditMode)
     {
-        <Tooltip Text="Edit Pack info">
-            <Button Clicked="() => IsEditMode = true"><Icon Name="IconName.Pen" /></Button>
-        </Tooltip>
+        <MudTooltip Text="Edit Pack info">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Clicked="() => IsEditMode = true"></MudIconButton>
+        </MudTooltip>
     }
 </h4>
 

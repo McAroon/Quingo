@@ -2,15 +2,15 @@
 {
     <div class="row">
         <div class="col-9">
-            <TextEdit @bind-Text="@value" />
+            <MudTextField  @bind-Value="@value" />
         </div>
         <div class="col-3">
-            <Tooltip Text="Save">
-                <Button Clicked="Save"><Icon Name="IconName.Save" /></Button>
-            </Tooltip>
-            <Tooltip Text="Cancel">
-                <Button Clicked="() => isEdit = false"><Icon Name="IconName.Undo" /></Button>
-            </Tooltip>
+            <MudTooltip Text="Save">
+                <MudIconButton Clicked="Save" Icon="@Icons.Material.Filled.Save"></MudIconButton>
+            </MudTooltip>
+            <MudTooltip Text="Cancel">
+                <MudIconButton Clicked="() => isEdit = false" Icon="@Icons.Material.Filled.Cancel"></MudIconButton>
+            </MudTooltip>
             
         </div>
     </div>
@@ -20,12 +20,12 @@ else
     <div class="row">
         <div class="col-9">@Value</div>
         <div class="col-3">
-            <Tooltip Text="Edit">
-                <Button Clicked="() => isEdit = true"><Icon Name="IconName.Pen" /></Button>
-            </Tooltip>
-            <Tooltip Text="Delete">
-                <Button Clicked="Delete"><Icon Name="IconName.Delete" /></Button>
-            </Tooltip>
+            <MudTooltip Text="Edit">
+                <MudIconButton Clicked="() => isEdit = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
+            </MudTooltip>
+            <MudTooltip Text="Delete">
+                <MudIconButton Clicked="Delete" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
+            </MudTooltip>
         </div>
     </div>
 }
