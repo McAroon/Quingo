@@ -1,0 +1,10 @@
+﻿<Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="[typeof(Quingo.Client.UserInfo).Assembly]">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Quingo.Client.Layout.MainLayout)">
+            <NotAuthorized>
+                <RedirectToLogin />
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>

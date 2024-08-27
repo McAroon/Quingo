@@ -1,0 +1,144 @@
+﻿<MudCard Class="mb-2">
+    @if (IsEditMode)
+    {
+        <MudCardContent>
+            <h5>Item info</h5>
+            <MudTextField Label="Name" Required @bind-Value="@Model.Name" />
+            <MudTextField Label="Image Url" @bind-Value="@Model.ImageUrl" />
+            <MudSelect T="int" MultiSelection Label="Tags" @bind-SelectedValues="@Model.TagIds">
+                @foreach (var tag in Node.Pack.Tags)
+                {
+                    <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
+                }
+            </MudSelect>
+       
+
+            <h5>Item Links <MudTooltip Text="Add Link"><MudIconButton Clicked="AddLink" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip></h5>
+            @foreach (var link in Model.NodeLinks)
+            {
+                <MudPaper Class="pa-4">
+                    <MudSelect T="NodeLinkDirection" Label="Link Direction" @bind-Value="@link.LinkDirection">
+                        <MudSelectItem Value="NodeLinkDirection.From">➡️ From</MudSelectItem>
+                        <MudSelectItem Value="NodeLinkDirection.To">⬅️ To</MudSelectItem>
+                        <MudSelectItem Value="NodeLinkDirection.Both">↔️ Both</MudSelectItem>
+                    </MudSelect>
+                    <MudAutocomplete T="NodeInfoModel" Label="Link Item" @bind-Value="@link.LinkedNode" SearchFunc="SearchNode" ToStringFunc="x => x?.Name" />
+                </MudPaper>
+            }
+        </MudCardContent>
+        <MudCardActions>
+            <div class="ml-auto">
+                <MudButton Color="Color.Primary" Clicked="Save">Save</MudButton>
+                <MudButton Color="Color.Secondary" Clicked="() => IsEditMode = false">Cancel</MudButton>
+            </div>
+        </MudCardActions>
+    }
+    else
+    {
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h4">
+                    @Model.Name <MudTooltip Text="Edit Item">
+                        <MudIconButton Clicked="() => IsEditMode = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
+                    </MudTooltip><MudTooltip Text="Delete Item">
+                    <MudIconButton Clicked="Delete" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
+                    </MudTooltip>
+                </MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Typo="Typo.h5">Tags</MudText>
+            <div>
+                @foreach (var tag in Node.NodeTags.Where(x => x.DeletedAt == null))
+                {
+                    <MudChip T="string" Variant="Variant.Text">@tag.Tag.Name</MudChip>
+                }
+            </div>
+        </MudCardContent>
+    }
+</MudCard>
+
+@code {
+    [Parameter]
+    public Node Node { get; set; } = default!;
+
+    [Parameter]
+    public Func<int, NodeModel, Task>? OnSave { get; set; }
+
+    [Parameter]
+    public Func<int, Task>? OnDelete { get; set; }
+
+    private NodeModel Model { get; set; } = default!;
+
+    private bool IsEditMode { get; set; }
+
+    private IEnumerable<Node> LinkableNodes => Node.Pack.Nodes.Where(
+        x => x.DeletedAt == null && x != Node && !Model.NodeLinks.Select(y => y.LinkedNodeId).Contains(x.Id));
+
+    protected override void OnParametersSet()
+    {
+        Model = MapModel();
+        StateHasChanged();
+    }
+
+    private NodeModel MapModel()
+    {
+        var fromIds = Node.NodeLinksFrom.Where(x => x.DeletedAt == null).Select(x => (id: x.NodeToId, name:x.NodeTo.Name, linkId: x.NodeLinkTypeId)).ToList();
+        var toIds = Node.NodeLinksTo.Where(x => x.DeletedAt == null).Select(x => (id: x.NodeFromId, name: x.NodeFrom.Name, linkId: x.NodeLinkTypeId)).ToList();
+        var bothIds = fromIds.Join(toIds, x => x.id, y => y.id, (x, y) => x).ToList();
+        var linksFrom = fromIds.Except(bothIds).Select(x => new NodeLinkModel
+            {
+                LinkedNode = new NodeInfoModel { Id = x.id, Name = x.name! },
+                LinkTypeId = x.linkId,
+                LinkDirection = NodeLinkDirection.From
+            });
+        var linksTo = toIds.Except(bothIds).Select(x => new NodeLinkModel
+            {
+                LinkedNode = new NodeInfoModel { Id = x.id, Name = x.name! },
+                LinkTypeId = x.linkId,
+                LinkDirection = NodeLinkDirection.To
+            });
+        var linksBoth = bothIds.Select(x => new NodeLinkModel
+            {
+                LinkedNode = new NodeInfoModel { Id = x.id, Name = x.name! },
+                LinkTypeId = x.linkId,
+                LinkDirection = NodeLinkDirection.Both
+            });
+        return new NodeModel
+            {
+                Name = Node.Name,
+                ImageUrl = Node.ImageUrl,
+                TagIds = Node.NodeTags.Where(x => x.DeletedAt == null).Select(x => x.TagId).ToList(),
+                NodeLinks = [..linksFrom, ..linksTo, ..linksBoth],
+            };
+    }
+
+    private void AddLink()
+    {
+        Model.NodeLinks.Add(new NodeLinkModel());
+    }
+
+    private async Task Save()
+    {
+        if (OnSave != null)
+        {
+            Model.TagIds ??= [];
+            Model.NodeLinks ??= [];
+            await OnSave.Invoke(Node.Id, Model);
+            IsEditMode = false;
+        }
+    }
+
+    private async Task Delete()
+    {
+        if (OnDelete != null)
+            await OnDelete.Invoke(Node.Id);
+    }
+
+    private Task<IEnumerable<NodeInfoModel>> SearchNode(string value, CancellationToken token)
+    {
+        var nodes = string.IsNullOrEmpty(value) ? LinkableNodes : LinkableNodes.Where(x => x.Name!.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+        var result = nodes.Select(x => new NodeInfoModel { Id = x.Id, Name = x.Name! });
+        return Task.FromResult(result);
+    }
+}
