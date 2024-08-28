@@ -43,7 +43,7 @@ else
                         @if (pack.CreatedByUserId == UserId)
                         {
                             <MudButton Href="@($"game/setup/pack/{pack.Id}")" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit">Edit</MudButton>
-                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" Clicked="() => DeletePack(pack.Id)">Delete</MudButton>
+                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeletePack(pack.Id)">Delete</MudButton>
                         }
                     </div>
                 </div>

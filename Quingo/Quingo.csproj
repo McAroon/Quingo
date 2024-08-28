@@ -28,7 +28,6 @@
 
   <ItemGroup>
     <Folder Include="Components\Pages\Game\Play\" />
-    <Folder Include="Data\Entities\" />
   </ItemGroup>
 
 </Project>

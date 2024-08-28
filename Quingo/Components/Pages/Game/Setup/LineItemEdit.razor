@@ -6,10 +6,10 @@
         </div>
         <div class="col-3">
             <MudTooltip Text="Save">
-                <MudIconButton Clicked="Save" Icon="@Icons.Material.Filled.Save"></MudIconButton>
+                <MudIconButton OnClick="Save" Icon="@Icons.Material.Filled.Save"></MudIconButton>
             </MudTooltip>
             <MudTooltip Text="Cancel">
-                <MudIconButton Clicked="() => isEdit = false" Icon="@Icons.Material.Filled.Cancel"></MudIconButton>
+                <MudIconButton OnClick="() => isEdit = false" Icon="@Icons.Material.Filled.Cancel"></MudIconButton>
             </MudTooltip>
             
         </div>
@@ -21,10 +21,10 @@ else
         <div class="col-9">@Value</div>
         <div class="col-3">
             <MudTooltip Text="Edit">
-                <MudIconButton Clicked="() => isEdit = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
+                <MudIconButton OnClick="() => isEdit = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
             </MudTooltip>
             <MudTooltip Text="Delete">
-                <MudIconButton Clicked="Delete" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
+                <MudIconButton OnClick="Delete" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
             </MudTooltip>
         </div>
     </div>

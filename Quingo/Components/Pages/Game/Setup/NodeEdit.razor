@@ -11,9 +11,9 @@
                     <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
                 }
             </MudSelect>
-       
 
-            <h5>Item Links <MudTooltip Text="Add Link"><MudIconButton Clicked="AddLink" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip></h5>
+
+            <h5>Item Links <MudTooltip Text="Add Link"><MudIconButton OnClick="AddLink" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip></h5>
             @foreach (var link in Model.NodeLinks)
             {
                 <MudPaper Class="pa-4">
@@ -28,8 +28,8 @@
         </MudCardContent>
         <MudCardActions>
             <div class="ml-auto">
-                <MudButton Color="Color.Primary" Clicked="Save">Save</MudButton>
-                <MudButton Color="Color.Secondary" Clicked="() => IsEditMode = false">Cancel</MudButton>
+                <MudButton Color="Color.Primary" OnClick="Save">Save</MudButton>
+                <MudButton Color="Color.Secondary" OnClick="() => IsEditMode = false">Cancel</MudButton>
             </div>
         </MudCardActions>
     }
@@ -39,9 +39,9 @@
             <CardHeaderContent>
                 <MudText Typo="Typo.h4">
                     @Model.Name <MudTooltip Text="Edit Item">
-                        <MudIconButton Clicked="() => IsEditMode = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
+                        <MudIconButton OnClick="() => IsEditMode = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
                     </MudTooltip><MudTooltip Text="Delete Item">
-                    <MudIconButton Clicked="Delete" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
+                        <MudIconButton OnClick="Delete" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
                     </MudTooltip>
                 </MudText>
             </CardHeaderContent>
