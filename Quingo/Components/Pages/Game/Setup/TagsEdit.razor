@@ -1,18 +1,18 @@
 ﻿@inject ApplicationDbContext Db
 
-<h4>
+<MudText Typo="Typo.h4" GutterBottom>
     Tags <MudTooltip Text="Add Tag"><MudIconButton OnClick="AddTag" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip>
-</h4>
+</MudText>
 
-<div class="row">
-    <div class="col-lg-4 col-md-6 col-sm-12">
+<MudGrid>
+    <MudItem xs="12" md="6" lg="4">
         @if (Pack?.Tags != null)
         @foreach (var tag in Pack.Tags.Where(x => x.DeletedAt == null))
         {
             <LineItemEdit Id="@tag.Id" Value="@tag.Name" OnSave="SaveTag" OnDelete="DeleteTag" />
         }
-    </div>
-</div>
+    </MudItem>
+</MudGrid>
 
 @code {
     [CascadingParameter]

@@ -1,33 +1,33 @@
 ﻿@if (isEdit)
 {
-    <div class="row">
-        <div class="col-9">
-            <MudTextField  @bind-Value="@value" />
-        </div>
-        <div class="col-3">
-            <MudTooltip Text="Save">
-                <MudIconButton OnClick="Save" Icon="@Icons.Material.Filled.Save"></MudIconButton>
-            </MudTooltip>
-            <MudTooltip Text="Cancel">
-                <MudIconButton OnClick="() => isEdit = false" Icon="@Icons.Material.Filled.Cancel"></MudIconButton>
-            </MudTooltip>
-            
-        </div>
-    </div>
+    <MudGrid>
+        <MudItem xs="12" Class="d-inline-flex justify-space-between align-center">
+            <MudTextField @bind-Value="@value" />
+            <span>
+                <MudTooltip Text="Save">
+                    <MudIconButton OnClick="Save" Icon="@Icons.Material.Filled.Save"></MudIconButton>
+                </MudTooltip>
+                <MudTooltip Text="Cancel">
+                    <MudIconButton OnClick="() => isEdit = false" Icon="@Icons.Material.Filled.Cancel"></MudIconButton>
+                </MudTooltip>
+            </span>
+        </MudItem>
+    </MudGrid>
 }
 else
 {
-    <div class="row">
-        <div class="col-9">@Value</div>
-        <div class="col-3">
-            <MudTooltip Text="Edit">
-                <MudIconButton OnClick="() => isEdit = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
-            </MudTooltip>
-            <MudTooltip Text="Delete">
-                <MudIconButton OnClick="Delete" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
-            </MudTooltip>
-        </div>
-    </div>
+    <MudGrid class="row">
+        <MudItem xs="12" Class="d-inline-flex justify-space-between align-center">
+            <MudText Inline>@Value</MudText>
+            <span>
+                <MudTooltip Text="Edit">
+                    <MudIconButton OnClick="() => isEdit = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
+                </MudTooltip><MudTooltip Text="Delete">
+                    <MudIconButton OnClick="Delete" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
+                </MudTooltip>
+            </span>
+        </MudItem>
+    </MudGrid>
 }
 
 

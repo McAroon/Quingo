@@ -1,18 +1,18 @@
 ﻿@inject ApplicationDbContext Db
 
-<h4>
+<MudText Typo="Typo.h4" GutterBottom>
     Link Types <MudTooltip Text="Add Link Type"><MudIconButton OnClick="AddLinkType" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip>
-</h4>
+</MudText>
 
-<div class="row">
-    <div class="col-lg-4 col-md-6 col-sm-12">
+<MudGrid>
+    <MudItem xs="12" md="6" lg="4">
         @if (Pack?.NodeLinkTypes != null)
             @foreach (var link in Pack.NodeLinkTypes.Where(x => x.DeletedAt == null))
             {
                 <LineItemEdit Id="@link.Id" Value="@link.Name" OnSave="SaveLinkType" OnDelete="DeleteLinkType" />
             }
-    </div>
-</div>
+    </MudItem>
+</MudGrid>
 
 @code {
     [CascadingParameter]

@@ -2,19 +2,20 @@
 
 @inject ApplicationDbContext Db
 
-<h4>
+<MudText Typo="Typo.h4" GutterBottom>
     Pack Items <MudTooltip Text="Add Item"><MudIconButton OnClick="AddNode" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip>
-</h4>
+</MudText>
 
-<div class="row">
-    <div class="col-lg-6 col-md-9 col-sm-12">
-        @if (Pack?.Nodes != null)
-            @foreach(var node in Pack.Nodes.Where(x => x.DeletedAt == null))
-            {
-                <NodeEdit Node="node" OnSave="SaveNode" OnDelete="DeleteNode" />
-            }
-    </div>
-</div>
+<MudGrid>
+    @if (Pack?.Nodes != null)
+    @foreach(var node in Pack.Nodes.Where(x => x.DeletedAt == null))
+    {
+        <MudItem xs="12" md="6" lg="4">
+            <NodeEdit Node="node" OnSave="SaveNode" OnDelete="DeleteNode" />
+        </MudItem>
+        <MudFlexBreak />
+    }
+</MudGrid>
 
 @code {
     [CascadingParameter]

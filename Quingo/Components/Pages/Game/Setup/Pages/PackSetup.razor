@@ -3,7 +3,6 @@
 
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
-@using System.ComponentModel.DataAnnotations
 
 @inject ApplicationDbContext Db
 @inject NavigationManager NavigationManager
@@ -12,65 +11,55 @@
 
 <PageTitle>Pack</PageTitle>
 
-<h1>@(IsCreate ? "Create" : "Edit") Pack</h1>
+<MudText Typo="Typo.h3" GutterBottom>@(IsCreate ? "Create" : "Edit") Pack</MudText>
 
-<h4 class="mb-3">
+<MudText Typo="Typo.h4" GutterBottom>
     Pack Info @if (!IsEditMode)
     {
         <MudTooltip Text="Edit Pack info">
             <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => IsEditMode = true"></MudIconButton>
         </MudTooltip>
     }
-</h4>
+</MudText>
 
 @if (Pack == null && !IsCreate)
 {
-    <p><em>Loading...</em></p>
+    <MudText><em>Loading...</em></MudText>
 }
 else if (IsEditMode)
 {
-    <div class="row">
-        <div class="col-md-4">
+    <MudGrid>
+        <MudItem xs="12" md="4">
             <EditForm Model="Input" method="post" OnValidSubmit="SavePack" FormName="save">
                 <DataAnnotationsValidator />
-                <Microsoft.AspNetCore.Components.Forms.ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Name" class="form-control" aria-required="true" />
-                    <label for="name">Pack Name</label>
-                    <ValidationMessage For="() => Input.Name" class="text-danger" />
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Description" class="form-control" />
-                    <label for="name">Description</label>
-                    <ValidationMessage For="() => Input.Description" class="text-danger" />
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.ImageUrl" class="form-control" />
-                    <label for="name">Image Url</label>
-                    <ValidationMessage For="() => Input.ImageUrl" class="text-danger" />
-                </div>
-                <button type="submit" class="btn btn-primary">Save</button>
-                <button class="btn btn-outline-secondary" @onclick="() => IsEditMode = false">Cancel</button>
+                <MudCard>
+                    <MudCardContent>
+                        <MudTextField Label="Pack Name" @bind-Value="Input.Name" For="@(() => Input.Name)" Required />
+                        <MudTextField Label="Description" @bind-Value="Input.Description" For="@(() => Input.Description)" />
+                        <MudTextField Label="Image Url" @bind-Value="Input.ImageUrl" For="@(() => Input.ImageUrl)" />
+                    </MudCardContent>
+                    <MudCardActions>
+                        <div class="ml-auto">
+                            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save">Save</MudButton>
+                            <MudButton Color="Color.Secondary" OnClick="() => IsEditMode = false" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+                        </div>
+                    </MudCardActions>
+                </MudCard>
             </EditForm>
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 }
 else
 {
-    <div class="row">
-        <div class="col-md-6 col-lg-4 col-sm-12">
-            <dl class="row">
-                <dt class="col-lg-3 col-sm-12">Pack Name</dt>
-                <dd class="col-lg-9 col-sm-12">@Pack?.Name</dd>
-
-                <dt class="col-lg-3 col-sm-12">Description</dt>
-                <dd class="col-lg-9 col-sm-12">@(Pack?.Description ?? "-")</dd>
-
-                <dt class="col-lg-3 col-sm-12">Image Url</dt>
-                <dd class="col-lg-9 col-sm-12">@(Pack?.ImageUrl ?? "-")</dd>
-            </dl>
-        </div>
-    </div>
+    <MudGrid class="row">
+        <MudItem xs="12" md="4">
+            <MudList T="string" ReadOnly>
+                <MudListItem Text="Pack Name" SecondaryText="@(!string.IsNullOrEmpty(Pack?.Name) ? Pack.Name : "-")" />
+                <MudListItem Text="Description" SecondaryText="@(!string.IsNullOrEmpty(Pack?.Description) ? Pack.Description : "-")" />
+                <MudListItem Text="Image Url" SecondaryText="@(!string.IsNullOrEmpty(Pack?.ImageUrl) ? Pack.ImageUrl : "-")" />
+            </MudList>
+        </MudItem>
+    </MudGrid>
 }
 
 

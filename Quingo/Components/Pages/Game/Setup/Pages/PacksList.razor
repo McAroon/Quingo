@@ -9,47 +9,54 @@
 
 <PageTitle>Packs</PageTitle>
 
-<h1>Packs</h1>
+<MudText Typo="Typo.h3" GutterBottom="true">Packs</MudText>
 
 @if (Packs == null)
 {
-    <p><em>Loading...</em></p>
+    <MudText><em>Loading...</em></MudText>
 }
 else
 {
-    <div class="row">
-        <div class="mb-3 w-75">
-             <MudTooltip Text="Test tooltip">
-                <MudButton Href="game/setup/pack" StartIcon="@Icons.Material.Filled.Add">New Pack</MudButton>
-            </MudTooltip>
-        </div>
-    </div>
-    <div class="row">
-        @foreach (var pack in Packs.Where(x => x.DeletedAt == null))
+    <MudGrid Class="mb-4">
+        <MudItem>
+            <MudButton Href="game/setup/pack" StartIcon="@Icons.Material.Filled.Add">New Pack</MudButton>
+        </MudItem>
+    </MudGrid>
+    <MudGrid>
+        @foreach (var pack in Packs.Where(x => x.DeletedAt == null).OrderBy(x => x.CreatedAt))
         {
-            <div class="col-sm-12 col-md-6 col-lg-3 mb-2">
-                <div class="card">
+            <MudItem xs="12" md="6" lg="3">
+                <MudCard>
                     @if (!string.IsNullOrEmpty(pack.ImageUrl))
                     {
-                        <img src="@pack.ImageUrl" class="card-img-top" alt="Logo">
+                        <MudCardMedia Image="@pack.ImageUrl" />
                     }
-                    <div class="card-body">
-                        <h5 class="card-title">@pack.Name</h5>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h5">@pack.Name</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            @if (pack.CreatedByUserId == UserId)
+                            {
+                                <MudTooltip Text="Edit Pack">
+                                    <MudIconButton Href="@($"game/setup/pack/{pack.Id}")" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
+                                </MudTooltip>
+                                <MudTooltip Text="Delete Pack">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => DeletePack(pack.Id)"></MudIconButton>
+                                </MudTooltip>
+                            }
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
                         @if (pack.Description != null)
                         {
-                            <p class="card-text">@pack.Description</p>
+                            <MudText>@pack.Description</MudText>
                         }
-
-                        @if (pack.CreatedByUserId == UserId)
-                        {
-                            <MudButton Href="@($"game/setup/pack/{pack.Id}")" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit">Edit</MudButton>
-                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeletePack(pack.Id)">Delete</MudButton>
-                        }
-                    </div>
-                </div>
-            </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
         }
-    </div>
+    </MudGrid>
 }
 
 @code {

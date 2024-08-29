@@ -9,12 +9,12 @@ namespace Quingo.Shared.Models
 {
     public class NodeLinkModel
     {
-        public int LinkedNodeId => LinkedNode.Id;
+        public int? LinkedNodeId => LinkedNode?.Id;
 
         public NodeInfoModel LinkedNode { get; set; } = default!;
 
         [Required]
-        public int LinkTypeId { get; set; }
+        public int? LinkTypeId { get; set; }
 
         [Required]
         public NodeLinkDirection LinkDirection { get; set; }

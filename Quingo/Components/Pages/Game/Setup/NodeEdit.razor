@@ -1,11 +1,11 @@
-﻿<MudCard Class="mb-2">
+﻿<MudCard>
     @if (IsEditMode)
     {
         <MudCardContent>
-            <h5>Item info</h5>
+            <MudText Typo="Typo.h6">Item info</MudText>
             <MudTextField Label="Name" Required @bind-Value="@Model.Name" />
             <MudTextField Label="Image Url" @bind-Value="@Model.ImageUrl" />
-            <MudSelect T="int" MultiSelection Label="Tags" @bind-SelectedValues="@Model.TagIds">
+            <MudSelect T="int" MultiSelection Label="Tags" @bind-SelectedValues="@Model.TagIds" MultiSelectionTextFunc="GetTagsSelectText">
                 @foreach (var tag in Node.Pack.Tags)
                 {
                     <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
@@ -13,23 +13,40 @@
             </MudSelect>
 
 
-            <h5>Item Links <MudTooltip Text="Add Link"><MudIconButton OnClick="AddLink" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip></h5>
+            <MudText Typo="Typo.h6">Item Links <MudTooltip Text="Add Link"><MudIconButton OnClick="AddLink" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip></MudText>
             @foreach (var link in Model.NodeLinks)
             {
-                <MudPaper Class="pa-4">
-                    <MudSelect T="NodeLinkDirection" Label="Link Direction" @bind-Value="@link.LinkDirection">
-                        <MudSelectItem Value="NodeLinkDirection.From">➡️ From</MudSelectItem>
-                        <MudSelectItem Value="NodeLinkDirection.To">⬅️ To</MudSelectItem>
-                        <MudSelectItem Value="NodeLinkDirection.Both">↔️ Both</MudSelectItem>
-                    </MudSelect>
-                    <MudAutocomplete T="NodeInfoModel" Label="Link Item" @bind-Value="@link.LinkedNode" SearchFunc="SearchNode" ToStringFunc="x => x?.Name" />
+                <MudPaper Class="pa-4 mb-2">
+                    <MudGrid>
+                        <MudItem xs="12">
+                            <MudSelect T="NodeLinkDirection" Label="Link Direction" @bind-Value="@link.LinkDirection">
+                                <MudSelectItem Value="NodeLinkDirection.From"><MudIcon Size="Size.Small" Icon="@Icons.Material.Filled.ChevronRight" Style="vertical-align: text-bottom" /> From</MudSelectItem>
+                                <MudSelectItem Value="NodeLinkDirection.To"><MudIcon Size="Size.Small" Icon="@Icons.Material.Filled.ChevronLeft" Style="vertical-align: text-bottom" /> To</MudSelectItem>
+                                <MudSelectItem Value="NodeLinkDirection.Both"><MudIcon Size="Size.Small" Icon="@Icons.Material.Filled.Code" Style="vertical-align: text-bottom" /> Both</MudSelectItem>
+                            </MudSelect>
+                            <MudAutocomplete T="NodeInfoModel" Label="Link Item" @bind-Value="@link.LinkedNode" SearchFunc="SearchNode" ToStringFunc="x => x?.Name" ResetValueOnEmptyText Clearable Required />
+                            <MudSelect T="int?" Label="Link Type" @bind-Value="@link.LinkTypeId" Required>
+                                @foreach (var linkType in Node.Pack.NodeLinkTypes)
+                                {
+                                    <MudSelectItem T="int?" Value="@linkType.Id">@linkType.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" Class="d-flex">
+                            <div class="ml-auto">
+                                <MudTooltip Text="Remove Link">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => DeleteLink(link)" />
+                                </MudTooltip>
+                            </div>
+                        </MudItem>
+                    </MudGrid>
                 </MudPaper>
             }
         </MudCardContent>
         <MudCardActions>
             <div class="ml-auto">
-                <MudButton Color="Color.Primary" OnClick="Save">Save</MudButton>
-                <MudButton Color="Color.Secondary" OnClick="() => IsEditMode = false">Cancel</MudButton>
+                <MudButton Color="Color.Primary" OnClick="Save" StartIcon="@Icons.Material.Filled.Save">Save</MudButton>
+                <MudButton Color="Color.Secondary" OnClick="CancelEdit" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
             </div>
         </MudCardActions>
     }
@@ -37,23 +54,40 @@
     {
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h4">
-                    @Model.Name <MudTooltip Text="Edit Item">
-                        <MudIconButton OnClick="() => IsEditMode = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
-                    </MudTooltip><MudTooltip Text="Delete Item">
-                        <MudIconButton OnClick="Delete" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
-                    </MudTooltip>
+                <MudText Typo="Typo.h5">
+                    @Model.Name
                 </MudText>
             </CardHeaderContent>
+            <CardHeaderActions>
+                <MudTooltip Text="Edit Item">
+                    <MudIconButton OnClick="() => IsEditMode = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
+                </MudTooltip>
+                <MudTooltip Text="Delete Item">
+                    <MudIconButton OnClick="Delete" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
+                </MudTooltip>
+            </CardHeaderActions>
         </MudCardHeader>
         <MudCardContent>
-            <MudText Typo="Typo.h5">Tags</MudText>
-            <div>
-                @foreach (var tag in Node.NodeTags.Where(x => x.DeletedAt == null))
-                {
-                    <MudChip T="string" Variant="Variant.Text">@tag.Tag.Name</MudChip>
-                }
-            </div>
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6">Tags</MudText>
+                    @foreach (var tag in GetTagNames(Model.TagIds))
+                    {
+                        <MudChip T="string" Variant="Variant.Text">@tag</MudChip>
+                    }
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6">Linked Items</MudText>
+                    @foreach (var link in Model.NodeLinks)
+                    {
+                        <MudGrid>
+                            <MudItem>@link.LinkDirection</MudItem>
+                            <MudItem>@link.LinkedNode?.Name</MudItem>
+                            <MudItem>@GetLinkTypeName(link.LinkTypeId)</MudItem>
+                        </MudGrid>
+                    }
+                </MudItem>
+            </MudGrid>
         </MudCardContent>
     }
 </MudCard>
@@ -76,6 +110,11 @@
         x => x.DeletedAt == null && x != Node && !Model.NodeLinks.Select(y => y.LinkedNodeId).Contains(x.Id));
 
     protected override void OnParametersSet()
+    {
+        RemapModel();
+    }
+
+    private void RemapModel()
     {
         Model = MapModel();
         StateHasChanged();
@@ -118,6 +157,11 @@
         Model.NodeLinks.Add(new NodeLinkModel());
     }
 
+    private void DeleteLink(NodeLinkModel linkModel)
+    {
+        Model.NodeLinks.Remove(linkModel);
+    }
+
     private async Task Save()
     {
         if (OnSave != null)
@@ -126,6 +170,7 @@
             Model.NodeLinks ??= [];
             await OnSave.Invoke(Node.Id, Model);
             IsEditMode = false;
+            RemapModel();
         }
     }
 
@@ -135,10 +180,34 @@
             await OnDelete.Invoke(Node.Id);
     }
 
+    private void CancelEdit()
+    {
+        IsEditMode = false;
+        RemapModel();
+    }
+
     private Task<IEnumerable<NodeInfoModel>> SearchNode(string value, CancellationToken token)
     {
         var nodes = string.IsNullOrEmpty(value) ? LinkableNodes : LinkableNodes.Where(x => x.Name!.Contains(value, StringComparison.InvariantCultureIgnoreCase));
         var result = nodes.Select(x => new NodeInfoModel { Id = x.Id, Name = x.Name! });
         return Task.FromResult(result);
+    }
+
+    private string GetTagsSelectText(List<string> selected)
+    {
+        var selectedInts = selected.Select(int.Parse).ToList();
+        var tags = Node.Pack.Tags.Where(x => selectedInts.Contains(x.Id)).Select(x => x.Name);
+        return string.Join(", ", tags);
+    }
+
+    private IEnumerable<string> GetTagNames(IEnumerable<int> tagIds)
+    {
+        var tagIdList = tagIds.ToList(); 
+        return Node.Pack.Tags.Where(x => tagIdList.Contains(x.Id)).Select(x => x.Name!);
+    }
+
+    private string? GetLinkTypeName(int? id)
+    {
+        return Node.Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == id)?.Name;
     }
 }
