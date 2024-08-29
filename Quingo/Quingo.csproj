@@ -30,4 +30,10 @@
     <Folder Include="Components\Pages\Game\Play\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="wwwroot\app.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

@@ -1,47 +1,49 @@
 ﻿<MudCard>
-    @if (IsEditMode)
+    @if (_isEditMode)
     {
         <MudCardContent>
-            <MudText Typo="Typo.h6">Item info</MudText>
-            <MudTextField Label="Name" Required @bind-Value="@Model.Name" />
-            <MudTextField Label="Image Url" @bind-Value="@Model.ImageUrl" />
-            <MudSelect T="int" MultiSelection Label="Tags" @bind-SelectedValues="@Model.TagIds" MultiSelectionTextFunc="GetTagsSelectText">
-                @foreach (var tag in Node.Pack.Tags)
+            <MudForm @ref="@_form">
+                <MudText Typo="Typo.h6">Item info</MudText>
+                <MudTextField Label="Name" Required @bind-Value="@_model.Name" />
+                <MudTextField Label="Image Url" @bind-Value="@_model.ImageUrl" />
+                <MudSelect T="int" MultiSelection Label="Tags" @bind-SelectedValues="@_model.TagIds" MultiSelectionTextFunc="GetTagsSelectText">
+                    @foreach (var tag in Node.Pack.Tags)
+                    {
+                        <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
+                    }
+                </MudSelect>
+
+
+                <MudText Typo="Typo.h6">Item Links <MudTooltip Text="Add Link"><MudIconButton OnClick="AddLink" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip></MudText>
+                @foreach (var link in _model.NodeLinks)
                 {
-                    <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
+                    <MudPaper Class="pa-4 mb-2">
+                        <MudGrid>
+                            <MudItem xs="12">
+                                <MudSelect T="NodeLinkDirection" Label="Link Direction" @bind-Value="@link.LinkDirection">
+                                    <MudSelectItem Value="NodeLinkDirection.From"><MudIcon Size="Size.Small" Icon="@GetDirectionIcon(NodeLinkDirection.From)" Class="icon-inline-select" /> From</MudSelectItem>
+                                    <MudSelectItem Value="NodeLinkDirection.To"><MudIcon Size="Size.Small" Icon="@GetDirectionIcon(NodeLinkDirection.To)" Class="icon-inline-select" /> To</MudSelectItem>
+                                    <MudSelectItem Value="NodeLinkDirection.Both"><MudIcon Size="Size.Small" Icon="@GetDirectionIcon(NodeLinkDirection.Both)" Class="icon-inline-select" /> Both</MudSelectItem>
+                                </MudSelect>
+                                <MudAutocomplete T="NodeInfoModel" Label="Link Item" @bind-Value="@link.LinkedNode" SearchFunc="SearchNode" ToStringFunc="x => x?.Name" ResetValueOnEmptyText Clearable Required />
+                                <MudSelect T="int?" Label="Link Type" @bind-Value="@link.LinkTypeId" Required>
+                                    @foreach (var linkType in Node.Pack.NodeLinkTypes)
+                                    {
+                                        <MudSelectItem T="int?" Value="@linkType.Id">@linkType.Name</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" Class="d-flex">
+                                <div class="ml-auto">
+                                    <MudTooltip Text="Remove Link">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => DeleteLink(link)" />
+                                    </MudTooltip>
+                                </div>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
                 }
-            </MudSelect>
-
-
-            <MudText Typo="Typo.h6">Item Links <MudTooltip Text="Add Link"><MudIconButton OnClick="AddLink" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip></MudText>
-            @foreach (var link in Model.NodeLinks)
-            {
-                <MudPaper Class="pa-4 mb-2">
-                    <MudGrid>
-                        <MudItem xs="12">
-                            <MudSelect T="NodeLinkDirection" Label="Link Direction" @bind-Value="@link.LinkDirection">
-                                <MudSelectItem Value="NodeLinkDirection.From"><MudIcon Size="Size.Small" Icon="@Icons.Material.Filled.ChevronRight" Style="vertical-align: text-bottom" /> From</MudSelectItem>
-                                <MudSelectItem Value="NodeLinkDirection.To"><MudIcon Size="Size.Small" Icon="@Icons.Material.Filled.ChevronLeft" Style="vertical-align: text-bottom" /> To</MudSelectItem>
-                                <MudSelectItem Value="NodeLinkDirection.Both"><MudIcon Size="Size.Small" Icon="@Icons.Material.Filled.Code" Style="vertical-align: text-bottom" /> Both</MudSelectItem>
-                            </MudSelect>
-                            <MudAutocomplete T="NodeInfoModel" Label="Link Item" @bind-Value="@link.LinkedNode" SearchFunc="SearchNode" ToStringFunc="x => x?.Name" ResetValueOnEmptyText Clearable Required />
-                            <MudSelect T="int?" Label="Link Type" @bind-Value="@link.LinkTypeId" Required>
-                                @foreach (var linkType in Node.Pack.NodeLinkTypes)
-                                {
-                                    <MudSelectItem T="int?" Value="@linkType.Id">@linkType.Name</MudSelectItem>
-                                }
-                            </MudSelect>
-                        </MudItem>
-                        <MudItem xs="12" Class="d-flex">
-                            <div class="ml-auto">
-                                <MudTooltip Text="Remove Link">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => DeleteLink(link)" />
-                                </MudTooltip>
-                            </div>
-                        </MudItem>
-                    </MudGrid>
-                </MudPaper>
-            }
+            </MudForm>
         </MudCardContent>
         <MudCardActions>
             <div class="ml-auto">
@@ -55,12 +57,12 @@
         <MudCardHeader>
             <CardHeaderContent>
                 <MudText Typo="Typo.h5">
-                    @Model.Name
+                    @_model.Name
                 </MudText>
             </CardHeaderContent>
             <CardHeaderActions>
                 <MudTooltip Text="Edit Item">
-                    <MudIconButton OnClick="() => IsEditMode = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
+                    <MudIconButton OnClick="() => _isEditMode = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
                 </MudTooltip>
                 <MudTooltip Text="Delete Item">
                     <MudIconButton OnClick="Delete" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
@@ -70,21 +72,39 @@
         <MudCardContent>
             <MudGrid>
                 <MudItem xs="12">
-                    <MudText Typo="Typo.h6">Tags</MudText>
-                    @foreach (var tag in GetTagNames(Model.TagIds))
+                    <MudText Typo="Typo.h6" GutterBottom>Tags</MudText>
+                    @if (_model.TagIds.Any())
                     {
-                        <MudChip T="string" Variant="Variant.Text">@tag</MudChip>
+                        @foreach (var tag in GetTagNames(_model.TagIds))
+                        {
+                            <MudChip T="string" Variant="Variant.Text" Color="Color.Info">@tag</MudChip>
+                        }
+                    }
+                    else
+                    {
+                        <i>none</i>
                     }
                 </MudItem>
                 <MudItem xs="12">
-                    <MudText Typo="Typo.h6">Linked Items</MudText>
-                    @foreach (var link in Model.NodeLinks)
+                    <MudText Typo="Typo.h6" GutterBottom>Linked Items</MudText>
+                    @if (_model.NodeLinks.Any())
                     {
-                        <MudGrid>
-                            <MudItem>@link.LinkDirection</MudItem>
-                            <MudItem>@link.LinkedNode?.Name</MudItem>
-                            <MudItem>@GetLinkTypeName(link.LinkTypeId)</MudItem>
-                        </MudGrid>
+                        <MudTable Items="_model.NodeLinks">
+                            <HeaderContent>
+                                <MudTh>Direction</MudTh>
+                                <MudTh>Item</MudTh>
+                                <MudTh>Type</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd><MudIcon Icon="@GetDirectionIcon(context.LinkDirection)" Class="icon-inline" /> <span>@context.LinkDirection</span></MudTd>
+                                <MudTd>@context.LinkedNode?.Name</MudTd>
+                                <MudTd>@GetLinkTypeName(context.LinkTypeId)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                    else
+                    {
+                        <i>none</i>
                     }
                 </MudItem>
             </MudGrid>
@@ -102,12 +122,23 @@
     [Parameter]
     public Func<int, Task>? OnDelete { get; set; }
 
-    private NodeModel Model { get; set; } = default!;
+    private NodeModel _model = default!;
 
-    private bool IsEditMode { get; set; }
+    private bool _isEditMode;
+
+    private MudForm _form = default!;
+
 
     private IEnumerable<Node> LinkableNodes => Node.Pack.Nodes.Where(
-        x => x.DeletedAt == null && x != Node && !Model.NodeLinks.Select(y => y.LinkedNodeId).Contains(x.Id));
+        x => x.DeletedAt == null && x != Node && !_model.NodeLinks.Select(y => y.LinkedNodeId).Contains(x.Id));
+
+    private string GetDirectionIcon(NodeLinkDirection direction) => direction switch
+    {
+        NodeLinkDirection.From => Icons.Material.Filled.ChevronRight,
+        NodeLinkDirection.To => Icons.Material.Filled.ChevronLeft,
+        NodeLinkDirection.Both => Icons.Material.Filled.Code,
+        _ => ""
+    };
 
     protected override void OnParametersSet()
     {
@@ -116,7 +147,7 @@
 
     private void RemapModel()
     {
-        Model = MapModel();
+        _model = MapModel();
         StateHasChanged();
     }
 
@@ -154,22 +185,23 @@
 
     private void AddLink()
     {
-        Model.NodeLinks.Add(new NodeLinkModel());
+        _model.NodeLinks.Add(new NodeLinkModel());
     }
 
     private void DeleteLink(NodeLinkModel linkModel)
     {
-        Model.NodeLinks.Remove(linkModel);
+        _model.NodeLinks.Remove(linkModel);
     }
 
     private async Task Save()
     {
-        if (OnSave != null)
+        await _form.Validate();
+        if (_form.IsValid && OnSave != null)
         {
-            Model.TagIds ??= [];
-            Model.NodeLinks ??= [];
-            await OnSave.Invoke(Node.Id, Model);
-            IsEditMode = false;
+            _model.TagIds ??= [];
+            _model.NodeLinks ??= [];
+            await OnSave.Invoke(Node.Id, _model);
+            _isEditMode = false;
             RemapModel();
         }
     }
@@ -182,7 +214,7 @@
 
     private void CancelEdit()
     {
-        IsEditMode = false;
+        _isEditMode = false;
         RemapModel();
     }
 

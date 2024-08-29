@@ -1,4 +1,5 @@
 ﻿@inject ApplicationDbContext Db
+@inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h4" GutterBottom>
     Link Types <MudTooltip Text="Add Link Type"><MudIconButton OnClick="AddLinkType" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip>
@@ -34,7 +35,8 @@
             var link = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == id);
             if (link == null)
             {
-                throw new Exception("Link Type not found"); // todo: proper error
+                Snackbar.Add("Link Type not found", Severity.Error);
+                return;
             }
 
             link.Name = value;
@@ -49,7 +51,14 @@
         var link = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == id);
         if (link == null)
         {
-            throw new Exception("Link Type not found"); // todo: proper error
+            Snackbar.Add("Link Type not found", Severity.Error);
+            return;
+        }
+
+        if (link.NodeLinks.Any(x => x.DeletedAt == null))
+        {
+            Snackbar.Add("Link Type is in use", Severity.Error);
+            return;
         }
 
         Db.Remove(link);

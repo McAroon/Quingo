@@ -2,7 +2,7 @@
 {
     <MudGrid>
         <MudItem xs="12" Class="d-inline-flex justify-space-between align-center">
-            <MudTextField @bind-Value="@value" />
+            <MudTextField @bind-Value="@value" OnKeyUp="SaveOnEnter" />
             <span>
                 <MudTooltip Text="Save">
                     <MudIconButton OnClick="Save" Icon="@Icons.Material.Filled.Save"></MudIconButton>
@@ -66,5 +66,13 @@ else
     {
         if (OnDelete != null)
             await OnDelete.Invoke(Id);
+    }
+
+    private async Task SaveOnEnter(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Save();
+        }
     }
 }
