@@ -6,7 +6,7 @@
 
         public int PackId { get; set; }
 
-        public required Pack Pack { get; set; }
+        public Pack Pack { get; set; } = default!;
 
         public List<NodeLink> NodeLinks { get; set; } = [];
     }

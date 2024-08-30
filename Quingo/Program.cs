@@ -5,6 +5,7 @@ using MudBlazor.Services;
 using Quingo.Components;
 using Quingo.Components.Account;
 using Quingo.Data;
+using Quingo.Scripts;
 using Quingo.Shared.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +41,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
+builder.Services.AddScoped<GenerateStandardBingo>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -67,5 +70,11 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+app.MapGet("/scripts/generate-bingo", async (GenerateStandardBingo script) =>
+{
+    await script.Execute();
+    return Results.Ok();
+});
 
 app.Run();
