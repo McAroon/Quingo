@@ -1,0 +1,221 @@
+﻿@inject ApplicationDbContext Db
+
+<MudText Typo="Typo.h4" GutterBottom>
+    Default Preset @if (!_isEdit)
+    {
+        <MudTooltip Text="Edit Preset">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => _isEdit = true"></MudIconButton>
+        </MudTooltip>
+    }
+</MudText>
+
+<MudGrid>
+    <MudItem xs="12" md="4">
+        @if (_isEdit)
+        {
+            <MudCard>
+                <MudCardContent>
+                    <MudForm @ref="@_form">
+                        <MudNumericField @bind-Value="_model.CardSize" @bind-Value:after="OnCardSizeUpdated" Label="Card Size" Min="1" Max="9" Required />
+                        <MudCheckBox @bind-Value="_model.FreeCenter" Label="Free Center" Disabled="!_model.IsFreeCenterEnabled" />
+                        <MudNumericField @bind-Value="_model.LivesNumber" Label="Number of Lives" Min="1" Required />
+                        <MudNumericField @bind-Value="_model.EndgameTimer" Label="Endgame Timer" Min="0" />
+                        <MudText Typo="Typo.h6">Columns</MudText>
+                        @foreach (var col in _model.Columns)
+                        {
+                            <MudPaper Class="pa-4 mb-2">
+                                <MudGrid>
+                                    <MudItem xs="12">
+                                        <MudTextField Label="Column Name" @bind-Value="col.Name" />
+                                        <MudSelect T="int" MultiSelection Label="Question Tags" @bind-SelectedValues="col.QuestionTags" MultiSelectionTextFunc="GetTagsSelectText">
+                                            @foreach (var tag in Pack.Tags)
+                                            {
+                                                <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                        <MudSelect T="int" MultiSelection Label="Answer Tags" @bind-SelectedValues="col.AnswerTags" MultiSelectionTextFunc="GetTagsSelectText">
+                                            @foreach (var tag in Pack.Tags)
+                                            {
+                                                <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+                        }
+                    </MudForm>
+                </MudCardContent>
+                <MudCardActions>
+                    <div class="ml-auto">
+                        <MudButton Color="Color.Primary" OnClick="Save" StartIcon="@Icons.Material.Filled.Save">Save</MudButton>
+                        <MudButton Color="Color.Secondary" OnClick="CancelEdit" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+                    </div>
+                </MudCardActions>
+            </MudCard>
+        }
+        else
+        {
+            <MudList T="string" ReadOnly>
+                <MudListItem Text="Card Size" SecondaryText="@_model.CardSize.ToString()" />
+                <MudListItem Text="Free Center" SecondaryText="@(_model.FreeCenter ? "Yes" : "No")" />
+                <MudListItem Text="Number of Lives" SecondaryText="@_model.LivesNumber.ToString()" />
+                <MudListItem Text="Endgame Timer" SecondaryText="@_model.EndgameTimer.ToString()" />
+                @for (int i = 0; i < _model.Columns.Count; i++)
+                {
+                    var col = _model.Columns[i];
+                    <MudListItem Text="@($"Column {i+1}")" Expanded="false">
+                        <NestedList>
+                            <MudListItem Text="Name" SecondaryText="@col.Name" />
+                            <MudListItem Text="Question Tags" SecondaryText="@GetTagsSelectText(col.QuestionTags)" />
+                            <MudListItem Text="Answer Tags" SecondaryText="@GetTagsSelectText(col.AnswerTags)" />
+                        </NestedList>
+                    </MudListItem>
+                }
+            </MudList>
+        }
+    </MudItem>
+</MudGrid>
+
+
+@code {
+    [CascadingParameter]
+    public Pack Pack { get; set; } = default!;
+
+    private PackPreset _preset = default!;
+
+    private MudForm _form = default!;
+
+    private bool _isEdit;
+
+    private PackPresetDataModel _model = default!;
+
+    protected override void OnParametersSet()
+    {
+        _preset = Pack.Presets.OrderBy(x => x.CreatedAt).FirstOrDefault()
+            ?? new PackPreset { Pack = Pack };
+        _model = new PackPresetDataModel(_preset.Data);
+    }
+
+    private void OnCardSizeUpdated()
+    {
+        if (!_model.IsFreeCenterEnabled)
+        {
+            _model.FreeCenter = false;
+        }
+
+        _model.Columns.MatchListSize(_model.CardSize, () => new PackPresetColumnModel());
+    }
+
+    private string GetTagsSelectText(IList<string> selected)
+    {
+        return GetTagsSelectText(selected.Select(int.Parse));
+    }
+
+    private string GetTagsSelectText(IEnumerable<int> selected)
+    {
+        var selectedList = selected.ToList();
+        var tags = Pack.Tags.Where(x => selectedList.Contains(x.Id)).Select(x => x.Name);
+        return string.Join(", ", tags);
+    }
+
+    private async Task Save()
+    {
+        await _form.Validate();
+        if (_form.IsValid)
+        {
+            _preset.Data = _model.ToData();
+            Db.Update(_preset);
+            await Db.SaveChangesAsync();
+            _isEdit = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CancelEdit()
+    {
+        _isEdit = false;
+        _model = new PackPresetDataModel(_preset.Data);
+        StateHasChanged();
+    }
+
+    public class PackPresetDataModel
+    {
+        public PackPresetDataModel()
+        {
+
+        }
+
+        public PackPresetDataModel(PackPresetData data)
+        {
+            CardSize = data.CardSize;
+            FreeCenter = data.FreeCenter;
+            Columns = data.Columns.Count > 0 ? data.Columns.Select(c => new PackPresetColumnModel(c)).ToList() : Columns;
+            LivesNumber = data.LivesNumber;
+            EndgameTimer = data.EndgameTimer;
+
+            Columns.MatchListSize(data.CardSize, () => new PackPresetColumnModel());
+        }
+
+        public PackPresetData ToData()
+        {
+            return new PackPresetData
+            {
+                CardSize = CardSize,
+                FreeCenter = FreeCenter,
+                LivesNumber = LivesNumber,
+                EndgameTimer = EndgameTimer,
+                Columns = Columns.Select(c => new PackPresetColumn
+                {
+                    Name = c.Name,
+                    QuestionTags = c.QuestionTags.ToList(),
+                    AnswerTags = c.AnswerTags.ToList()
+                }).ToList()
+            };
+        }
+
+        public int CardSize { get; set; } = 5;
+
+        public bool FreeCenter { get; set; } = true;
+
+        public bool IsFreeCenterEnabled => CardSize % 2 != 0;
+
+        public int LivesNumber { get; set; } = 3;
+
+        public int EndgameTimer { get; set; } = 20;
+
+        public List<PackPresetColumnModel> Columns { get; set; } =
+        [
+            new PackPresetColumnModel("B"),
+            new PackPresetColumnModel("I"),
+            new PackPresetColumnModel("N"),
+            new PackPresetColumnModel("G"),
+            new PackPresetColumnModel("O")
+        ];
+    }
+
+    public record PackPresetColumnModel
+    {
+        public PackPresetColumnModel()
+        {
+
+        }
+
+        public PackPresetColumnModel(string name)
+        {
+            Name = name;
+        }
+
+        public PackPresetColumnModel(PackPresetColumn col)
+        {
+            Name = col.Name;
+            QuestionTags = new List<int>(col.QuestionTags);
+            AnswerTags = new List<int>(col.AnswerTags);
+        }
+
+        public string Name { get; set; } = "";
+
+        public IEnumerable<int> QuestionTags { get; set; } = [];
+
+        public IEnumerable<int> AnswerTags { get; set; } = [];
+    }
+}

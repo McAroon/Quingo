@@ -10,7 +10,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Quingo", "Quingo\Quingo.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Quingo.Client", "Quingo.Client\Quingo.Client.csproj", "{D411EA44-A3F9-43F5-B742-17B1BC686BB3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quingo.Shared", "Quingo.Shared\Quingo.Shared.csproj", "{1E703EEA-799B-44DD-AA64-68246C80E87D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Quingo.Shared", "Quingo.Shared\Quingo.Shared.csproj", "{1E703EEA-799B-44DD-AA64-68246C80E87D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

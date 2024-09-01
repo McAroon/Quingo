@@ -51,7 +51,7 @@ else if (IsEditMode)
 }
 else
 {
-    <MudGrid class="row">
+    <MudGrid>
         <MudItem xs="12" md="4">
             <MudList T="string" ReadOnly>
                 <MudListItem Text="Pack Name" SecondaryText="@(!string.IsNullOrEmpty(Pack?.Name) ? Pack.Name : "-")" />
@@ -68,6 +68,7 @@ else
     <CascadingValue Value="Pack">
         <TagsEdit />
         <NodeLinksEdit />
+        <PresetEdit />
         <NodesEdit />
     </CascadingValue>
 }
@@ -94,12 +95,7 @@ else
     {
         if (PackId != null)
         {
-            Pack = await Db.Packs
-            .Include(x => x.Tags)
-            .Include(x => x.NodeLinkTypes)
-            .Include(x => x.Nodes).ThenInclude(x => x.NodeTags)
-            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
-            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo)
+            Pack = await Db.PacksWithIncludes
             .FirstOrDefaultAsync(x => x.Id == PackId);
         }
         

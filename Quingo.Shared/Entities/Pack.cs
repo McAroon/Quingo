@@ -13,5 +13,7 @@
         public List<NodeLinkType> NodeLinkTypes { get; set; } = [];
 
         public List<Tag> Tags { get; set; } = [];
+
+        public List<PackPreset> Presets { get; set; } = [];
     }
 }

@@ -2,18 +2,22 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Quingo.Data;
+using Quingo.Shared.Entities;
 
 #nullable disable
 
 namespace Quingo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240831225152_PackPresets")]
+    partial class PackPresets
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -470,6 +474,10 @@ namespace Quingo.Migrations
                     b.Property<string>("CreatedByUserId")
                         .HasColumnType("text");
 
+                    b.Property<PackPresetData>("Data")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -775,68 +783,7 @@ namespace Quingo.Migrations
                         .WithMany()
                         .HasForeignKey("UpdatedByUserId");
 
-                    b.OwnsOne("Quingo.Shared.Entities.PackPresetData", "Data", b1 =>
-                        {
-                            b1.Property<int>("PackPresetId")
-                                .HasColumnType("integer");
-
-                            b1.Property<int>("CardSize")
-                                .HasColumnType("integer");
-
-                            b1.Property<int>("EndgameTimer")
-                                .HasColumnType("integer");
-
-                            b1.Property<bool>("FreeCenter")
-                                .HasColumnType("boolean");
-
-                            b1.Property<int>("LivesNumber")
-                                .HasColumnType("integer");
-
-                            b1.HasKey("PackPresetId");
-
-                            b1.ToTable("PackPresets");
-
-                            b1.ToJson("Data");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PackPresetId");
-
-                            b1.OwnsMany("Quingo.Shared.Entities.PackPresetColumn", "Columns", b2 =>
-                                {
-                                    b2.Property<int>("PackPresetDataPackPresetId")
-                                        .HasColumnType("integer");
-
-                                    b2.Property<int>("Id")
-                                        .ValueGeneratedOnAdd()
-                                        .HasColumnType("integer");
-
-                                    b2.Property<int[]>("AnswerTags")
-                                        .IsRequired()
-                                        .HasColumnType("integer[]");
-
-                                    b2.Property<string>("Name")
-                                        .IsRequired()
-                                        .HasColumnType("text");
-
-                                    b2.Property<int[]>("QuestionTags")
-                                        .IsRequired()
-                                        .HasColumnType("integer[]");
-
-                                    b2.HasKey("PackPresetDataPackPresetId", "Id");
-
-                                    b2.ToTable("PackPresets");
-
-                                    b2.WithOwner()
-                                        .HasForeignKey("PackPresetDataPackPresetId");
-                                });
-
-                            b1.Navigation("Columns");
-                        });
-
                     b.Navigation("CreatedByUser");
-
-                    b.Navigation("Data")
-                        .IsRequired();
 
                     b.Navigation("DeletedByUser");
 

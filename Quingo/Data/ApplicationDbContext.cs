@@ -15,6 +15,16 @@ namespace Quingo.Data
         public DbSet<Tag> Tags { get; set; }
         public DbSet<NodeLinkType> NodeLinkTypes { get; set; }
 
+        public DbSet<PackPreset> PackPresets { get; set; }
+
+        public IQueryable<Pack> PacksWithIncludes => Packs
+            .Include(x => x.Tags)
+            .Include(x => x.NodeLinkTypes)
+            .Include(x => x.Presets)
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeTags)
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo);
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -25,6 +35,7 @@ namespace Quingo.Data
             new EntityBaseConfiguration<Pack>().Configure(builder.Entity<Pack>());
             new EntityBaseConfiguration<Tag>().Configure(builder.Entity<Tag>());
             new EntityBaseConfiguration<NodeLinkType>().Configure(builder.Entity<NodeLinkType>());
+            new EntityBaseConfiguration<PackPreset>().Configure(builder.Entity<PackPreset>());
 
             builder.Entity<Node>().Ignore(e => e.NodeLinks);
             builder.Entity<Node>().Ignore(e => e.LinkedNodes);
@@ -38,6 +49,14 @@ namespace Quingo.Data
             builder.Entity<Pack>().HasMany(e => e.Nodes).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
             builder.Entity<Pack>().HasMany(e => e.NodeLinkTypes).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
             builder.Entity<Pack>().HasMany(e => e.Tags).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
+            builder.Entity<Pack>().HasMany(e => e.Presets).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
+
+            builder.Entity<PackPreset>().OwnsOne(e => e.Data, d =>
+            {
+                d.ToJson();
+                d.Ignore(x => x.IsFreeCenterEnabled);
+                d.OwnsMany(x => x.Columns);
+            });
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
