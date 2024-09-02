@@ -15,8 +15,6 @@ public record PackPresetData
 
     public bool FreeCenter { get; set; } = true;
 
-    public bool IsFreeCenterEnabled => CardSize % 2 != 0;
-
     public int LivesNumber { get; set; } = 3;
 
     public int EndgameTimer { get; set; } = 20;

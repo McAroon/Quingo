@@ -1,13 +1,26 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.Extensions.Options;
 using Quingo.Shared.Entities;
 using System.Security.Claims;
 
 namespace Quingo.Data
 {
-    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IHttpContextAccessor contextAccessor) : IdentityDbContext<ApplicationUser>(options)
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
+        private readonly IHttpContextAccessor? _httpContextAccessor;
+
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IHttpContextAccessor contextAccessor) : base(options)
+        {
+            _httpContextAccessor = contextAccessor;
+        }
+
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+            
+        }
+
         public DbSet<Node> Nodes { get; set; }
         public DbSet<NodeLink> NodeLinks { get; set; }
         public DbSet<NodeTag> NodeTags { get; set; }
@@ -54,7 +67,6 @@ namespace Quingo.Data
             builder.Entity<PackPreset>().OwnsOne(e => e.Data, d =>
             {
                 d.ToJson();
-                d.Ignore(x => x.IsFreeCenterEnabled);
                 d.OwnsMany(x => x.Columns);
             });
         }
@@ -67,7 +79,7 @@ namespace Quingo.Data
 
         private void SetFieldsOnSave()
         {
-            var userId = contextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = _httpContextAccessor?.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)
             {
                 return;
