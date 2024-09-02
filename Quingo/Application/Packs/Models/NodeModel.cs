@@ -5,18 +5,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Quingo.Shared.Models
+namespace Quingo.Application.Packs.Models
 {
-    public class PackModel
+    public class NodeModel
     {
         [Required]
         [Display(Name = "Name")]
         public string? Name { get; set; }
 
-        [Display(Name = "Description")]
-        public string? Description { get; set; }
-
         [Display(Name = "Image Url")]
         public string? ImageUrl { get; set; }
+
+        public IEnumerable<int> TagIds { get; set; } = [];
+
+        public List<NodeLinkModel> NodeLinks { get; set; } = [];
     }
 }

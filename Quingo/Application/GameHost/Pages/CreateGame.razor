@@ -1,0 +1,48 @@
+﻿@page "/game/host/create"
+
+@using Microsoft.AspNetCore.Authorization
+
+@inject ApplicationDbContext Db
+
+@attribute [Authorize]
+
+<PageTitle>Create Game</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom>Create Game</MudText>
+
+<MudGrid>
+    <MudItem xs="12" md="4">
+        <MudSelect T="int" Label="Select Pack" @bind-Value="@_selectedPackId" @bind-Value:after="OnPackSelected">
+            @foreach (var pack in _packs)
+            {
+                <MudSelectItem T="int" Value="@pack.Id">@pack.Name</MudSelectItem>
+            }
+        </MudSelect>
+        @if (_pack != null)
+        {
+            <MudButton StartIcon="@Icons.Material.Filled.PlayArrow">Start Game</MudButton>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<Pack> _packs = [];
+
+    private int _selectedPackId;
+
+    private Pack? _pack;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _packs = await Db.Packs.ToListAsync();
+    }
+
+    private async Task OnPackSelected()
+    {
+        _pack = await Db.PacksWithIncludes.FirstOrDefaultAsync(x => x.Id == _selectedPackId);
+        if (_pack == null)
+        {
+            throw new Exception("Pack not found");
+        }
+    }
+}

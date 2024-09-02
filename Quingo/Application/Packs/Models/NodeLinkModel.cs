@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Quingo.Shared.Models
+namespace Quingo.Application.Packs.Models
 {
     public class NodeLinkModel
     {
