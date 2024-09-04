@@ -106,8 +106,11 @@ public class PlayerState : IDisposable
 
     public void RemoveLife()
     {
-        LivesNumber -= 1;
-        StateChanged();
+        if (LivesNumber > 0)
+        {
+            LivesNumber -= 1;
+            StateChanged();
+        }
     }
 
     private static bool IsCenter(int size, int i, int j)

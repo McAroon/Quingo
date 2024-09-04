@@ -13,11 +13,14 @@ public class GameState : IDisposable
         Preset = preset.Data;
         HostUserId = hostUserId;
         StartedAt = UpdatedAt = DateTime.UtcNow;
+        State = GameStateEnum.Init;
+        EndgameTimer = preset.Data.EndgameTimer;
 
         _random = new Random(gameSessionId.GetHashCode());
 
         _drawnNodes.CollectionChanged += HandleDrawnNodesChanged;
         _players.CollectionChanged += HandlePlayersChanged;
+        _winningPlayers.CollectionChanged += HandleWinningPlayersChanged;
 
         Setup();
     }
@@ -48,26 +51,39 @@ public class GameState : IDisposable
     private readonly ObservableCollection<PlayerState> _players = [];
     public ReadOnlyCollection<PlayerState> Players => _players.AsReadOnly();
 
+    private readonly ObservableCollection<PlayerState> _winningPlayers = [];
+    public ReadOnlyCollection<PlayerState> WinningPlayers => _winningPlayers.AsReadOnly();
+
     public bool CanDraw => _qNodes.Count > 0;
 
     private List<bool[,]> _bingoPatterns = [];
 
+    public GameStateEnum State { get; private set; }
+
+    public int EndgameTimer { get; private set; }
+
 
     private void Setup()
     {
+        if (State != GameStateEnum.Init) return;
+
         var qTagIds = Preset.Columns.SelectMany(x => x.QuestionTags).Distinct().ToList();
         _qNodes = Pack.Nodes.Where(x => qTagIds.Any(t => x.NodeTags.Select(nt => nt.TagId).Contains(t))).ToList();
         _bingoPatterns = PatternGenerator.GenerateDefaultPatterns(Preset.CardSize);
+        State = GameStateEnum.Active;
+        StateChanged();
     }
 
     public void Join(PlayerState player)
     {
+        if (State != GameStateEnum.Active) return;
+
         _players.Add(player);
     }
 
     public void Draw()
     {
-        if (!CanDraw) return;
+        if (!CanDraw || State != GameStateEnum.Active) return;
 
         var idx = _random.Next(0, _qNodes.Count - 1);
         var node = _qNodes[idx];
@@ -78,7 +94,7 @@ public class GameState : IDisposable
 
     public void Call(PlayerState player)
     {
-        if (player.LivesNumber <= 0) return;
+        if (player.LivesNumber <= 0 || (State is not GameStateEnum.Active or GameStateEnum.FinalCountdown)) return;
 
         player.Validate();
         var isValid = false;
@@ -113,8 +129,30 @@ public class GameState : IDisposable
         }
         else
         {
-            // todo: end timer; finish game
+            _winningPlayers.Add(player);
+            StartCountdown();
         }
+    }
+
+    private void StartCountdown()
+    {
+        if (State != GameStateEnum.Active) return;
+
+        State = GameStateEnum.FinalCountdown;
+        StateChanged();
+
+        Task.Run(async () =>
+        {
+            while (EndgameTimer > 0)
+            {
+                EndgameTimer--;
+                StateChanged();
+                await Task.Delay(1000);
+            }
+
+            State = GameStateEnum.Finished;
+            StateChanged();
+        });
     }
 
 
@@ -136,6 +174,11 @@ public class GameState : IDisposable
     {
         StateChanged();
     }
+
+    private void HandleWinningPlayersChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        StateChanged();
+    }
     #endregion
 
     #region dispose
@@ -148,6 +191,7 @@ public class GameState : IDisposable
             OnStateChange = null;
             _drawnNodes.CollectionChanged -= HandleDrawnNodesChanged;
             _players.CollectionChanged -= HandlePlayersChanged;
+            _winningPlayers.CollectionChanged -= HandleWinningPlayersChanged;
 
             foreach (var player in _players)
             {
@@ -165,4 +209,12 @@ public class GameState : IDisposable
         GC.SuppressFinalize(this);
     }
     #endregion
+}
+
+public enum GameStateEnum
+{
+    Init,
+    Active,
+    FinalCountdown,
+    Finished
 }
