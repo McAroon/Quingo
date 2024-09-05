@@ -16,7 +16,10 @@ builder.Services.AddMudServices();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-    //.AddInteractiveWebAssemblyComponents();
+//.AddInteractiveWebAssemblyComponents();
+
+builder.Logging.AddConfiguration(
+    builder.Configuration.GetSection("Logging"));
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();

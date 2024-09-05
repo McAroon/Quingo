@@ -1,0 +1,20 @@
+﻿@page "/game/host/{GameSessionId:guid}"
+
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+
+@inject ILogger<HostGame> Logger
+@inject GameStateService StateService
+@inject ISnackbar Snackbar
+
+@attribute [Authorize]
+
+<h3>HostGame</h3>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+    [Parameter]
+    public Guid GameSessionId { get; set; }
+}

@@ -134,6 +134,14 @@ public class GameState : IDisposable
         }
     }
 
+    public void EndGame()
+    {
+        if (State != GameStateEnum.Active) return;
+
+        State = GameStateEnum.Finished;
+        StateChanged();
+    }
+
     private void StartCountdown()
     {
         if (State != GameStateEnum.Active) return;

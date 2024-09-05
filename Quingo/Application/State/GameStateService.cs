@@ -15,7 +15,7 @@ public class GameStateService
         _dbContextFactory = dbContextFactory;
     }
 
-    public async Task StartGame(int packId, string userId)
+    public async Task<GameState> StartGame(int packId, string userId)
     {
         try
         {
@@ -51,6 +51,7 @@ public class GameStateService
             {
                 throw new GameStateException("Error creating game");
             }
+            return game;
         }
         catch (Exception e) when (e is not GameStateException)
         {
@@ -110,16 +111,28 @@ public class GameStateService
                 throw new GameStateException("User is not allowed to end the game");
             }
 
-            game.Dispose();
-            if (!_state.TryRemove(gameSessionId, out _))
-            {
-                throw new GameStateException("Error stopping the game");
-            }
+            game.EndGame();
+            RemoveGame(game);
         }
         catch (Exception e) when (e is not GameStateException)
         {
 
-            throw new GameStateException("Error joining the game", e);
+            throw new GameStateException("Error while trying to end the game", e);
         }
+    }
+
+    public void RemoveGame(GameState game)
+    {
+        if (game.State != GameStateEnum.Finished)
+        {
+            throw new GameStateException("Only finished games can be removed");
+        }
+
+        Task.Run(async () => 
+        {
+            await Task.Delay(1000 * 10);
+            game.Dispose();
+            _state.TryRemove(game.GameSessionId, out _);
+        });
     }
 }

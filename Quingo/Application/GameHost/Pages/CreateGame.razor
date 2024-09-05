@@ -1,8 +1,13 @@
-﻿@page "/game/host/create"
+﻿@page "/game/host"
 
 @using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
 
+@inject ILogger<CreateGame> Logger
 @inject ApplicationDbContext Db
+@inject GameStateService StateService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
 
 @attribute [Authorize]
 
@@ -18,15 +23,17 @@
                 <MudSelectItem T="int" Value="@pack.Id">@pack.Name</MudSelectItem>
             }
         </MudSelect>
-        @if (_pack != null)
-        {
-            <MudButton StartIcon="@Icons.Material.Filled.PlayArrow">Start Game</MudButton>
-        }
+        <MudButton StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="StartGame" Disabled="_pack == null">Start Game</MudButton>
     </MudItem>
 </MudGrid>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+
     private List<Pack> _packs = [];
+
+    private string? _userId;
 
     private int _selectedPackId;
 
@@ -35,6 +42,10 @@
     protected override async Task OnInitializedAsync()
     {
         _packs = await Db.Packs.ToListAsync();
+        if (AuthenticationState != null)
+        {
+            _userId = (await AuthenticationState).User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
     }
 
     private async Task OnPackSelected()
@@ -43,6 +54,23 @@
         if (_pack == null)
         {
             throw new Exception("Pack not found");
+        }
+    }
+
+    private async Task StartGame()
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(_pack, nameof(_pack));
+            ArgumentNullException.ThrowIfNull(_userId, nameof(_userId));
+
+            var game = await StateService.StartGame(_pack.Id, _userId);
+            NavigationManager.NavigateTo($"/game/host/{game.GameSessionId}");
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, e.Message);
+            Snackbar.Add(e.Message, Severity.Error);
         }
     }
 }
