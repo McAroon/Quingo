@@ -71,7 +71,6 @@ public class GameState : IDisposable
         _qNodes = Pack.Nodes.Where(x => qTagIds.Any(t => x.NodeTags.Select(nt => nt.TagId).Contains(t))).ToList();
         _bingoPatterns = PatternGenerator.GenerateDefaultPatterns(Preset.CardSize);
         State = GameStateEnum.Active;
-        StateChanged();
     }
 
     public void Join(PlayerState player)
@@ -89,7 +88,7 @@ public class GameState : IDisposable
         var node = _qNodes[idx];
         _qNodes.Remove(node);
         _drawnNodes.Add(node);
-        StateChanged();
+        NotifyStateChanged();
     }
 
     public void Call(PlayerState player)
@@ -139,7 +138,7 @@ public class GameState : IDisposable
         if (State != GameStateEnum.Active) return;
 
         State = GameStateEnum.Finished;
-        StateChanged();
+        NotifyStateChanged();
     }
 
     private void StartCountdown()
@@ -147,45 +146,45 @@ public class GameState : IDisposable
         if (State != GameStateEnum.Active) return;
 
         State = GameStateEnum.FinalCountdown;
-        StateChanged();
+        NotifyStateChanged();
 
-        Task.Run(async () =>
+        _ = Task.Run(async () =>
         {
             while (EndgameTimer > 0)
             {
                 EndgameTimer--;
-                StateChanged();
+                NotifyStateChanged();
                 await Task.Delay(1000);
             }
 
             State = GameStateEnum.Finished;
-            StateChanged();
+            NotifyStateChanged();
         });
     }
 
 
     #region events
-    public event EventHandler? OnStateChange;
+    public event Action? StateChanged;
 
-    private void StateChanged()
+    private void NotifyStateChanged()
     {
         UpdatedAt = DateTime.UtcNow;
-        OnStateChange?.Invoke(this, EventArgs.Empty);
+        StateChanged?.Invoke();
     }
 
     private void HandleDrawnNodesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        StateChanged();
+        NotifyStateChanged();
     }
 
     private void HandlePlayersChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        StateChanged();
+        NotifyStateChanged();
     }
 
     private void HandleWinningPlayersChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        StateChanged();
+        NotifyStateChanged();
     }
     #endregion
 
@@ -196,7 +195,7 @@ public class GameState : IDisposable
     {
         if (!disposedValue)
         {
-            OnStateChange = null;
+            StateChanged = null;
             _drawnNodes.CollectionChanged -= HandleDrawnNodesChanged;
             _players.CollectionChanged -= HandlePlayersChanged;
             _winningPlayers.CollectionChanged -= HandleWinningPlayersChanged;

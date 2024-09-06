@@ -81,7 +81,17 @@ public class GameStateService
         }
     }
 
-    public GameState GetGameState(Guid gameSessionId)
+    public GameState GetGameState(Guid gameSessionId, string userId)
+    {
+        var game = GetGameState(gameSessionId);
+        if (game.HostUserId != userId)
+        {
+            throw new GameStateException("User is not the host");
+        }
+        return game;
+    }
+
+    private GameState GetGameState(Guid gameSessionId)
     {
         if (!_state.TryGetValue(gameSessionId, out var game))
         {
@@ -128,7 +138,7 @@ public class GameStateService
             throw new GameStateException("Only finished games can be removed");
         }
 
-        Task.Run(async () => 
+        _ = Task.Run(async () => 
         {
             await Task.Delay(1000 * 10);
             game.Dispose();

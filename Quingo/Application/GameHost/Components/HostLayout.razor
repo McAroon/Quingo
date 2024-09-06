@@ -1,0 +1,21 @@
+﻿<MudGrid>
+    <MudItem xs="12">
+       <ActionBar />
+    </MudItem>
+    <MudItem>
+        <QuestionList />
+    </MudItem>
+    <MudItem>
+        <PlayerList />
+    </MudItem>
+</MudGrid>
+
+@code {
+    [CascadingParameter]
+    public GameState Game { get; set; } = default!;
+
+    public void EndGame()
+    {
+        Game.EndGame();
+    }
+}

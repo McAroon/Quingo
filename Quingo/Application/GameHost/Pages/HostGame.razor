@@ -3,13 +3,27 @@
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
 
+@implements IDisposable
+
 @inject ILogger<HostGame> Logger
 @inject GameStateService StateService
 @inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
 
 @attribute [Authorize]
 
-<h3>HostGame</h3>
+<PageTitle>Host Game</PageTitle>
+
+@if (_initError != null)
+{
+    <MudAlert Severity="Severity.Error">@_initError</MudAlert>
+}
+else
+{
+    <CascadingValue Value="_game">
+        <HostLayout />
+    </CascadingValue>
+}
 
 @code {
     [CascadingParameter]
@@ -17,4 +31,46 @@
 
     [Parameter]
     public Guid GameSessionId { get; set; }
+
+    private string? _initError;
+
+    private string? _userId;
+
+    private GameState _game = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationState != null)
+        {
+            _userId = (await AuthenticationState).User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        if (_userId == null)
+        {
+            _initError = "Initialization error";
+            return;
+        }
+
+        _game = StateService.GetGameState(GameSessionId, _userId);
+        if (_game is null)
+        {
+            _initError = "Game is not found";
+            return;
+        }
+
+        _game.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (_game != null)
+        {
+            _game.StateChanged -= OnStateChanged;
+        }
+    }
 }
