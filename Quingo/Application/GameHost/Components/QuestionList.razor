@@ -1,6 +1,47 @@
-﻿<h3>QuestionList</h3>
+﻿@implements IDisposable
+
+<MudGrid Spacing="5">
+    @foreach (var node in Game.DrawnNodes)
+    {
+        <MudItem>
+            <NodeSquare Node="node" Highlighted="node == Game.DrawnNodes.Last() && _toggleHighlight" />
+        </MudItem>
+    }
+</MudGrid>
 
 @code {
     [CascadingParameter]
     public GameState Game { get; set; } = default!;
+
+    private bool _toggleHighlight = true;
+
+    protected override void OnInitialized()
+    {
+        Game.NodeDrawn += Blink;
+    }
+
+    private void Blink()
+    {
+        InvokeAsync(async () =>
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                _toggleHighlight = !_toggleHighlight;
+                StateHasChanged();
+                await Task.Delay(500);
+            }
+
+            if (!_toggleHighlight)
+            {
+                _toggleHighlight = true;
+                StateHasChanged();
+            }
+        });
+    }
+
+    public void Dispose()
+    {
+        Game.NodeDrawn += Blink;
+    }
+
 }

@@ -4,13 +4,14 @@ namespace Quingo.Application.State;
 
 public class PlayerState : IDisposable
 {
-    public PlayerState(Guid playerSessionId, GameState gameState, string playerUserId)
+    public PlayerState(Guid playerSessionId, GameState gameState, string playerUserId, string playerName)
     {
         PlayerSessionId = playerSessionId;
         GameState = gameState;
-        Card = new PlayerCard(Preset);
+        Card = new PlayerCardData(Preset);
         LivesNumber = Preset.LivesNumber;
         PlayerUserId = playerUserId;
+        PlayerName = playerName;
         StartedAt = UpdatedAt = DateTime.UtcNow;
 
         Setup();
@@ -24,11 +25,13 @@ public class PlayerState : IDisposable
 
     private PackPresetData Preset => GameState.Preset;
 
-    public PlayerCard Card { get; private set; }
+    public PlayerCardData Card { get; private set; }
 
     public int LivesNumber { get; private set; }
 
     public string PlayerUserId { get; private set; }
+
+    public string PlayerName { get; private set; }
 
     public DateTime StartedAt { get; private set; }
 
@@ -53,7 +56,7 @@ public class PlayerState : IDisposable
             {
                 if (colNodes.Count == 0 || (Preset.FreeCenter && IsCenter(Preset.CardSize, col, row)))
                 {
-                    Card.Cells[col, row] = new PlayerCardCell(col, row);
+                    Card.Cells[col, row] = new PlayerCardCellData(col, row);
                 }
                 else
                 {
@@ -62,7 +65,7 @@ public class PlayerState : IDisposable
                     colNodes.Remove(node);
                     aNodes.Remove(node);
 
-                    Card.Cells[col, row] = new PlayerCardCell(col, row, node);
+                    Card.Cells[col, row] = new PlayerCardCellData(col, row, node);
                 }
             }
         }
@@ -150,12 +153,12 @@ public class PlayerState : IDisposable
     #endregion
 }
 
-public class PlayerCard(PackPresetData preset)
+public class PlayerCardData(PackPresetData preset)
 {
-    public PlayerCardCell[,] Cells { get; } = new PlayerCardCell[preset.CardSize, preset.CardSize];
+    public PlayerCardCellData[,] Cells { get; } = new PlayerCardCellData[preset.CardSize, preset.CardSize];
 }
 
-public class PlayerCardCell(int col, int row, Node? node = null)
+public class PlayerCardCellData(int col, int row, Node? node = null)
 {
     public int Col { get; } = col;
 

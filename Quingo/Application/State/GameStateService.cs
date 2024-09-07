@@ -60,7 +60,7 @@ public class GameStateService
         }
     }
 
-    public void JoinGame(Guid gameSessionId, string userId)
+    public void JoinGame(Guid gameSessionId, string userId, string userName)
     {
         try
         {
@@ -71,7 +71,7 @@ public class GameStateService
             }
 
             var playerSessionId = Guid.NewGuid();
-            var player = new PlayerState(playerSessionId, game, userId);
+            var player = new PlayerState(playerSessionId, game, userId, userName);
             game.Join(player);
         }
         catch (Exception e) when (e is not GameStateException)

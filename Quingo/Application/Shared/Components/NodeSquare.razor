@@ -1,0 +1,29 @@
+﻿<MudPaper Height="150" Width="150">
+    <MudCard Class="pa-5" Outlined="Highlighted">
+        @if (Node == null)
+        {
+            <MudCardContent>
+                <MudText Typo="Typo.body1">FREE</MudText>
+            </MudCardContent>
+        }
+        else
+        {
+            @if (!string.IsNullOrEmpty(Node.ImageUrl))
+            {
+                <MudCardMedia Image="@Node.ImageUrl" Height="100" />
+            }
+            <MudCardContent>
+                <MudText Typo="Typo.body1">@Node.Name</MudText>
+            </MudCardContent>
+        }
+    </MudCard>
+</MudPaper>
+
+
+@code {
+    [Parameter, EditorRequired]
+    public Node? Node { get; set; }
+
+    [Parameter]
+    public bool Highlighted { get; set; }
+}

@@ -1,4 +1,15 @@
-﻿<h3>PlayerList</h3>
+﻿<MudTable Items="Game.Players">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Lives</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.PlayerName</MudTd>
+        <MudTd DataLabel="Lives">@context.LivesNumber</MudTd>
+        <MudTd DataLabel="Actions"></MudTd>
+    </RowTemplate>
+</MudTable>
 
 @code {
     [CascadingParameter]

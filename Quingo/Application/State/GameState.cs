@@ -166,6 +166,8 @@ public class GameState : IDisposable
     #region events
     public event Action? StateChanged;
 
+    public event Action? NodeDrawn;
+
     private void NotifyStateChanged()
     {
         UpdatedAt = DateTime.UtcNow;
@@ -175,6 +177,7 @@ public class GameState : IDisposable
     private void HandleDrawnNodesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         NotifyStateChanged();
+        NodeDrawn?.Invoke();
     }
 
     private void HandlePlayersChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)

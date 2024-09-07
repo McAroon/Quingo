@@ -2,10 +2,10 @@
     <MudItem xs="12">
        <ActionBar />
     </MudItem>
-    <MudItem>
+    <MudItem md="6" xs="12">
         <QuestionList />
     </MudItem>
-    <MudItem>
+    <MudItem md="6" xs="12">
         <PlayerList />
     </MudItem>
 </MudGrid>
@@ -13,9 +13,4 @@
 @code {
     [CascadingParameter]
     public GameState Game { get; set; } = default!;
-
-    public void EndGame()
-    {
-        Game.EndGame();
-    }
 }
