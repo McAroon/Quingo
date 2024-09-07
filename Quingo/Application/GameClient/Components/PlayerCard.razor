@@ -1,0 +1,18 @@
+﻿<MudGrid Spacing="1">
+    @for (int row = 0; row < State.Card.Cells.GetLength(1); row++)
+    {
+        @for (int col = 0; col < State.Card.Cells.GetLength(0); col++)
+        {
+            var cell = State.Card.Cells[col, row];
+            <MudItem xs="1">
+                <PlayerCardCell Data="cell" />
+            </MudItem>
+        }
+        <MudFlexBreak />
+    }
+</MudGrid>
+
+@code {
+    [CascadingParameter]
+    public PlayerState State { get; set; } = default!;
+}

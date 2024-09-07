@@ -1,0 +1,9 @@
+﻿<MudBadge Visible="Data.IsMarked" Overlap Color="Color.Primary">
+    <NodeSquare Node="Data.Node" />
+</MudBadge>
+
+
+@code {
+    [Parameter, EditorRequired]
+    public PlayerCardCellData Data { get; set; } = default!;
+}
