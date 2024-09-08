@@ -1,0 +1,19 @@
+﻿<MudGrid>
+    <MudItem xs="12" md="6">
+        <PlayerActionBar />
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <PlayerStats />
+    </MudItem>
+    <MudItem xs="12">
+        <QuestionList Game="State.GameState" ItemsToDisplay="10" />
+    </MudItem>
+    <MudItem md="6" xs="12">
+        <PlayerCard />
+    </MudItem>
+</MudGrid>
+
+@code {
+    [CascadingParameter]
+    public PlayerState State { get; set; } = default!;
+}

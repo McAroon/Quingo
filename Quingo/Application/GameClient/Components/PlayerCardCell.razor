@@ -1,9 +1,31 @@
-﻿<MudBadge Visible="Data.IsMarked" Overlap Color="Color.Primary">
-    <NodeSquare Node="Data.Node" />
+﻿<MudBadge Visible="Cell.IsMarked" Overlap Color="Color.Primary">
+    <div @onclick="Mark" class="@ClickableClass">
+        <NodeSquare Node="Cell.Node"  />
+    </div>
 </MudBadge>
 
+<style>
+    .node-clickable {
+        cursor: pointer;
+    }
+</style>
 
 @code {
+    [CascadingParameter]
+    public PlayerState State { get; set; } = default!;
+
     [Parameter, EditorRequired]
-    public PlayerCardCellData Data { get; set; } = default!;
+    public PlayerCardCellData Cell { get; set; } = default!;
+
+    private bool CanMark => State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown;
+
+    private string ClickableClass => CanMark ? "node-clickable" : "";
+
+    private void Mark()
+    {
+        if (CanMark)
+        {
+            State.Mark(Cell.Col, Cell.Row);
+        }
+    }
 }

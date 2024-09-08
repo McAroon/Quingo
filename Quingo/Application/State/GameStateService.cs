@@ -7,6 +7,7 @@ namespace Quingo.Application.State;
 public class GameStateService
 {
     private static readonly ConcurrentDictionary<Guid, GameState> _state = new();
+    public IReadOnlyList<GameState> Games => new List<GameState>(_state.Values).AsReadOnly();
 
     private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
 
@@ -46,7 +47,7 @@ public class GameStateService
 
             var sessionId = Guid.NewGuid();
 
-            var game = new GameState(sessionId, pack, preset, userId);
+            var game = new GameState(sessionId, pack, preset, userId, user.UserName);
             if (!_state.TryAdd(sessionId, game))
             {
                 throw new GameStateException("Error creating game");
@@ -60,7 +61,7 @@ public class GameStateService
         }
     }
 
-    public void JoinGame(Guid gameSessionId, string userId, string userName)
+    public PlayerState JoinGame(Guid gameSessionId, string userId, string userName)
     {
         try
         {
@@ -73,6 +74,7 @@ public class GameStateService
             var playerSessionId = Guid.NewGuid();
             var player = new PlayerState(playerSessionId, game, userId, userName);
             game.Join(player);
+            return player;
         }
         catch (Exception e) when (e is not GameStateException)
         {

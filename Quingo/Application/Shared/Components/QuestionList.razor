@@ -1,7 +1,9 @@
-﻿@implements IDisposable
+﻿@using Quingo.Application.State
+
+@implements IDisposable
 
 <MudGrid Spacing="5">
-    @foreach (var node in Game.DrawnNodes)
+    @foreach (var node in Nodes)
     {
         <MudItem>
             <NodeSquare Node="node" Highlighted="node == Game.DrawnNodes.Last() && _toggleHighlight" />
@@ -10,10 +12,15 @@
 </MudGrid>
 
 @code {
-    [CascadingParameter]
+    [Parameter, EditorRequired]
     public GameState Game { get; set; } = default!;
 
+    [Parameter]
+    public int ItemsToDisplay { get; set; }
+
     private bool _toggleHighlight = true;
+
+    private IEnumerable<Node> Nodes => ItemsToDisplay > 0 ? Game.DrawnNodes.TakeLast(ItemsToDisplay) : Game.DrawnNodes;
 
     protected override void OnInitialized()
     {

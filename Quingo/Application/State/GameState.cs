@@ -5,13 +5,14 @@ namespace Quingo.Application.State;
 
 public class GameState : IDisposable
 {
-    public GameState(Guid gameSessionId, Pack pack, PackPreset preset, string hostUserId)
+    public GameState(Guid gameSessionId, Pack pack, PackPreset preset, string hostUserId, string? hostName)
     {
         GameSessionId = gameSessionId;
         PackId = pack.Id;
         Pack = pack;
         Preset = preset.Data;
         HostUserId = hostUserId;
+        HostName = hostName;
         StartedAt = UpdatedAt = DateTime.UtcNow;
         State = GameStateEnum.Init;
         EndgameTimer = preset.Data.EndgameTimer;
@@ -34,6 +35,8 @@ public class GameState : IDisposable
     public PackPresetData Preset { get; private set; }
 
     public string HostUserId { get; private set; }
+
+    public string? HostName { get; private set; }
 
     public DateTime StartedAt { get; private set; }
 
@@ -199,6 +202,7 @@ public class GameState : IDisposable
         if (!disposedValue)
         {
             StateChanged = null;
+            NodeDrawn = null;
             _drawnNodes.CollectionChanged -= HandleDrawnNodesChanged;
             _players.CollectionChanged -= HandlePlayersChanged;
             _winningPlayers.CollectionChanged -= HandleWinningPlayersChanged;

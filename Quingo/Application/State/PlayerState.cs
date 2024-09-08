@@ -84,7 +84,7 @@ public class PlayerState : IDisposable
         {
             cell.IsValid = true;
         }
-        StateChanged();
+        NotifyStateChanged();
     }
 
     public void Validate()
@@ -104,7 +104,7 @@ public class PlayerState : IDisposable
                 }
             }
         }
-        StateChanged();
+        NotifyStateChanged();
     }
 
     public void RemoveLife()
@@ -112,7 +112,7 @@ public class PlayerState : IDisposable
         if (LivesNumber > 0)
         {
             LivesNumber -= 1;
-            StateChanged();
+            NotifyStateChanged();
         }
     }
 
@@ -124,12 +124,12 @@ public class PlayerState : IDisposable
         return i == j && i == (size - 1) / 2;
     }
 
-    public event EventHandler? OnStateChange;
+    public event Action? StateChanged;
 
-    private void StateChanged()
+    private void NotifyStateChanged()
     {
         UpdatedAt = DateTime.UtcNow;
-        OnStateChange?.Invoke(this, EventArgs.Empty);
+        StateChanged?.Invoke();
     }
 
     #region dispose
@@ -139,7 +139,7 @@ public class PlayerState : IDisposable
     {
         if (!disposedValue)
         {
-            OnStateChange = null;
+            StateChanged = null;
             disposedValue = true;
         }
     }

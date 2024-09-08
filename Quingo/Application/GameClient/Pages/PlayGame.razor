@@ -1,7 +1,83 @@
 ﻿@page "/game/play/{GameSessionId:guid}/{PlayerSessionId:guid}"
 
-<h3>PlayGame</h3>
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+
+@implements IDisposable
+
+@inject GameStateService StateService
+@inject ISnackbar Snackbar
+@inject ILogger<PlayGame> Logger
+
+@attribute [Authorize]
+
+<PageTitle>Play</PageTitle>
+
+@if (_initError != null)
+{
+    <MudAlert Severity="Severity.Error">@_initError</MudAlert>
+}
+else
+{
+    <CascadingValue Value="_state">
+        <PlayLayout />
+    </CascadingValue>
+}
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
 
+    [Parameter]
+    public Guid GameSessionId { get; set; }
+
+    [Parameter]
+    public Guid PlayerSessionId { get; set; }
+
+    private string? _initError;
+
+    private string? _userId;
+
+    private PlayerState _state = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (AuthenticationState != null)
+            {
+                var auth = await AuthenticationState;
+                _userId = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            }
+
+            if (_userId == null)
+            {
+                _initError = "Initialization error";
+                return;
+            }
+
+            _state = StateService.GetPlayerState(GameSessionId, PlayerSessionId, _userId);
+            _state.StateChanged += OnStateChanged;
+            _state.GameState.StateChanged += OnStateChanged;
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, e.Message);
+            _initError = e.Message;
+        }
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (_state != null)
+        {
+            _state.StateChanged -= OnStateChanged;
+            _state.GameState.StateChanged -= OnStateChanged;
+        }
+    }
 }

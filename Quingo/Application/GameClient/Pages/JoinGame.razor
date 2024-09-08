@@ -1,7 +1,70 @@
 ﻿@page "/game/play"
 
-<h3>JoinGame</h3>
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+
+@inject GameStateService StateService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject ILogger<JoinGame> Logger
+
+@attribute [Authorize]
+
+<PageTitle>Join Game</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom>Join Game</MudText>
+
+<MudTable Items="StateService.Games" Hover>
+    <HeaderContent>
+        <MudTh>Pack</MudTh>
+        <MudTh>Host</MudTh>
+        <MudTh>Started</MudTh>
+        <MudTh>Players</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Pack">@context.Pack.Name</MudTd>
+        <MudTd DataLabel="Host">@context.HostUserId</MudTd>
+        <MudTd DataLabel="Started">@context.StartedAt.ToShortDateString() @context.StartedAt.ToShortTimeString()</MudTd>
+        <MudTd DataLabel="Players">@context.Players.Count</MudTd>
+        <MudTd DataLabel="Actions">
+            <MudButton Size="Size.Small" OnClick="() => Join(context)">Join</MudButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
 
+    private string? _userId;
+
+    private string? _userName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationState != null)
+        {
+            var auth = await AuthenticationState;
+            _userId = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            _userName = auth.User.FindFirstValue(ClaimTypes.Name);
+        }
+    }
+
+    private void Join(GameState game)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(_userId, nameof(_userId));
+            ArgumentNullException.ThrowIfNull(_userName, nameof(_userName));
+
+            var player = StateService.JoinGame(game.GameSessionId, _userId, _userName);
+            NavigationManager.NavigateTo($"/game/play/{game.GameSessionId}/{player.PlayerSessionId}");
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, e.Message);
+            Snackbar.Add(e.Message, Severity.Error);
+        }
+    }
 }
