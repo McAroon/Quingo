@@ -1,4 +1,9 @@
-﻿@inherits LayoutComponentBase
+﻿@using Quingo.Shared
+@using System.Security.Claims
+
+@inherits LayoutComponentBase
+
+@inject TempUserStorage Store
 
 <MudThemeProvider @ref="@_mudThemeProvider" @bind-IsDarkMode="@_isDarkMode" />
 <MudPopoverProvider />
@@ -9,8 +14,8 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h5" Class="ml-3">Quingo</MudText>
         <MudSpacer />
-        <MudToggleIconButton Color="Color.Inherit" @bind-Toggled="_isDarkMode" Icon="@Icons.Material.Filled.LightMode"
-                             ToggledIcon="@Icons.Material.Filled.DarkMode" />
+        <MudToggleIconButton Color="Color.Inherit" @bind-Toggled="_isDarkMode" @bind-Toggled:after="OnDarkModeToggle" 
+            Icon="@Icons.Material.Filled.LightMode" ToggledIcon="@Icons.Material.Filled.DarkMode" />
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
@@ -28,27 +33,74 @@
 </div>
 
 @code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+
     private bool _drawerOpen = true;
 
     private bool _isDarkMode;
 
     private MudThemeProvider _mudThemeProvider = default!;
 
-
+    private string? _userId;
 
     private void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationState == null) return;
+
+        var auth = await AuthenticationState;
+        _userId = auth.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (_userId == null) return;
+
+        var storedDarkMode = StoreGetDarkMode();
+
+        if (storedDarkMode != null)
+        {
+            _isDarkMode = storedDarkMode.Value;
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            if (_userId != null)
+            {
+                var storedDarkMode = StoreGetDarkMode();
+                if (storedDarkMode != null) return;
+            }
+
             _isDarkMode = await _mudThemeProvider.GetSystemPreference();
             StateHasChanged();
+            StoreSetDarkMode();
         }
+    }
+
+    private void OnDarkModeToggle()
+    {
+        StoreSetDarkMode();
+    }
+
+    private void StoreSetDarkMode()
+    {
+        if (_userId != null)
+        {
+            Store.Set(_userId, TempUserStorage.DARK_MODE, _isDarkMode.ToString());
+        }
+    }
+
+    private bool? StoreGetDarkMode()
+    {
+        return _userId != null 
+        && Store.TryGet(_userId, TempUserStorage.DARK_MODE, out var strValue)
+        && bool.TryParse(strValue, out var value) ? value : null;
     }
 
 }

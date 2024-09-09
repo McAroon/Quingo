@@ -7,6 +7,7 @@ using Quingo.Components;
 using Quingo.Components.Account;
 using Quingo.Data;
 using Quingo.Scripts;
+using Quingo.Shared;
 using Quingo.Shared.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,6 +51,7 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 builder.Services.AddSingleton<GameStateService>();
 builder.Services.AddScoped<GenerateStandardBingo>();
+builder.Services.AddSingleton<TempUserStorage>();
 
 var app = builder.Build();
 
