@@ -1,24 +1,17 @@
-﻿<MudPaper Height="150" Width="150">
-    <MudCard Class="pa-5" Outlined="Highlighted">
-        @if (Node == null)
-        {
-            <MudCardContent>
-                <MudText Typo="Typo.body1">FREE</MudText>
-            </MudCardContent>
-        }
-        else
-        {
-            @if (!string.IsNullOrEmpty(Node.ImageUrl))
-            {
-                <MudCardMedia Image="@Node.ImageUrl" Height="100" />
-            }
-            <MudCardContent>
-                <MudText Typo="Typo.body1">@Node.Name</MudText>
-            </MudCardContent>
-        }
-    </MudCard>
-</MudPaper>
-
+﻿<MudCard Class="@CardClass">
+    @if (!string.IsNullOrEmpty(Node?.ImageUrl))
+    {
+        <MudCardMedia Image="@Node.ImageUrl" Height="100" />
+    }
+    <MudCardContent Class="align-content-center">
+        <MudText Align="Align.Center" Typo="Typo.h6">
+            <span class="node-text">@(Node?.Name ?? "FREE")</span>
+        </MudText>
+    </MudCardContent>
+    <MudBadge BadgeClass="z-10" Color="Color.Tertiary" Overlap Origin="Origin.BottomRight"
+              Visible="ShowTagsBadge && BadgeText != null" Content="@BadgeText">
+    </MudBadge>
+</MudCard>
 
 @code {
     [Parameter, EditorRequired]
@@ -26,4 +19,15 @@
 
     [Parameter]
     public bool Highlighted { get; set; }
+
+    [Parameter]
+    public bool Selected { get; set; }
+
+    [Parameter]
+    public bool ShowTagsBadge { get; set; }
+
+    public string CardClass => string.Join(" ", 
+        ["pa-1", "node-square", Highlighted ? "node-highlighted" : "", Selected ? "node-selected" : ""]);
+
+    public string? BadgeText => Node != null ? string.Join(", ", Node.NodeTags.Select(t => t.Tag.Name)) : null;
 }

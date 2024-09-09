@@ -1,11 +1,16 @@
-﻿<MudGrid Justify="Justify.FlexEnd">
-    <MudItem md="1" xs="4">
-        <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop"
-                   Disabled="Game.State != GameStateEnum.Active" OnClick="EndGame">End Game</MudButton>
+﻿@inject ISnackbar Snackbar
+@inject ILogger<HostActionBar> Logger
+
+<MudGrid Justify="Justify.FlexEnd">
+    <MudItem xs="5" Class="d-flex">
+         <div class="ml-auto">
+            <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop"
+                       Disabled="Game.State != GameStateEnum.Active" OnClick="EndGame">End Game</MudButton>
+         </div>
     </MudItem>
 </MudGrid>
 <MudGrid Justify="Justify.Center">
-    <MudItem md="1" xs="4">
+    <MudItem md="2" xs="4">
         <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
                    StartIcon="@Icons.Material.Outlined.PlayCircle" OnClick="Draw"
                    Disabled="Game.State != GameStateEnum.Active || !Game.CanDraw">Draw</MudButton>
@@ -16,13 +21,29 @@
     [CascadingParameter]
     public GameState Game { get; set; } = default!;
 
-    public void EndGame()
+    private void EndGame()
     {
-        Game.EndGame();
+        try
+        {
+            Game.EndGame();
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, e.Message);
+            Snackbar.Add(e.Message, Severity.Error);
+        }
     }
 
-    public void Draw()
+    private void Draw()
     {
-        Game.Draw();
+        try
+        {
+            Game.Draw();
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, e.Message);
+            Snackbar.Add(e.Message, Severity.Error);
+        }
     }
 }

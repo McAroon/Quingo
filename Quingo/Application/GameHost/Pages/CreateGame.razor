@@ -17,13 +17,13 @@
 
 <MudGrid>
     <MudItem xs="12" md="4">
-        <MudSelect T="int" Label="Select Pack" @bind-Value="@_selectedPackId" @bind-Value:after="OnPackSelected">
+        <MudSelect T="int?" Label="Select Pack" @bind-Value="@_selectedPackId" @bind-Value:after="OnPackSelected" Class="pb-4">
             @foreach (var pack in _packs)
             {
-                <MudSelectItem T="int" Value="@pack.Id">@pack.Name</MudSelectItem>
+                <MudSelectItem T="int?" Value="@pack.Id">@pack.Name</MudSelectItem>
             }
         </MudSelect>
-        <MudButton StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="StartGame" Disabled="_pack == null">Start Game</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="StartGame" Disabled="_pack == null">Start Game</MudButton>
     </MudItem>
 </MudGrid>
 
@@ -35,7 +35,7 @@
 
     private string? _userId;
 
-    private int _selectedPackId;
+    private int? _selectedPackId;
 
     private Pack? _pack;
 

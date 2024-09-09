@@ -14,7 +14,7 @@
 
 <MudText Typo="Typo.h3" GutterBottom>Join Game</MudText>
 
-<MudTable Items="StateService.Games" Hover>
+<MudTable Items="StateService.Games">
     <HeaderContent>
         <MudTh>Pack</MudTh>
         <MudTh>Host</MudTh>
@@ -24,11 +24,11 @@
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Pack">@context.Pack.Name</MudTd>
-        <MudTd DataLabel="Host">@context.HostUserId</MudTd>
+        <MudTd DataLabel="Host">@context.HostName</MudTd>
         <MudTd DataLabel="Started">@context.StartedAt.ToShortDateString() @context.StartedAt.ToShortTimeString()</MudTd>
         <MudTd DataLabel="Players">@context.Players.Count</MudTd>
         <MudTd DataLabel="Actions">
-            <MudButton Size="Size.Small" OnClick="() => Join(context)">Join</MudButton>
+            <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => Join(context)">Join</MudButton>
         </MudTd>
     </RowTemplate>
 </MudTable>

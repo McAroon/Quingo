@@ -16,11 +16,6 @@ namespace Quingo.Data
             _httpContextAccessor = contextAccessor;
         }
 
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-        {
-            
-        }
-
         public DbSet<Node> Nodes { get; set; }
         public DbSet<NodeLink> NodeLinks { get; set; }
         public DbSet<NodeTag> NodeTags { get; set; }
@@ -34,7 +29,7 @@ namespace Quingo.Data
             .Include(x => x.Tags)
             .Include(x => x.NodeLinkTypes)
             .Include(x => x.Presets)
-            .Include(x => x.Nodes).ThenInclude(x => x.NodeTags)
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeTags).ThenInclude(x => x.Tag)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo);
 

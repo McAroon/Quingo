@@ -1,10 +1,24 @@
-﻿<MudGrid Spacing="1">
+﻿<MudGrid Spacing="1" Class="pb-2">
+    @foreach (var col in State.GameState.Preset.Columns)
+    {
+        <MudItem>
+            <MudCard Outlined Class="pa-5 node-square node-header">
+                <MudCardContent Class="align-content-center">
+                    <MudText Align="Align.Center" Typo="Typo.h5">
+                        <span class="node-text">@col.Name</span>
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
+<MudGrid Spacing="1">
     @for (int row = 0; row < State.Card.Cells.GetLength(1); row++)
     {
         @for (int col = 0; col < State.Card.Cells.GetLength(0); col++)
         {
             var cell = State.Card.Cells[col, row];
-            <MudItem xs="1">
+            <MudItem>
                 <PlayerCardCell Cell="cell" />
             </MudItem>
         }

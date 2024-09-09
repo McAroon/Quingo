@@ -1,14 +1,6 @@
-﻿<MudBadge Visible="Cell.IsMarked" Overlap Color="Color.Primary">
-    <div @onclick="Mark" class="@ClickableClass">
-        <NodeSquare Node="Cell.Node"  />
-    </div>
-</MudBadge>
-
-<style>
-    .node-clickable {
-        cursor: pointer;
-    }
-</style>
+﻿<div @onclick="Mark" class="@ClickableClass">
+    <NodeSquare Node="Cell.Node" Selected="Cell.IsMarked" />
+</div>
 
 @code {
     [CascadingParameter]

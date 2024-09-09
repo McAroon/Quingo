@@ -1,6 +1,42 @@
-﻿<h3>PlayerActionBar</h3>
+﻿@inject ISnackbar Snackbar
+@inject ILogger<PlayerActionBar> Logger
+
+<MudGrid Justify="Justify.FlexEnd">
+    <MudItem xs="5" Class="d-flex">
+        <div class="ml-auto">
+            <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ExitToApp" Href="/">Leave Game</MudButton>
+        </div>
+    </MudItem>
+</MudGrid>
+<MudGrid Justify="Justify.Center">
+    <MudItem md="2" xs="4">
+        <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Outlined.BackHand" OnClick="Call"
+                   Disabled="!AllowCall">Call</MudButton>
+    </MudItem>
+</MudGrid>
 
 @code {
     [CascadingParameter]
     public PlayerState State { get; set; } = default!;
+
+    private bool AllowCall => (State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown)
+        && State.LivesNumber > 0;
+
+    private void Call()
+    {
+        try
+        {
+            if (AllowCall)
+            {
+                State.GameState.Call(State);
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, e.Message);
+            Snackbar.Add(e.Message, Severity.Error);
+        }
+    }
+
 }

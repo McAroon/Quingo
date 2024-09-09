@@ -2,11 +2,11 @@
 
 @implements IDisposable
 
-<MudGrid Spacing="5">
+<MudGrid Spacing="1">
     @foreach (var node in Nodes)
     {
         <MudItem>
-            <NodeSquare Node="node" Highlighted="node == Game.DrawnNodes.Last() && _toggleHighlight" />
+            <NodeSquare Node="node" Highlighted="node == Game.DrawnNodes.Last() && _toggleHighlight" ShowTagsBadge />
         </MudItem>
     }
 </MudGrid>

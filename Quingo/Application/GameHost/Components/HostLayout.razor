@@ -1,11 +1,16 @@
 ﻿<MudGrid>
-    <MudItem xs="12">
+    <MudItem xs="12" md="6">
        <HostActionBar />
     </MudItem>
+    <MudItem xs="12" md="6">
+        <HostStats />
+    </MudItem>
     <MudItem md="6" xs="12">
+        <MudText Typo="Typo.h5" GutterBottom>Draw History</MudText>
         <QuestionList Game="Game" />
     </MudItem>
     <MudItem md="6" xs="12">
+        <MudText Typo="Typo.h5" GutterBottom>Player List</MudText>
         <PlayerList />
     </MudItem>
 </MudGrid>

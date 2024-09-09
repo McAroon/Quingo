@@ -7,3 +7,29 @@
     margin-bottom: -4px;
     margin-right: 4px;
 }
+
+.node-clickable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.node-square {
+    width: 110px;
+    height: 110px;
+}
+
+.node-header {
+    background-color: var(--mud-palette-tertiary-hover);
+}
+
+.node-highlighted, .node-selected {
+    background-color: var(--mud-palette-primary-hover);
+}
+
+    .node-selected .node-text {
+        color: var(--mud-palette-primary-text);
+        background-color: var(--mud-palette-primary);
+        border-radius: 30px;
+        padding: 6px 8px;
+        margin: 0 -8px;
+    }
