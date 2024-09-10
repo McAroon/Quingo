@@ -42,6 +42,8 @@ public class GameState : IDisposable
 
     public DateTime UpdatedAt { get; private set; }
 
+    public int QuestionCount { get; private set; }
+
     private readonly Random _random;
     public Random Random => _random;
 
@@ -65,6 +67,14 @@ public class GameState : IDisposable
 
     public int EndgameTimer { get; private set; }
 
+    public string StateDisplayValue => State switch
+    {
+        GameStateEnum.Init => "Init",
+        GameStateEnum.Active => "Active",
+        GameStateEnum.FinalCountdown => "Countdown",
+        GameStateEnum.Finished => "Finished",
+        _ => ""
+    };
 
     private void Setup()
     {
@@ -72,6 +82,7 @@ public class GameState : IDisposable
 
         var qTagIds = Preset.Columns.SelectMany(x => x.QuestionTags).Distinct().ToList();
         _qNodes = Pack.Nodes.Where(x => qTagIds.Any(t => x.NodeTags.Select(nt => nt.TagId).Contains(t))).ToList();
+        QuestionCount = _qNodes.Count;
         _bingoPatterns = PatternGenerator.GenerateDefaultPatterns(Preset.CardSize);
         State = GameStateEnum.Active;
     }
@@ -87,7 +98,7 @@ public class GameState : IDisposable
     {
         if (!CanDraw || State != GameStateEnum.Active) return;
 
-        var idx = _random.Next(0, _qNodes.Count - 1);
+        var idx = _random.Next(0, _qNodes.Count);
         var node = _qNodes[idx];
         _qNodes.Remove(node);
         _drawnNodes.Add(node);
@@ -112,7 +123,7 @@ public class GameState : IDisposable
                 {
                     var patCell = pattern[col, row];
                     var plCell = player.Card.Cells[col, row];
-                    patternValid = patCell & plCell.IsMarked & plCell.IsValid == patCell;
+                    patternValid = (patCell & plCell.IsMarked & plCell.IsValid) == patCell;
                     if (!patternValid) break;
                 }
                 if (!patternValid) break;
@@ -171,6 +182,8 @@ public class GameState : IDisposable
 
     public event Action? NodeDrawn;
 
+    public event Action<PlayerState>? PlayerJoined;
+
     private void NotifyStateChanged()
     {
         UpdatedAt = DateTime.UtcNow;
@@ -186,6 +199,9 @@ public class GameState : IDisposable
     private void HandlePlayersChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         NotifyStateChanged();
+        var player = e.NewItems?.Count > 0 ? (PlayerState?)e.NewItems[0] : null;
+        if (player != null)
+            PlayerJoined?.Invoke(player);
     }
 
     private void HandleWinningPlayersChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)

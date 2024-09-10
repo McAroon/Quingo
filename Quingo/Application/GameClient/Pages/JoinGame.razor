@@ -12,9 +12,13 @@
 
 <PageTitle>Join Game</PageTitle>
 
-<MudText Typo="Typo.h3" GutterBottom>Join Game</MudText>
+<MudText Typo="Typo.h3" GutterBottom>
+    Join Game <MudTooltip Text="Refresh">
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="StateHasChanged"></MudIconButton>
+    </MudTooltip>
+    </MudText>
 
-<MudTable Items="StateService.Games">
+<MudTable Items="StateService.Games.Where(x => x.State == GameStateEnum.Active)">
     <HeaderContent>
         <MudTh>Pack</MudTh>
         <MudTh>Host</MudTh>

@@ -6,7 +6,7 @@
         <PlayerStats />
     </MudItem>
     <MudItem xs="12">
-        <MudText Typo="Typo.h5" GutterBottom>Draw History</MudText>
+        <MudText Typo="Typo.h5" GutterBottom>Draw History (@State.GameState.DrawnNodes.Count / @State.GameState.QuestionCount)</MudText>
         <QuestionList Game="State.GameState" ItemsToDisplay="10" />
     </MudItem>
     <MudItem xs="12">

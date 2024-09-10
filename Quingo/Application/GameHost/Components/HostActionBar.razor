@@ -1,11 +1,19 @@
 ﻿@inject ISnackbar Snackbar
 @inject ILogger<HostActionBar> Logger
+@inject GameStateService StateService
 
 <MudGrid Justify="Justify.FlexEnd">
     <MudItem xs="5" Class="d-flex">
          <div class="ml-auto">
-            <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop"
-                       Disabled="Game.State != GameStateEnum.Active" OnClick="EndGame">End Game</MudButton>
+            @if (Game.State == GameStateEnum.Active)
+            {
+                <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop"
+                Disabled="Game.State != GameStateEnum.Active" OnClick="EndGame">End Game</MudButton>
+            }
+            else
+            {
+                <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ExitToApp" Href="/">Leave Game</MudButton>
+            }
          </div>
     </MudItem>
 </MudGrid>
@@ -21,11 +29,14 @@
     [CascadingParameter]
     public GameState Game { get; set; } = default!;
 
+    [CascadingParameter(Name = "UserId")]
+    public string UserId { get; set; } = default!;
+
     private void EndGame()
     {
         try
         {
-            Game.EndGame();
+            StateService.EndGame(Game.GameSessionId, UserId);
         }
         catch (Exception e)
         {
@@ -39,6 +50,12 @@
         try
         {
             Game.Draw();
+
+            // var count = Game.QNodes.Count;
+            // for (int i = 0; i < count && Game.CanDraw; i++)
+            // {
+            //     Game.Draw();
+            // }
         }
         catch (Exception e)
         {

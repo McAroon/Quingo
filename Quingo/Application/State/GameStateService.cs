@@ -20,7 +20,7 @@ public class GameStateService
     {
         try
         {
-            if (_state.Values.Any(x => x.HostUserId == userId))
+            if (_state.Values.Any(x => x.State != GameStateEnum.Finished && x.HostUserId == userId))
             {
                 throw new GameStateException("User is already hosting a game");
             }
@@ -66,9 +66,10 @@ public class GameStateService
         try
         {
             var game = GetGameState(gameSessionId);
-            if (game.Players.Any(x => x.PlayerUserId == userId))
+            var exPlayer = game.Players.FirstOrDefault(x => x.PlayerUserId == userId);
+            if (exPlayer != null)
             {
-                throw new GameStateException("Player has already joined the game");
+                return exPlayer;
             }
 
             var playerSessionId = Guid.NewGuid();
@@ -97,7 +98,7 @@ public class GameStateService
     {
         if (!_state.TryGetValue(gameSessionId, out var game))
         {
-            throw new GameStateException("Game state not found");
+            throw new GameStateException("Game not found");
         }
         return game;
     }
@@ -108,7 +109,7 @@ public class GameStateService
         var player = game.Players.FirstOrDefault(x => x.PlayerSessionId == playerSessionId && x.PlayerUserId == userId);
         if (player == null)
         {
-            throw new GameStateException("Player state not found");
+            throw new GameStateException("Player not found");
         }
         return player;
     }
@@ -137,7 +138,7 @@ public class GameStateService
     {
         if (game.State != GameStateEnum.Finished)
         {
-            throw new GameStateException("Only finished games can be removed");
+            return;
         }
 
         _ = Task.Run(async () => 

@@ -55,6 +55,12 @@ else
 
             _game = StateService.GetGameState(GameSessionId, _userId);
             _game.StateChanged += OnStateChanged;
+            _game.PlayerJoined += OnPlayerJoined;
+
+            foreach (var player in _game.Players)
+            {
+                player.StateChanged += OnStateChanged;
+            }
         }
         catch (Exception e)
         {
@@ -68,11 +74,25 @@ else
         InvokeAsync(StateHasChanged);
     }
 
+    private void OnPlayerJoined(PlayerState player)
+    {
+        Snackbar.Add($"{player.PlayerName} has joined!", Severity.Info);
+        player.StateChanged += OnStateChanged;
+    }
+
     public void Dispose()
     {
-        if (_game != null)
+        if (_game == null) return;
+
+        _game.StateChanged -= OnStateChanged;
+        foreach (var player in _game.Players)
         {
-            _game.StateChanged -= OnStateChanged;
+            player.StateChanged -= OnStateChanged;
+        }
+
+        if (_game.State == GameStateEnum.Finished)
+        {
+            StateService.RemoveGame(_game);
         }
     }
 }

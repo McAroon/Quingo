@@ -28,12 +28,11 @@
 </MudGrid>
 
 @code {
-    [CascadingParameter]
-    private Task<AuthenticationState>? AuthenticationState { get; set; }
+    [CascadingParameter(Name = "UserId")]
+    public string UserId { get; set; } = default!;
 
     private List<Pack> _packs = [];
 
-    private string? _userId;
 
     private int? _selectedPackId;
 
@@ -41,11 +40,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _packs = await Db.Packs.ToListAsync();
-        if (AuthenticationState != null)
+        var exGame = StateService.Games.FirstOrDefault(x => x.HostUserId == UserId && x.State != GameStateEnum.Finished);
+        if (exGame != null)
         {
-            _userId = (await AuthenticationState).User.FindFirstValue(ClaimTypes.NameIdentifier);
+            NavigationManager.NavigateTo($"/game/host/{exGame.GameSessionId}");
+            return;
         }
+        _packs = await Db.Packs.ToListAsync();
     }
 
     private async Task OnPackSelected()
@@ -62,9 +63,9 @@
         try
         {
             ArgumentNullException.ThrowIfNull(_pack, nameof(_pack));
-            ArgumentNullException.ThrowIfNull(_userId, nameof(_userId));
+            ArgumentNullException.ThrowIfNull(UserId, nameof(UserId));
 
-            var game = await StateService.StartGame(_pack.Id, _userId);
+            var game = await StateService.StartGame(_pack.Id, UserId);
             NavigationManager.NavigateTo($"/game/host/{game.GameSessionId}");
         }
         catch (Exception e)

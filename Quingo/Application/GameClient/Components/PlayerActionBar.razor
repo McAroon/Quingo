@@ -21,7 +21,7 @@
     public PlayerState State { get; set; } = default!;
 
     private bool AllowCall => (State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown)
-        && State.LivesNumber > 0;
+        && State.LivesNumber > 0 && !State.GameState.WinningPlayers.Contains(State);
 
     private void Call()
     {
