@@ -1,22 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Quingo.Shared.Entities;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Quingo.Application.Packs.Models
+namespace Quingo.Application.Packs.Models;
+
+public class PackModel
 {
-    public class PackModel
+    public PackModel()
     {
-        [Required]
-        [Display(Name = "Name")]
-        public string? Name { get; set; }
-
-        [Display(Name = "Description")]
-        public string? Description { get; set; }
-
-        [Display(Name = "Image Url")]
-        public string? ImageUrl { get; set; }
+        
     }
+
+    public PackModel(Pack? pack)
+    {
+        Name = pack?.Name ?? "";
+        Description = pack?.Description ?? "";
+        ImageUrl = pack?.ImageUrl ?? "";
+    }
+
+    [Required]
+    [Display(Name = "Name")]
+    public string? Name { get; set; }
+
+    [Display(Name = "Description")]
+    public string? Description { get; set; }
+
+    [Display(Name = "Image Url")]
+    public string? ImageUrl { get; set; }
 }

@@ -1,0 +1,99 @@
+﻿@inject ApplicationDbContext Db
+@inject NavigationManager NavigationManager
+
+<MudText Typo="Typo.h4" GutterBottom>
+    Pack Info @if (!_isEdit)
+    {
+        <MudTooltip Text="Edit Pack info">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => _isEdit = true"></MudIconButton>
+        </MudTooltip>
+    }
+</MudText>
+
+@if (_isEdit)
+{
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudCard>
+                <MudCardContent>
+                    <MudForm @ref="@_form">
+                        <MudTextField Label="Pack Name" @bind-Value="_model.Name" Required />
+                        <MudTextField Label="Description" @bind-Value="_model.Description" />
+                        <MudTextField Label="Image Url" @bind-Value="_model.ImageUrl" />
+                    </MudForm>
+                </MudCardContent>
+                <MudCardActions>
+                    <div class="ml-auto">
+                        <MudButton Color="Color.Primary" OnClick="Save" StartIcon="@Icons.Material.Filled.Save">Save</MudButton>
+                        @if (!IsCreate)
+                        {
+                            <MudButton Color="Color.Secondary" OnClick="CancelEdit" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+                        }
+                    </div>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudList T="string" ReadOnly>
+                <MudListItem Text="Pack Name" SecondaryText="@(!string.IsNullOrEmpty(Pack?.Name) ? Pack.Name : "-")" />
+                <MudListItem Text="Description" SecondaryText="@(!string.IsNullOrEmpty(Pack?.Description) ? Pack.Description : "-")" />
+                <MudListItem Text="Image Url" SecondaryText="@(!string.IsNullOrEmpty(Pack?.ImageUrl) ? Pack.ImageUrl : "-")" />
+            </MudList>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    [Parameter]
+    public int? PackId { get; set; }
+
+    [Parameter]
+    public Pack? Pack { get; set; }
+
+    private bool _isEdit;
+
+    private bool IsCreate => PackId == null;
+
+    private MudForm _form = default!;
+
+    private PackModel _model = default!;
+
+    protected override void OnInitialized()
+    {
+        _model = new PackModel(Pack);
+        _isEdit = IsCreate;
+    }
+
+    private async Task Save()
+    {
+        await _form.Validate();
+        if (!_form.IsValid) return;
+
+        var pack = Pack ?? new Pack();
+        pack.Name = _model.Name;
+        pack.Description = _model.Description;
+        pack.ImageUrl = _model.ImageUrl;
+
+        Db.Update(pack);
+        await Db.SaveChangesAsync();
+
+        _isEdit = false;
+
+        if (IsCreate)
+        {
+            NavigationManager.NavigateTo($"game/setup/pack/{pack.Id}");
+        }
+    }
+
+    private void CancelEdit()
+    {
+        _isEdit = false;
+        _model = new PackModel(Pack);
+        StateHasChanged();
+    }
+}
