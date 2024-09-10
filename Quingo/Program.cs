@@ -1,7 +1,7 @@
+using Amazon.S3;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Minio;
 using MudBlazor.Services;
 using Quingo.Application.State;
 using Quingo.Components;
@@ -55,12 +55,19 @@ builder.Services.AddSingleton<GameStateService>();
 builder.Services.AddScoped<GenerateStandardBingo>();
 builder.Services.AddSingleton<TempUserStorage>();
 
-// minio
-var minioSettings = builder.Configuration.GetSection(nameof(MinioSettings)).Get<MinioSettings>() ?? new();
-builder.Services.AddMinio(cc => cc
-    .WithEndpoint(minioSettings.Endpoint)
-    .WithCredentials(minioSettings.AccessKey, minioSettings.SecretKey)
-    .Build());
+// S3
+var s3Settings = builder.Configuration.GetSection(nameof(S3Settings)).Get<S3Settings>() ?? new();
+builder.Services.AddSingleton<IAmazonS3>(sp =>
+{
+    var s3Config = new AmazonS3Config
+    {
+        ServiceURL = s3Settings.Endpoint,
+        ForcePathStyle = true,
+    };
+
+    return new AmazonS3Client(s3Settings.AccessKey, s3Settings.SecretKey, s3Config);
+});
+
 builder.Services.AddScoped<FileStoreService>();
 builder.Services.Configure<FileStoreSettings>(builder.Configuration.GetSection(nameof(FileStoreSettings)));
 

@@ -1,5 +1,6 @@
 ﻿@inject ApplicationDbContext Db
 @inject NavigationManager NavigationManager
+@inject FileStoreService Files
 
 <MudText Typo="Typo.h4" GutterBottom>
     Pack Info @if (!_isEdit)
@@ -19,7 +20,7 @@
                     <MudForm @ref="@_form">
                         <MudTextField Label="Pack Name" @bind-Value="_model.Name" Required />
                         <MudTextField Label="Description" @bind-Value="_model.Description" />
-                        <MudTextField Label="Image Url" @bind-Value="_model.ImageUrl" />
+                        <ImageUpload @ref="_upload" />
                     </MudForm>
                 </MudCardContent>
                 <MudCardActions>
@@ -39,11 +40,21 @@ else
 {
     <MudGrid>
         <MudItem xs="12" md="4">
-            <MudList T="string" ReadOnly>
-                <MudListItem Text="Pack Name" SecondaryText="@(!string.IsNullOrEmpty(Pack?.Name) ? Pack.Name : "-")" />
-                <MudListItem Text="Description" SecondaryText="@(!string.IsNullOrEmpty(Pack?.Description) ? Pack.Description : "-")" />
-                <MudListItem Text="Image Url" SecondaryText="@(!string.IsNullOrEmpty(Pack?.ImageUrl) ? Pack.ImageUrl : "-")" />
-            </MudList>
+            @if (!string.IsNullOrEmpty(Pack?.ImageUrl))
+            {
+                <MudImage ObjectFit="ObjectFit.ScaleDown" Src="@Files.GetFileUrl(Pack.ImageUrl)" Class="rounded-lg" Height="200" />
+            }
+
+            <table class="dl-table">
+                <tr>
+                    <th>Pack Name</th>
+                    <td>@(!string.IsNullOrEmpty(Pack?.Name) ? Pack.Name : "-")</td>
+                </tr>
+                <tr>
+                    <th>Description</th>
+                    <td>@(!string.IsNullOrEmpty(Pack?.Description) ? Pack.Description : "-")</td>
+                </tr>
+            </table>
         </MudItem>
     </MudGrid>
 }
@@ -63,6 +74,8 @@ else
 
     private PackModel _model = default!;
 
+    private ImageUpload _upload = default!;
+
     protected override void OnInitialized()
     {
         _model = new PackModel(Pack);
@@ -77,8 +90,8 @@ else
         var pack = Pack ?? new Pack();
         pack.Name = _model.Name;
         pack.Description = _model.Description;
-        pack.ImageUrl = _model.ImageUrl;
 
+        await UploadImage(pack);
         Db.Update(pack);
         await Db.SaveChangesAsync();
 
@@ -88,6 +101,14 @@ else
         {
             NavigationManager.NavigateTo($"game/setup/pack/{pack.Id}");
         }
+    }
+
+    private async Task UploadImage(Pack pack)
+    {
+        if (_upload.File == null) return;
+
+        await Files.UploadBrowserFile(_upload.File);
+        pack.ImageUrl = _upload.File.Name;
     }
 
     private void CancelEdit()

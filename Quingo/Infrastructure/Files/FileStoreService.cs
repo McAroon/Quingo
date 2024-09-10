@@ -1,33 +1,39 @@
-﻿using Microsoft.Extensions.Options;
-using Minio;
-using Minio.DataModel.Args;
+﻿using Amazon.S3;
+using Amazon.S3.Model;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Extensions.Options;
 
 namespace Quingo.Infrastructure.Files;
 
 public class FileStoreService
 {
-    private readonly IMinioClient _minio;
-    private readonly FileStoreSettings _settings;
+    private readonly FileStoreSettings _fileSettings;
+    private readonly IAmazonS3 _client;
 
-    public FileStoreService(IMinioClient minio, IOptions<FileStoreSettings> storageOptions)
+    public FileStoreService(IOptions<FileStoreSettings> storageOptions, IAmazonS3 client)
     {
-        _minio = minio;
-        _settings = storageOptions.Value;
+        _fileSettings = storageOptions.Value;
+        _client = client;
     }
 
-    public async Task UploadFile(Stream data, string filename, string contentType)
+    public async Task UploadBrowserFile(IBrowserFile file)
     {
-        var args = new PutObjectArgs()
-            .WithBucket(_settings.Bucket)
-            .WithStreamData(data)
-            .WithFileName(filename)
-            .WithContentType(contentType);
-        await _minio.PutObjectAsync(args);
+        using var data = file.OpenReadStream();
+
+        var req = new PutObjectRequest
+        {
+            BucketName = _fileSettings.Bucket,
+            Key = file.Name,
+            InputStream = data,
+            ContentType = file.ContentType,
+        };
+
+        var res = await _client.PutObjectAsync(req);
     }
 
-    public string GetFileUrl(string filename)
+    public string GetFileUrl(string? filename)
     {
-        var prefix = _settings.UrlPrefix.EndsWith('/') ? _settings.UrlPrefix : _settings.UrlPrefix + "/";
+        var prefix = _fileSettings.UrlPrefix.EndsWith('/') ? _fileSettings.UrlPrefix : _fileSettings.UrlPrefix + "/";
         return prefix + filename;
     }
 }

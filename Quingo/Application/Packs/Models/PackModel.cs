@@ -14,7 +14,6 @@ public class PackModel
     {
         Name = pack?.Name ?? "";
         Description = pack?.Description ?? "";
-        ImageUrl = pack?.ImageUrl ?? "";
     }
 
     [Required]
@@ -23,7 +22,4 @@ public class PackModel
 
     [Display(Name = "Description")]
     public string? Description { get; set; }
-
-    [Display(Name = "Image Url")]
-    public string? ImageUrl { get; set; }
 }

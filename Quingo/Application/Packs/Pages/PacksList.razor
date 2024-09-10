@@ -4,6 +4,7 @@
 @using System.Security.Claims
 
 @inject ApplicationDbContext Db
+@inject FileStoreService Files
 
 @attribute [Authorize]
 
@@ -29,7 +30,7 @@ else
                 <MudCard>
                     @if (!string.IsNullOrEmpty(pack.ImageUrl))
                     {
-                        <MudCardMedia Image="@pack.ImageUrl" />
+                        <MudCardMedia Image="@Files.GetFileUrl(pack.ImageUrl)" />
                     }
                     <MudCardHeader>
                         <CardHeaderContent>
@@ -47,11 +48,8 @@ else
                             }
                         </CardHeaderActions>
                     </MudCardHeader>
-                    <MudCardContent>
-                        @if (pack.Description != null)
-                        {
-                            <MudText>@pack.Description</MudText>
-                        }
+                    <MudCardContent Style="min-height:60px">
+                        <MudText>@pack.Description</MudText>
                     </MudCardContent>
                 </MudCard>
             </MudItem>

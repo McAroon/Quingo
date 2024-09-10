@@ -1,0 +1,68 @@
+﻿<MudStack Style="width: 150px">
+    <MudFileUpload T="IBrowserFile"
+                   @ref="@_fileUpload"
+                   OnFilesChanged="OnInputFileChanged"
+                   AppendMultipleFiles
+                   Hidden="@false"
+                   InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+                   InputStyle="opacity:0"
+                   tabindex="-1"
+                   @ondrop="@ClearDragClass"
+                   @ondragenter="@SetDragClass"
+                   @ondragleave="@ClearDragClass"
+                   @ondragend="@ClearDragClass">
+        <ActivatorContent>
+            <MudPaper Height="150px"
+                      Outlined="true"
+                      Class="@_dragClass">
+                <MudText Align="Align.Center" Color="Color.Primary">
+                    <MudIcon Icon="@Icons.Material.Filled.AttachFile" />
+                </MudText>
+                <MudText Align="Align.Center" Color="Color.Primary">
+                    Upload Image
+                </MudText>
+            </MudPaper>
+        </ActivatorContent>
+    </MudFileUpload>
+    @if (File != null)
+    {
+        <MudChip T="string"
+                 Color="Color.Dark"
+                 Text="@File.Name"
+                 OnClose="ClearAsync"
+                 Class="z-20"
+                 tabindex="-1" />
+    }
+</MudStack>
+
+@code {
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full align-content-center";
+
+    private string _dragClass = DefaultDragClass;
+
+    private MudFileUpload<IBrowserFile>? _fileUpload;
+
+    public IBrowserFile? File { get; private set; }
+
+    private async Task ClearAsync()
+    {
+        await (_fileUpload?.ClearAsync() ?? Task.CompletedTask);
+        File = null;
+        ClearDragClass();
+    }
+
+    private Task OpenFilePickerAsync()
+        => _fileUpload?.OpenFilePickerAsync() ?? Task.CompletedTask;
+
+    private void OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        File = e.File;
+        ClearDragClass();
+    }
+
+    private void SetDragClass()
+        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+
+    private void ClearDragClass()
+        => _dragClass = DefaultDragClass;
+}

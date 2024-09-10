@@ -1,6 +1,6 @@
 ﻿namespace Quingo.Infrastructure.Files
 {
-    public class MinioSettings
+    public class S3Settings
     {
         public string Endpoint { get; set; } = "";
 
