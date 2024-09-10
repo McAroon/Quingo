@@ -1,7 +1,7 @@
-﻿<MudGrid Spacing="1" Class="pb-2">
+﻿<MudStack Spacing="1" Row Class="pb-2" Wrap="Wrap.NoWrap">
     @foreach (var col in State.GameState.Preset.Columns)
     {
-        <MudItem>
+        <div>
             <MudCard Outlined Class="pa-5 node-square node-header">
                 <MudCardContent Class="align-content-center">
                     <MudText Align="Align.Center" Typo="Typo.h5">
@@ -9,22 +9,21 @@
                     </MudText>
                 </MudCardContent>
             </MudCard>
-        </MudItem>
+        </div>
     }
-</MudGrid>
-<MudGrid Spacing="1">
-    @for (int row = 0; row < State.Card.Cells.GetLength(1); row++)
-    {
+</MudStack>
+
+@for (int row = 0; row < State.Card.Cells.GetLength(1); row++)
+{
+    var cRow = row;
+    <MudStack Spacing="1" Row Class="pb-1" Wrap="Wrap.NoWrap">
         @for (int col = 0; col < State.Card.Cells.GetLength(0); col++)
         {
-            var cell = State.Card.Cells[col, row];
-            <MudItem>
-                <PlayerCardCell Cell="cell" />
-            </MudItem>
+            var cell = State.Card.Cells[col, cRow];
+            <PlayerCardCell Cell="cell" />
         }
-        <MudFlexBreak />
-    }
-</MudGrid>
+    </MudStack>
+}
 
 @code {
     [CascadingParameter]
