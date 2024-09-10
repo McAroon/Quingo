@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using Quingo.Shared.Entities;
 using System.Security.Claims;
 
-namespace Quingo.Data
+namespace Quingo.Infrastructure.Database
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {

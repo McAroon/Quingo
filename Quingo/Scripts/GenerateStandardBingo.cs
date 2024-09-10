@@ -1,4 +1,4 @@
-﻿using Quingo.Data;
+﻿using Quingo.Infrastructure.Database;
 using Quingo.Shared.Entities;
 
 namespace Quingo.Scripts;

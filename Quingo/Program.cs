@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Minio;
 using MudBlazor.Services;
 using Quingo.Application.State;
 using Quingo.Components;
 using Quingo.Components.Account;
-using Quingo.Data;
+using Quingo.Infrastructure.Database;
+using Quingo.Infrastructure.Files;
 using Quingo.Scripts;
 using Quingo.Shared;
 using Quingo.Shared.Entities;
@@ -52,6 +54,15 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 builder.Services.AddSingleton<GameStateService>();
 builder.Services.AddScoped<GenerateStandardBingo>();
 builder.Services.AddSingleton<TempUserStorage>();
+
+// minio
+var minioSettings = builder.Configuration.GetSection(nameof(MinioSettings)).Get<MinioSettings>() ?? new();
+builder.Services.AddMinio(cc => cc
+    .WithEndpoint(minioSettings.Endpoint)
+    .WithCredentials(minioSettings.AccessKey, minioSettings.SecretKey)
+    .Build());
+builder.Services.AddScoped<FileStoreService>();
+builder.Services.Configure<FileStoreSettings>(builder.Configuration.GetSection(nameof(FileStoreSettings)));
 
 var app = builder.Build();
 

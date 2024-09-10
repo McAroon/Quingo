@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Quingo.Client;
-using Quingo.Data;
 using Quingo.Shared.Entities;
 using System.Diagnostics;
 using System.Security.Claims;

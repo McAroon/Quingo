@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Quingo.Data;
+using Quingo.Infrastructure.Database;
 using System.Collections.Concurrent;
 
 namespace Quingo.Application.State;

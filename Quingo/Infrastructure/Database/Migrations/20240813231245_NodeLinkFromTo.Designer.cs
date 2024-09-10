@@ -5,15 +5,15 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using Quingo.Data;
+using Quingo.Infrastructure.Database;
 
 #nullable disable
 
 namespace Quingo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240821194602_NodeNameOpt")]
-    partial class NodeNameOpt
+    [Migration("20240813231245_NodeLinkFromTo")]
+    partial class NodeLinkFromTo
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -245,6 +245,7 @@ namespace Quingo.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("PackId")
@@ -595,7 +596,7 @@ namespace Quingo.Migrations
                         .HasForeignKey("DeletedByUserId");
 
                     b.HasOne("Quingo.Data.Entities.Node", "NodeFrom")
-                        .WithMany("NodeLinksFrom")
+                        .WithMany("NodeLinks1")
                         .HasForeignKey("NodeFromId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -607,7 +608,7 @@ namespace Quingo.Migrations
                         .IsRequired();
 
                     b.HasOne("Quingo.Data.Entities.Node", "NodeTo")
-                        .WithMany("NodeLinksTo")
+                        .WithMany("NodeLinks2")
                         .HasForeignKey("NodeToId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -747,9 +748,9 @@ namespace Quingo.Migrations
 
             modelBuilder.Entity("Quingo.Data.Entities.Node", b =>
                 {
-                    b.Navigation("NodeLinksFrom");
+                    b.Navigation("NodeLinks1");
 
-                    b.Navigation("NodeLinksTo");
+                    b.Navigation("NodeLinks2");
 
                     b.Navigation("NodeTags");
                 });
