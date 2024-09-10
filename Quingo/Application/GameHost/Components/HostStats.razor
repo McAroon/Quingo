@@ -1,4 +1,23 @@
-﻿<h3>HostStats</h3>
+﻿<table class="dl-table">
+    <tr>
+        <th>Game State</th>
+        <td>@Game.StateDisplayValue</td>
+    </tr>
+    @if (Game.State == GameStateEnum.FinalCountdown)
+    {
+        <tr>
+            <th>Countdown Timer</th>
+            <td>@Game.EndgameTimer</td>
+        </tr>
+    }
+    @if (Game.WinningPlayers.Count > 0)
+    {
+        <tr>
+            <th>@(Game.WinningPlayers.Count == 1 ? "Winner" : "Winners")</th>
+            <td>@string.Join(", ", Game.WinningPlayers.Select(x => x.PlayerName))</td>
+        </tr>
+    }
+</table>
 
 @code {
     [CascadingParameter]
