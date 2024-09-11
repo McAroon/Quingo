@@ -26,7 +26,8 @@
 }
 
 .node-square {
-    width: 110px;
+    width: 100%;
+    max-width: 110px;
     height: 110px;
     padding: 4px;
 }
@@ -38,6 +39,7 @@
         background-size: cover;
         border-radius: var(--mud-default-borderradius);
         padding: 0;
+        overflow: hidden;
     }
 
     .node-square .node-text {
@@ -52,11 +54,13 @@
         background-color: var(--mud-palette-primary);
     }
 
-.node-header {
-    background-color: var(--mud-palette-tertiary-hover);
-}
+    .node-square.node-header {
+        background-color: var(--mud-palette-tertiary-hover);
+        max-height: 110px;
+        height: auto;
+    }
 
-    .node-header.node-square .node-text {
+    .node-square.node-header .node-text {
         background-color: initial;
         color: var(--mud-palette-text-primary);
     }

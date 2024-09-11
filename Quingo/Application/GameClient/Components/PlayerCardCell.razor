@@ -1,6 +1,4 @@
-﻿<div @onclick="Mark" class="@ClickableClass">
-    <NodeSquare Node="Cell.Node" Selected="Cell.IsMarked" />
-</div>
+﻿<NodeSquare Node="Cell.Node" Selected="Cell.IsMarked" OnClick="@(OnClick!)" />
 
 @code {
     [CascadingParameter]
@@ -11,7 +9,7 @@
 
     private bool CanMark => State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown;
 
-    private string ClickableClass => CanMark ? "node-clickable" : "";
+    private Action? OnClick => CanMark ? Mark : null;
 
     private void Mark()
     {

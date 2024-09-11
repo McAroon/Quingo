@@ -1,6 +1,6 @@
 ﻿@inject FileStoreService Files
 
-<MudCard Class="@CardClass">
+<MudCard Class="@CardClass" @onclick="OnCardClick">
     <MudCardContent Class="node-square-content" Style="@ImageStyle">
         <MudText Align="Align.Center" Typo="Typo.h6">
             <span class="node-text">@(Node?.Name ?? "FREE")</span>
@@ -24,12 +24,18 @@
     [Parameter]
     public bool ShowTagsBadge { get; set; }
 
+    [Parameter]
+    public Action? OnClick { get; set; }
+
+    private Action OnCardClick => OnClick ?? (() => {});
+
     private string? ImageStyle => string.IsNullOrEmpty(Node?.ImageUrl) 
         ? null 
         : $"background-image: url(\"{Files.GetFileUrl(Node.ImageUrl)}\");";
 
     private string CardClass => string.Join(" ", 
-        ["node-square", Highlighted ? "node-highlighted" : "", Selected ? "node-selected" : ""]);
+        ["node-square", Highlighted ? "node-highlighted" : "", 
+        Selected ? "node-selected" : "", OnClick != null ? "node-clickable" : ""]);
 
     private string? BadgeText => Node != null ? string.Join(", ", Node.NodeTags.Select(t => t.Tag.Name)) : null;
 }

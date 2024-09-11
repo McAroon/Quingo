@@ -1,15 +1,13 @@
 ﻿<MudStack Spacing="1" Row Class="pb-2" Wrap="Wrap.NoWrap">
     @foreach (var col in State.GameState.Preset.Columns)
     {
-        <div>
-            <MudCard Outlined Class="pa-5 node-square node-header">
-                <MudCardContent Class="align-content-center">
-                    <MudText Align="Align.Center" Typo="Typo.h5">
-                        <span class="node-text">@col.Name</span>
-                    </MudText>
-                </MudCardContent>
-            </MudCard>
-        </div>
+        <MudCard Outlined Class="node-square node-header">
+            <MudCardContent Class="node-square-content">
+                <MudText Align="Align.Center" Typo="Typo.h5">
+                    <span class="node-text">@col.Name</span>
+                </MudText>
+            </MudCardContent>
+        </MudCard>
     }
 </MudStack>
 
