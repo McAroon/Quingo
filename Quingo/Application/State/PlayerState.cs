@@ -100,8 +100,7 @@ public class PlayerState : IDisposable
                 }
                 else
                 {
-                    cell.IsValid = cell.Node.LinkedNodes
-                        .Any(n => GameState.DrawnNodes.FirstOrDefault(dn => dn.Id == n.Id) != null);
+                    cell.IsValid = cell.Node.NodeLinks.Any(n => GameState.DrawnNodes.FirstOrDefault(dn => dn.Id == n.NodeFromId || dn.Id == n.NodeToId) != null);
                 }
             }
         }

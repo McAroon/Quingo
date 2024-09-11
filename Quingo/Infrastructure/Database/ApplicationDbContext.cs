@@ -30,8 +30,8 @@ namespace Quingo.Infrastructure.Database
             .Include(x => x.NodeLinkTypes)
             .Include(x => x.Presets)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeTags).ThenInclude(x => x.Tag)
-            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom).ThenInclude(x => x.NodeTo)
-            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo).ThenInclude(x => x.NodeFrom);
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo);
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
