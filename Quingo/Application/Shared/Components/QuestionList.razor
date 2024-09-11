@@ -22,6 +22,8 @@
 
     private IEnumerable<Node> Nodes => ItemsToDisplay > 0 ? Game.DrawnNodes.TakeLast(ItemsToDisplay) : Game.DrawnNodes;
 
+    private CancellationTokenSource _blinkCancelSrc = new();
+
     protected override void OnInitialized()
     {
         Game.NodeDrawn += Blink;
@@ -31,14 +33,20 @@
     {
         InvokeAsync(async () =>
         {
+            _blinkCancelSrc.Cancel();
+            _blinkCancelSrc = new();
+            var token = _blinkCancelSrc.Token;
+
             for (int i = 0; i < 6; i++)
             {
+                if (token.IsCancellationRequested) break;
+
                 _toggleHighlight = !_toggleHighlight;
                 StateHasChanged();
-                await Task.Delay(500);
+                await Task.Delay(500, token);
             }
 
-            if (!_toggleHighlight)
+            if (!_toggleHighlight && !token.IsCancellationRequested)
             {
                 _toggleHighlight = true;
                 StateHasChanged();
