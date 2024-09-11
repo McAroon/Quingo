@@ -1,5 +1,6 @@
 ﻿@inject ApplicationDbContext Db
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <MudText Typo="Typo.h4" GutterBottom>
     Link Types <MudTooltip Text="Add Link Type"><MudIconButton OnClick="AddLinkType" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip>
@@ -10,7 +11,7 @@
         @if (Pack?.NodeLinkTypes != null)
             @foreach (var link in Pack.NodeLinkTypes.Where(x => x.DeletedAt == null))
             {
-                <LineItemEdit Id="@link.Id" Value="@link.Name" OnSave="SaveLinkType" OnDelete="DeleteLinkType" />
+                <LineItemEdit Id="@link.Id" Value="@link.Name" OnSave="SaveLinkType" OnDelete="ConfirmDeleteLinkType" />
             }
     </MudItem>
 </MudGrid>
@@ -46,7 +47,7 @@
         StateHasChanged();
     }
 
-    private async Task DeleteLinkType(int id)
+    private async Task ConfirmDeleteLinkType(int id)
     {
         var link = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == id);
         if (link == null)
@@ -61,6 +62,22 @@
             return;
         }
 
+        var parameters = new ConfirmDialog.ConfirmDialogParams
+            {
+                Prompt = $"Delete link type {link.Name}?",
+                ButtonText = "Delete",
+                ButtonColor = Color.Error
+            };
+        var confirmed = await ConfirmDialog.CallDialog(DialogService, parameters);
+
+        if (confirmed)
+        {
+            await DeleteLinkType(link);
+        }
+    }
+
+    private async Task DeleteLinkType(NodeLinkType link)
+    {
         Db.Remove(link);
         await Db.SaveChangesAsync();
         StateHasChanged();

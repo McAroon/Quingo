@@ -1,5 +1,7 @@
 ﻿@inject ApplicationDbContext Db
 @inject FileStoreService Files
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <MudText Typo="Typo.h4" GutterBottom>
     Pack Items <MudTooltip Text="Add Item"><MudIconButton OnClick="AddNode" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip>
@@ -10,7 +12,7 @@
     @foreach(var node in Pack.Nodes.Where(x => x.DeletedAt == null))
     {
         <MudItem xs="12" md="6" lg="4">
-            <NodeEdit Node="node" OnSave="SaveNode" OnDelete="DeleteNode" />
+            <NodeEdit Node="node" OnSave="SaveNode" OnDelete="ConfirmDeleteNode" />
         </MudItem>
         <MudFlexBreak />
     }
@@ -41,7 +43,8 @@
             var node = Pack.Nodes.FirstOrDefault(x => x.Id == id);
             if (node == null)
             {
-                throw new Exception("Item not found"); // todo: proper error
+                Snackbar.Add("Item not found", Severity.Error);
+                return;
             }
 
             node.Name = model.Name;
@@ -54,7 +57,8 @@
                     var tag = Pack.Tags.FirstOrDefault(x => x.Id == tagId);
                     if (tag == null)
                     {
-                        throw new Exception("Tag not found"); // todo: proper error
+                        Snackbar.Add("Tag not found", Severity.Error);
+                        return;
                     }
 
                     nodeTag = new NodeTag
@@ -84,13 +88,15 @@
                     var linkType = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == linkModel.LinkTypeId);
                     if (linkType == null)
                     {
-                        throw new Exception("Link Type not found"); // todo: proper error
+                        Snackbar.Add("Link Type not found", Severity.Error);
+                        return;
                     }
 
                     var linkedNode = Pack.Nodes.FirstOrDefault(x => x.Id == linkModel.LinkedNodeId);
                     if (linkedNode == null)
                     {
-                        throw new Exception("Linked Item not found"); // todo: proper error
+                        Snackbar.Add("Linked Item not found", Severity.Error);
+                        return;
                     }
 
                     if (link == null)
@@ -123,13 +129,15 @@
                     var linkType = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == linkModel.LinkTypeId);
                     if (linkType == null)
                     {
-                        throw new Exception("Link Type not found"); // todo: proper error
+                        Snackbar.Add("Link Type not found", Severity.Error);
+                        return;
                     }
 
                     var linkedNode = Pack.Nodes.FirstOrDefault(x => x.Id == linkModel.LinkedNodeId);
                     if (linkedNode == null)
                     {
-                        throw new Exception("Linked Item not found"); // todo: proper error
+                        Snackbar.Add("Linked Item not found", Severity.Error);
+                        return;
                     }
 
                     if (link == null)
@@ -186,14 +194,31 @@
         StateHasChanged();
     }
 
-    private async Task DeleteNode(int id)
+    private async Task ConfirmDeleteNode(int id)
     {
         var node = Pack.Nodes.FirstOrDefault(x => x.Id == id);
         if (node == null)
         {
-            throw new Exception("Item not found"); // todo: proper error
+            Snackbar.Add("Item not found", Severity.Error);
+            return;
         }
 
+        var parameters = new ConfirmDialog.ConfirmDialogParams
+            {
+                Prompt = $"Delete item {node.Name}?",
+                ButtonText = "Delete",
+                ButtonColor = Color.Error
+            };
+        var confirmed = await ConfirmDialog.CallDialog(DialogService, parameters);
+
+        if (confirmed)
+        {
+            await DeleteNode(node);
+        }
+    }
+
+    private async Task DeleteNode(Node node)
+    {
         Db.Remove(node);
         await Db.SaveChangesAsync();
         StateHasChanged();

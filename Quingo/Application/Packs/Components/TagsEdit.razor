@@ -1,5 +1,6 @@
 ﻿@inject ApplicationDbContext Db
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <MudText Typo="Typo.h4" GutterBottom>
     Tags <MudTooltip Text="Add Tag"><MudIconButton OnClick="AddTag" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip>
@@ -8,9 +9,11 @@
 <MudGrid>
     <MudItem xs="12" md="6" lg="4">
         @if (Pack?.Tags != null)
-        @foreach (var tag in Pack.Tags.Where(x => x.DeletedAt == null))
         {
-            <LineItemEdit Id="@tag.Id" Value="@tag.Name" OnSave="SaveTag" OnDelete="DeleteTag" />
+            @foreach (var tag in Pack.Tags.Where(x => x.DeletedAt == null))
+            {
+                <LineItemEdit Id="@tag.Id" Value="@tag.Name" OnSave="SaveTag" OnDelete="ConfirmDeleteTag" />
+            }
         }
     </MudItem>
 </MudGrid>
@@ -46,7 +49,7 @@
         StateHasChanged();
     }
 
-    private async Task DeleteTag(int id)
+    private async Task ConfirmDeleteTag(int id)
     {
         var tag = Pack.Tags.FirstOrDefault(x => x.Id == id);
         if (tag == null)
@@ -54,12 +57,29 @@
             Snackbar.Add("Tag not found", Severity.Error);
             return;
         }
+
         if (tag.NodeTags.Any(x => x.DeletedAt == null))
         {
             Snackbar.Add("Tag is in use", Severity.Error);
             return;
         }
 
+        var parameters = new ConfirmDialog.ConfirmDialogParams
+            {
+                Prompt = $"Delete tag {tag.Name}?",
+                ButtonText = "Delete",
+                ButtonColor = Color.Error
+            };
+        var confirmed = await ConfirmDialog.CallDialog(DialogService, parameters);
+
+        if (confirmed)
+        {
+            await DeleteTag(tag);
+        }
+    }
+
+    private async Task DeleteTag(Tag tag)
+    {
         Db.Remove(tag);
         await Db.SaveChangesAsync();
         StateHasChanged();

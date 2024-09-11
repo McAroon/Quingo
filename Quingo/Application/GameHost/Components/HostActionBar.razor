@@ -1,20 +1,21 @@
 ﻿@inject ISnackbar Snackbar
 @inject ILogger<HostActionBar> Logger
 @inject GameStateService StateService
+@inject IDialogService DialogService
 
 <MudGrid Justify="Justify.FlexEnd">
     <MudItem xs="5" Class="d-flex">
-         <div class="ml-auto">
+        <div class="ml-auto">
             @if (Game.State == GameStateEnum.Active)
             {
                 <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop"
-                Disabled="Game.State != GameStateEnum.Active" OnClick="EndGame">End Game</MudButton>
+                           Disabled="Game.State != GameStateEnum.Active" OnClick="ConfirmEndGame">End Game</MudButton>
             }
             else
             {
                 <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ExitToApp" Href="/">Leave Game</MudButton>
             }
-         </div>
+        </div>
     </MudItem>
 </MudGrid>
 <MudGrid Justify="Justify.Center">
@@ -31,6 +32,22 @@
 
     [CascadingParameter(Name = "UserId")]
     public string UserId { get; set; } = default!;
+
+    private async Task ConfirmEndGame()
+    {
+        var parameters = new ConfirmDialog.ConfirmDialogParams
+            {
+                Prompt = $"Do you want to end game?",
+                ButtonText = "End game",
+                ButtonColor = Color.Error
+            };
+        var confirmed = await ConfirmDialog.CallDialog(DialogService, parameters);
+
+        if (confirmed)
+        {
+            EndGame();
+        }
+    }
 
     private void EndGame()
     {

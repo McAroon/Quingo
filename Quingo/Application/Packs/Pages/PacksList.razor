@@ -5,6 +5,7 @@
 
 @inject ApplicationDbContext Db
 @inject FileStoreService Files
+@inject IDialogService DialogService
 
 @attribute [Authorize]
 
@@ -42,8 +43,8 @@ else
                                 <MudTooltip Text="Edit Pack">
                                     <MudIconButton Href="@($"game/setup/pack/{pack.Id}")" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
                                 </MudTooltip>
-                                <MudTooltip Text="Delete Pack">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => DeletePack(pack.Id)"></MudIconButton>
+                                <MudTooltip Text="Delete Pack" ShowOnFocus="false">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="async () => await ConfirmDelete(pack)"></MudIconButton>
                                 </MudTooltip>
                             }
                         </CardHeaderActions>
@@ -74,13 +75,24 @@ else
         }
     }
 
-    private async Task DeletePack(int packId)
+    private async Task ConfirmDelete(Pack pack)
     {
-        var pack = await Db.Packs.FirstOrDefaultAsync(x => x.Id == packId);
-        if (pack == null)
+        var parameters = new ConfirmDialog.ConfirmDialogParams
+            {
+                Prompt = $"Delete pack {pack.Name}?",
+                ButtonText = "Delete",
+                ButtonColor = Color.Error
+            };
+        var confirmed = await ConfirmDialog.CallDialog(DialogService, parameters);
+
+        if (confirmed)
         {
-            throw new Exception("Pack not found");
+            await DeletePack(pack);
         }
+    }
+
+    private async Task DeletePack(Pack pack)
+    {
         Db.Remove(pack);
         await Db.SaveChangesAsync();
         StateHasChanged();

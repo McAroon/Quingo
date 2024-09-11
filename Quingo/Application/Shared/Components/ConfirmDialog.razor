@@ -1,0 +1,58 @@
+﻿<MudDialog>
+    <DialogContent>@Prompt</DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="@ButtonColor" OnClick="Submit">@ButtonText</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string? Prompt { get; set; }
+
+    [Parameter]
+    public string ButtonText { get; set; } = "Ok";
+
+    [Parameter]
+    public Color ButtonColor { get; set; } = Color.Primary;
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void Cancel() => MudDialog.Cancel();
+
+    public static async Task<bool> CallDialog(IDialogService service, ConfirmDialogParams dialogParams)
+    {
+        var parameters = new DialogParameters<ConfirmDialog>
+            {
+                { x => x.Prompt, dialogParams.Prompt },
+                { x => x.ButtonText, dialogParams.ButtonText },
+                { x => x.ButtonColor, dialogParams.ButtonColor },
+            };
+
+        var opts = new DialogOptions
+            {
+                CloseOnEscapeKey = true,
+                FullWidth = true,
+                MaxWidth = MaxWidth.ExtraSmall
+            };
+
+        var dialog = await service.ShowAsync<ConfirmDialog>(dialogParams.Title, parameters, opts);
+        var result = await dialog.Result;
+
+        return result != null
+            && !result.Canceled
+            && bool.TryParse(result.Data?.ToString(), out var confirmed)
+            && confirmed;
+    }
+
+    public class ConfirmDialogParams
+    {
+        public string Title { get; set; } = "Confirmation";
+        public string? Prompt { get; set; }
+        public string? ButtonText { get; set; } = "Ok";
+        public Color ButtonColor { get; set; } = Color.Primary;
+    }
+}
