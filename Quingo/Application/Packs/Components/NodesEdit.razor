@@ -1,6 +1,5 @@
-﻿@using System.ComponentModel.DataAnnotations
-
-@inject ApplicationDbContext Db
+﻿@inject ApplicationDbContext Db
+@inject FileStoreService Files
 
 <MudText Typo="Typo.h4" GutterBottom>
     Pack Items <MudTooltip Text="Add Item"><MudIconButton OnClick="AddNode" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip>
@@ -46,7 +45,6 @@
             }
 
             node.Name = model.Name;
-            node.ImageUrl = model.ImageUrl;
 
             foreach (var tagId in model.TagIds)
             {
@@ -175,6 +173,12 @@
                 {
                     Db.Remove(nodeLink);
                 }
+            }
+
+            if (model.ImageFile != null)
+            {
+                await Files.UploadBrowserFile(model.ImageFile);
+                node.ImageUrl = model.ImageFile.Name;
             }
         }
 

@@ -40,11 +40,6 @@ else
 {
     <MudGrid>
         <MudItem xs="12" md="4">
-            @if (!string.IsNullOrEmpty(Pack?.ImageUrl))
-            {
-                <MudImage ObjectFit="ObjectFit.ScaleDown" Src="@Files.GetFileUrl(Pack.ImageUrl)" Class="rounded-lg" Height="200" />
-            }
-
             <table class="dl-table">
                 <tr>
                     <th>Pack Name</th>
@@ -55,6 +50,10 @@ else
                     <td>@(!string.IsNullOrEmpty(Pack?.Description) ? Pack.Description : "-")</td>
                 </tr>
             </table>
+            @if (!string.IsNullOrEmpty(Pack?.ImageUrl))
+            {
+                <MudImage ObjectFit="ObjectFit.ScaleDown" Src="@Files.GetFileUrl(Pack.ImageUrl)" Class="rounded-lg" Height="200" />
+            }
         </MudItem>
     </MudGrid>
 }

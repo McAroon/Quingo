@@ -5,14 +5,13 @@
             <MudForm @ref="@_form">
                 <MudText Typo="Typo.h6">Item info</MudText>
                 <MudTextField Label="Name" Required @bind-Value="@_model.Name" />
-                <MudTextField Label="Image Url" @bind-Value="@_model.ImageUrl" />
                 <MudSelect T="int" MultiSelection Label="Tags" @bind-SelectedValues="@_model.TagIds" MultiSelectionTextFunc="GetTagsSelectText">
                     @foreach (var tag in Node.Pack.Tags)
                     {
                         <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
                     }
                 </MudSelect>
-
+                <ImageUpload @ref="_upload" />
 
                 <MudText Typo="Typo.h6">Item Links <MudTooltip Text="Add Link"><MudIconButton OnClick="AddLink" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip></MudText>
                 @foreach (var link in _model.NodeLinks)
@@ -72,6 +71,9 @@
         <MudCardContent>
             <MudGrid>
                 <MudItem xs="12">
+                    <NodeSquare Node="Node" />
+                </MudItem>
+                <MudItem xs="12">
                     <MudText Typo="Typo.h6" GutterBottom>Tags</MudText>
                     @if (_model.TagIds.Any())
                     {
@@ -128,6 +130,8 @@
 
     private MudForm _form = default!;
 
+    private ImageUpload? _upload;
+
 
     private IEnumerable<Node> LinkableNodes => Node.Pack.Nodes.Where(
         x => x.DeletedAt == null && x != Node && !_model.NodeLinks.Select(y => y.LinkedNodeId).Contains(x.Id));
@@ -177,7 +181,6 @@
         return new NodeModel
             {
                 Name = Node.Name,
-                ImageUrl = Node.ImageUrl,
                 TagIds = Node.NodeTags.Where(x => x.DeletedAt == null).Select(x => x.TagId).ToList(),
                 NodeLinks = [..linksFrom, ..linksTo, ..linksBoth],
             };
@@ -200,6 +203,7 @@
         {
             _model.TagIds ??= [];
             _model.NodeLinks ??= [];
+            _model.ImageFile = _upload?.File;
             await OnSave.Invoke(Node.Id, _model);
             _isEditMode = false;
             RemapModel();
