@@ -51,7 +51,7 @@
 
     private async Task OnPackSelected()
     {
-        _pack = await Db.PacksWithIncludes.FirstOrDefaultAsync(x => x.Id == _selectedPackId);
+        _pack = await Db.Packs.FirstOrDefaultAsync(x => x.Id == _selectedPackId);
         if (_pack == null)
         {
             throw new Exception("Pack not found");

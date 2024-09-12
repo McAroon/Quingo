@@ -44,12 +44,11 @@ else
 
     private bool IsCreate => PackId == null;
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
         if (PackId != null && _pack?.Id != PackId)
         {
-            _pack = await Db.PacksWithIncludes
-            .FirstOrDefaultAsync(x => x.Id == PackId);
+            _pack = await Db.GetPack(PackId.Value);
         }
 
         if (PackId != null && (_pack == null || UserId != _pack.CreatedByUserId))

@@ -29,9 +29,35 @@ namespace Quingo.Infrastructure.Database
             .Include(x => x.Tags)
             .Include(x => x.NodeLinkTypes)
             .Include(x => x.Presets)
-            .Include(x => x.Nodes).ThenInclude(x => x.NodeTags).ThenInclude(x => x.Tag)
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeTags)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo);
+
+        public async Task<Pack?> GetPack(int packId, bool noTracking = false)
+        {
+            var pack = await (noTracking ? PacksWithIncludes.AsNoTracking() : PacksWithIncludes).FirstOrDefaultAsync(x => x.Id == packId);
+            if (pack == null) return null;
+
+            foreach (var node in pack.Nodes)
+            {
+                foreach (var tag in node.NodeTags)
+                {
+                    tag.Tag ??= pack.Tags.First(x => x.Id == tag.TagId);
+                }
+                foreach (var link in node.NodeLinksFrom)
+                {
+                    link.NodeLinkType ??= pack.NodeLinkTypes.First(x => x.Id == link.NodeLinkTypeId);
+                    link.NodeTo ??= pack.Nodes.First(x => x.Id == link.NodeToId);
+                }
+                foreach (var link in node.NodeLinksTo)
+                {
+                    link.NodeLinkType ??= pack.NodeLinkTypes.First(x => x.Id == link.NodeLinkTypeId);
+                    link.NodeFrom ??= pack.Nodes.First(x => x.Id == link.NodeFromId);
+                }
+            }
+
+            return pack;
+        }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

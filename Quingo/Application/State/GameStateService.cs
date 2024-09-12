@@ -27,7 +27,7 @@ public class GameStateService
 
             using var db = await _dbContextFactory.CreateDbContextAsync();
 
-            var pack = await db.PacksWithIncludes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == packId);
+            var pack = await db.GetPack(packId, true);
             if (pack == null)
             {
                 throw new GameStateException("Pack not found");
