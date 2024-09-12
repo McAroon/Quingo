@@ -71,7 +71,7 @@
         <MudCardContent>
             <MudGrid>
                 <MudItem xs="12">
-                    <NodeSquare Node="Node" />
+                    <NodeSquare Node="Node" ShowTagsBadge />
                 </MudItem>
                 <MudItem xs="12">
                     <MudText Typo="Typo.h6" GutterBottom>Tags</MudText>
@@ -79,7 +79,7 @@
                     {
                         @foreach (var tag in GetTagNames(_model.TagIds))
                         {
-                            <MudChip T="string" Variant="Variant.Text" Color="Color.Info">@tag</MudChip>
+                            <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@tag</MudChip>
                         }
                     }
                     else
@@ -138,8 +138,8 @@
 
     private string GetDirectionIcon(NodeLinkDirection direction) => direction switch
     {
-        NodeLinkDirection.From => Icons.Material.Filled.ChevronRight,
-        NodeLinkDirection.To => Icons.Material.Filled.ChevronLeft,
+        NodeLinkDirection.From => Icons.Material.Filled.ChevronLeft,
+        NodeLinkDirection.To => Icons.Material.Filled.ChevronRight,
         NodeLinkDirection.Both => Icons.Material.Filled.Code,
         _ => ""
     };

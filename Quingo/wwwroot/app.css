@@ -27,13 +27,16 @@
 
 .node-square {
     width: 100%;
-    max-width: 110px;
-    height: 110px;
+    max-width: 150px;
+    aspect-ratio: 1/1;
     padding: 4px;
 }
 
     .node-square .node-square-content {
-        align-content: end;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
         background-position: center;
         background-repeat: no-repeat;
         background-size: cover;
@@ -45,7 +48,7 @@
     .node-square .node-text {
         border-radius: 30px;
         padding: 2px 6px;
-        margin: 0 -8px;
+        min-width: 36px;
         color: var(--mud-palette-primary-text);
         background-color: rgba(39,39,47,0.4);
     }
@@ -55,9 +58,10 @@
     }
 
     .node-square.node-header {
-        background-color: var(--mud-palette-tertiary-hover);
+        background-color: var(--mud-palette-info-hover);
         max-height: 110px;
         height: auto;
+        aspect-ratio: auto;
     }
 
     .node-square.node-header .node-text {
@@ -69,3 +73,14 @@
         background-color: var(--mud-palette-primary-hover);
     }
 
+.node-square .node-square-content .node-badges {
+    align-self: flex-end;
+}
+
+    .node-square .node-square-content .node-badges .node-badge {
+        padding: 0 6px;
+        margin: 0;
+        height: 20px;
+        min-width: 20px;
+        opacity: 0.9;
+    }

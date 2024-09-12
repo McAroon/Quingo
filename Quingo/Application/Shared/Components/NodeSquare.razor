@@ -1,14 +1,17 @@
 ﻿@inject FileStoreService Files
 
-<MudCard Class="@CardClass" @onclick="OnCardClick">
+<MudCard Class="@CardClass" @onclick="OnCardClick">   
     <MudCardContent Class="node-square-content" Style="@ImageStyle">
-        <MudText Align="Align.Center" Typo="Typo.h6">
-            <span class="node-text">@(Node?.Name ?? "FREE")</span>
+        <div class="node-badges">
+            @if (ShowTagsBadge && BadgeText != null)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="node-badge">@BadgeText</MudChip>
+            }
+        </div>
+        <MudText Align="Align.Center" Typo="Typo.h6" Class="node-text">
+            @(Node?.Name ?? "FREE")
         </MudText>
     </MudCardContent>
-    <MudBadge BadgeClass="z-10" Color="Color.Tertiary" Overlap Origin="Origin.BottomRight"
-              Visible="ShowTagsBadge && BadgeText != null" Content="@BadgeText">
-    </MudBadge>
 </MudCard>
 
 @code {
@@ -35,7 +38,7 @@
 
     private string CardClass => string.Join(" ", 
         ["node-square", Highlighted ? "node-highlighted" : "", 
-        Selected ? "node-selected" : "", OnClick != null ? "node-clickable" : ""]);
+    Selected ? "node-selected" : "", OnClick != null ? "node-clickable" : ""]);
 
-    private string? BadgeText => Node != null ? string.Join(", ", Node.NodeTags.Select(t => t.Tag.Name)) : null;
+    private string? BadgeText => Node != null ? string.Join(", ", Node.NodeTags.Where(x => x.DeletedAt == null).Select(t => t.Tag.Name)) : null;
 }
