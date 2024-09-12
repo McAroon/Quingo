@@ -5,7 +5,7 @@
 <MudStack Spacing="1" Row Wrap="Wrap.Wrap">
     @foreach (var node in Nodes)
     {
-        <NodeSquare Node="node" Highlighted="node == Game.DrawnNodes.Last() && _toggleHighlight" ShowTagsBadge />
+        <NodeSquare Node="node" Selected="node.Id == Game.DrawnNodes.Last().Id && _toggleHighlight" ShowTagsBadge />
     }
 </MudStack>
 
@@ -18,7 +18,7 @@
 
     private bool _toggleHighlight = true;
 
-    private IEnumerable<Node> Nodes => ItemsToDisplay > 0 ? Game.DrawnNodes.TakeLast(ItemsToDisplay) : Game.DrawnNodes;
+    private IEnumerable<NodeViewModel> Nodes => (ItemsToDisplay > 0 ? Game.DrawnNodes.TakeLast(ItemsToDisplay) : Game.DrawnNodes).Select(x => new NodeViewModel(x));
 
     private CancellationTokenSource _blinkCancelSrc = new();
 

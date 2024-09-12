@@ -1,10 +1,12 @@
-﻿namespace Quingo.Shared;
+﻿using System.Collections.Concurrent;
+
+namespace Quingo.Shared;
 
 public class TempUserStorage
 {
     public const string DARK_MODE = "darkMode";
 
-    private readonly Dictionary<string, Dictionary<string, string>> _data = [];
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _data = [];
 
     public string? Get(string userId, string key)
     {
@@ -21,7 +23,7 @@ public class TempUserStorage
     {
         if (!_data.ContainsKey(userId)) 
         {
-            _data.Add(userId, []);
+            _data.TryAdd(userId, []);
         }
         
         _data[userId][key] = value;
