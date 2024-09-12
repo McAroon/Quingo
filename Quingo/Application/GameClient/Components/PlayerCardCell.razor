@@ -1,4 +1,4 @@
-﻿<NodeSquare Node="Node" Selected="Cell.IsMarked" OnClick="@(OnClick!)" />
+﻿<NodeSquare Node="Node" Selected="Cell.IsMarked" OnClick="@(OnClick!)" ShowTagBadge="ShowTagBadge" ShowTagBadgeTooltip="ShowTagBadge" />
 
 @code {
     [CascadingParameter]
@@ -12,6 +12,8 @@
     private bool CanMark => State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown;
 
     private Action? OnClick => CanMark ? Mark : null;
+
+    private bool ShowTagBadge => State.GameState.Preset.ShowTagBadges;
 
     private void Mark()
     {

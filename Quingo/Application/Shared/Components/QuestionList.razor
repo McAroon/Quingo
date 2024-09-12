@@ -5,7 +5,7 @@
 <MudStack Spacing="1" Row Wrap="Wrap.Wrap">
     @foreach (var node in Nodes)
     {
-        <NodeSquare Node="node" Selected="node.Id == Game.DrawnNodes.Last().Id && _toggleHighlight" ShowTagsBadge />
+        <NodeSquare Node="node" Selected="node.Id == Game.DrawnNodes.Last().Id && _toggleHighlight" ShowTagBadge ShowTagBadgeTooltip="Game.Preset.ShowTagBadges" />
     }
 </MudStack>
 

@@ -19,6 +19,8 @@ public record PackPresetData
 
     public int EndgameTimer { get; set; } = 20;
 
+    public bool ShowTagBadges { get; set; } = true;
+
     public List<PackPresetColumn> Columns { get; set; } = [];
 }
 

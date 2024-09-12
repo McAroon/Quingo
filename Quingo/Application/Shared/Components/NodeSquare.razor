@@ -3,9 +3,9 @@
 <MudCard Class="@CardClass" @onclick="OnCardClick">
     <MudCardContent Class="node-square-content" Style="@_imageStyle">
         <div class="node-badges">
-            @if (ShowTagsBadge && _badgeText != null)
+            @if (ShowTagBadge && _badgeText != null)
             {
-                if (Node?.NodeLinksByTag?.Count > 0)
+                if (ShowTagBadgeTooltip && Node?.NodeLinksByTag?.Count > 0)
                 {
                     <MudTooltip Placement="Placement.Right">
                         <ChildContent>
@@ -41,7 +41,10 @@
     public bool Selected { get; set; }
 
     [Parameter]
-    public bool ShowTagsBadge { get; set; }
+    public bool ShowTagBadge { get; set; }
+
+    [Parameter]
+    public bool ShowTagBadgeTooltip { get; set; }
 
     [Parameter]
     public Action? OnClick { get; set; }
