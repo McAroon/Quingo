@@ -28,9 +28,14 @@
 
             <MudGrid>
                 <MudItem md="12">
+                    <MudStaticTextField For="@(() => Input.Username)" @bind-Value="Input.Username"
+                                        Label="Username" Placeholder="name"
+                                        UserAttributes="@(new() { { "autocomplete", "username" }, { "aria-required", "true" } } )" />
+                </MudItem>
+                <MudItem md="12">
                     <MudStaticTextField For="@(() => Input.Email)" @bind-Value="Input.Email"
-                                        Label="Email" Placeholder="name@example.com"
-                                        UserAttributes="@(new() { { "autocomplete", "true" }, { "aria-required", "true" } } )" />
+                                        Label="Email" InputType="InputType.Email" Placeholder="name@example.com"
+                                        UserAttributes="@(new() { { "autocomplete", "email" }, { "aria-required", "true" } } )" />
                 </MudItem>
                 <MudItem md="12">
                     <MudStaticTextField For="@(() => Input.Password)" @bind-Value="Input.Password"
@@ -48,10 +53,10 @@
             </MudGrid>
         </EditForm>
     </MudItem>
-    <MudItem md="6">
+@*     <MudItem md="6">
         <MudText Typo="Typo.body1" GutterBottom="true">Use another service to register.</MudText>
         <ExternalLoginPicker />
-    </MudItem>
+    </MudItem> *@
 </MudGrid>
 
 @code {
@@ -69,7 +74,7 @@
     {
         var user = CreateUser();
 
-        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+        await UserStore.SetUserNameAsync(user, Input.Username, CancellationToken.None);
         var emailStore = GetEmailStore();
         await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
         var result = await UserManager.CreateAsync(user, Input.Password);
@@ -126,6 +131,10 @@
 
     private sealed class InputModel
     {
+        [Required]
+        [Display(Name = "Username")]
+        public string Username { get; set; } = "";
+
         [Required]
         [EmailAddress]
         [Display(Name = "Email")]

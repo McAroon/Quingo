@@ -19,12 +19,14 @@
 
     <MudGrid>
         <MudItem md="12">
-            <MudStaticTextField Value="@username" Label="Username" Disabled="true" Placeholder="Please choose your username." />
+            <MudStaticTextField For="@(() => Input.Username)" @bind-Value="Input.Username"
+                                Label="Username" Placeholder="Please enter your username."
+                                UserAttributes="@(new() { { "autocomplete", "username" }, { "aria-required", "true" } } )" />
         </MudItem>
         <MudItem md="12">
-            <MudStaticTextField For="@(() => Input.PhoneNumber)" @bind-Value="Input.PhoneNumber"
-                                Label="Phone Number" HelperText="Please enter your phone number."
-                                UserAttributes="@(new() { { "autocomplete", "tel-national" } } )" />
+            <MudStaticTextField For="@(() => Input.Email)" @bind-Value="Input.Email"
+                                Label="Email" Placeholder="Please enter your email."
+                                UserAttributes="@(new() { { "autocomplete", "email" }, { "aria-required", "true" } } )" />
         </MudItem>
         <MudItem md="12">
             <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Save</MudStaticButton>
@@ -34,8 +36,10 @@
 
 @code {
     private ApplicationUser user = default!;
+
     private string? username;
-    private string? phoneNumber;
+
+    private string? email;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -47,19 +51,29 @@
     {
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
         username = await UserManager.GetUserNameAsync(user);
-        phoneNumber = await UserManager.GetPhoneNumberAsync(user);
+        email = await UserManager.GetEmailAsync(user);
 
-        Input.PhoneNumber ??= phoneNumber;
+        Input.Username ??= username;
+        Input.Email ??= email;
     }
 
     private async Task OnValidSubmitAsync()
     {
-        if (Input.PhoneNumber != phoneNumber)
+        if (Input.Username != username)
         {
-            var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-            if (!setPhoneResult.Succeeded)
+            var setUsernameResult = await UserManager.SetUserNameAsync(user, Input.Username);
+            if (!setUsernameResult.Succeeded)
             {
-                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
+                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set username.", HttpContext);
+            }
+        }
+
+        if (Input.Email != email)
+        {
+            var setEmailResult = await UserManager.SetEmailAsync(user, Input.Email);
+            if (!setEmailResult.Succeeded)
+            {
+                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set email.", HttpContext);
             }
         }
 
@@ -69,8 +83,13 @@
 
     private sealed class InputModel
     {
-        [Phone]
-        [Display(Name = "Phone number")]
-        public string? PhoneNumber { get; set; }
+        [Required]
+        [Display(Name = "Username")]
+        public string? Username { get; set; }
+
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string? Email { get; set; }
     }
 }
