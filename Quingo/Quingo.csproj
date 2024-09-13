@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Quingo.Client\Quingo.Client.csproj" />
     <ProjectReference Include="..\Quingo.Shared\Quingo.Shared.csproj" />
   </ItemGroup>
 

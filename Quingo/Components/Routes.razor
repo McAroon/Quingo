@@ -1,6 +1,6 @@
-﻿<Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="[typeof(Quingo.Client.UserInfo).Assembly]">
+﻿<Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Quingo.Client.Layout.MainLayout)">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Quingo.Components.Layout.MainLayout)">
             <NotAuthorized>
                 <RedirectToLogin />
             </NotAuthorized>
