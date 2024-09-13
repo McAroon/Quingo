@@ -18,7 +18,7 @@
         @for (int col = 0; col < State.Card.Cells.GetLength(0); col++)
         {
             var cell = State.Card.Cells[col, cRow];
-            <PlayerCardCell Cell="cell" />
+            <PlayerCardCell Cell="cell" ReadOnly="ReadOnly" />
         }
     </MudStack>
 }
@@ -26,4 +26,7 @@
 @code {
     [CascadingParameter]
     public PlayerState State { get; set; } = default!;
+
+    [Parameter]
+    public bool ReadOnly { get; set; }
 }

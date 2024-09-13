@@ -7,9 +7,12 @@
     [Parameter, EditorRequired]
     public PlayerCardCellData Cell { get; set; } = default!;
 
+    [Parameter]
+    public bool ReadOnly { get; set; }
+
     public NodeViewModel? Node => Cell.Node == null ? null : new NodeViewModel(Cell.Node);
 
-    private bool CanMark => State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown;
+    private bool CanMark => !ReadOnly && State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown;
 
     private Action? OnClick => CanMark ? Mark : null;
 
