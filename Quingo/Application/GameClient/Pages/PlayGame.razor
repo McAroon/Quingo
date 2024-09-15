@@ -8,6 +8,7 @@
 @inject GameStateService StateService
 @inject ISnackbar Snackbar
 @inject ILogger<PlayGame> Logger
+@inject IDialogService Dialog
 
 @attribute [Authorize]
 
@@ -59,6 +60,7 @@ else
             _state = StateService.GetPlayerState(GameSessionId, PlayerSessionId, _userId);
             _state.StateChanged += OnStateChanged;
             _state.GameState.StateChanged += OnStateChanged;
+            _state.GameState.GameStateChanged += OnGameStateChanged;
         }
         catch (Exception e)
         {
@@ -72,12 +74,29 @@ else
         InvokeAsync(StateHasChanged);
     }
 
+    private async void OnGameStateChanged(GameStateEnum state)
+    {
+        if (state is GameStateEnum.FinalCountdown)
+        {
+            Snackbar.Add("Countdown!", Severity.Warning);
+        }
+        else if (state is GameStateEnum.Canceled)
+        {
+            await Dialog.ShowMessageBox("The game has been canceled", $"{_state.GameState.HostName} has canceled the game.");
+        }
+        else if (state is GameStateEnum.Finished)
+        {
+            await Dialog.ShowMessageBox("The game has ended", $"Thanks for playing!");
+        }
+    }
+
     public void Dispose()
     {
         if (_state != null)
         {
             _state.StateChanged -= OnStateChanged;
             _state.GameState.StateChanged -= OnStateChanged;
+            _state.GameState.GameStateChanged -= OnGameStateChanged;
         }
     }
 }

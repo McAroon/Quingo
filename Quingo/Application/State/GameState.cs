@@ -63,7 +63,16 @@ public class GameState : IDisposable
 
     private List<bool[,]> _bingoPatterns = [];
 
-    public GameStateEnum State { get; private set; }
+    private GameStateEnum _state;
+    public GameStateEnum State 
+    { 
+        get { return _state; } 
+        private set 
+        {
+            _state = value;
+            GameStateChanged?.Invoke(value);
+        } 
+    }
 
     public int EndgameTimer { get; private set; }
 
@@ -108,7 +117,7 @@ public class GameState : IDisposable
 
     public void Call(PlayerState player)
     {
-        if (player.LivesNumber <= 0 || (State is not GameStateEnum.Active or GameStateEnum.FinalCountdown)) return;
+        if (player.LivesNumber <= 0 || (State is not GameStateEnum.Active and not GameStateEnum.FinalCountdown)) return;
 
         player.Validate();
         var isValid = false;
@@ -184,6 +193,8 @@ public class GameState : IDisposable
     public event Action? NodeDrawn;
 
     public event Action<PlayerState>? PlayerJoined;
+
+    public event Action<GameStateEnum>? GameStateChanged;
 
     private void NotifyStateChanged()
     {

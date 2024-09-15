@@ -13,6 +13,12 @@
         <MudText Typo="Typo.h5" GutterBottom>Player Card</MudText>
         <PlayerCard />
     </MudItem>
+    <MudItem xs="12" md="6">
+        <MudText Typo="Typo.h5" GutterBottom>Players</MudText>
+        <CascadingValue Value="State.GameState">
+            <PlayerList IsPlayer />
+        </CascadingValue>
+    </MudItem>
 </MudGrid>
 
 @code {

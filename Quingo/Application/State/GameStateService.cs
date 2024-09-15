@@ -20,7 +20,7 @@ public class GameStateService
     {
         try
         {
-            if (_state.Values.Any(x => (x.State is not GameStateEnum.Finished or GameStateEnum.Canceled) && x.HostUserId == userId))
+            if (_state.Values.Any(x => (x.State is not GameStateEnum.Finished and not GameStateEnum.Canceled) && x.HostUserId == userId))
             {
                 throw new GameStateException("User is already hosting a game");
             }
@@ -136,7 +136,7 @@ public class GameStateService
 
     public void RemoveGame(GameState game)
     {
-        if (game.State is not GameStateEnum.Finished or GameStateEnum.Canceled)
+        if (game.State is not GameStateEnum.Finished and not GameStateEnum.Canceled)
         {
             return;
         }
