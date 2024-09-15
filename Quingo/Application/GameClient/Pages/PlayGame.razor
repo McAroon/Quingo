@@ -82,7 +82,7 @@ else
         }
         else if (state is GameStateEnum.Canceled)
         {
-            await Dialog.ShowMessageBox("The game has been canceled", $"{_state.GameState.HostName} has canceled the game.");
+            await Dialog.ShowMessageBox("Game canceled", $"{_state.GameState.HostName} has canceled the game.");
         }
         else if (state is GameStateEnum.Finished)
         {

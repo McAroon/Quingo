@@ -47,9 +47,9 @@
         }
     }
 
-    private void ShowCellDetails(PlayerCardCellData cell)
+    private async void ShowCellDetails(PlayerCardCellData cell)
     {
-        if (cell.Node == null) return;    
-        // todo: details dialog
+        var model = cell.Node == null ? null : new NodeViewModel(cell.Node);
+        await NodeDetailsDialog.ShowNodeDetails(Dialog, State.GameState, model);
     }
 }

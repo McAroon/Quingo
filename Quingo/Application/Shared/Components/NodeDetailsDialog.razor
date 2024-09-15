@@ -1,5 +1,57 @@
-﻿<h3>NodeDetailsDialog</h3>
+﻿<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="1" Row Wrap="Wrap.Wrap" Class="pt-1 pb-2">
+            <NodeSquare Node="Node" ShowTagBadgeTooltip ShowTagBadge />
+        </MudStack>
+        @if (_linkedNodes.Count > 0)
+        {
+            <MudText Typo="Typo.h6" GutterBottom>Linked Items</MudText>
+            <MudStack Spacing="1" Row Wrap="Wrap.Wrap" Class="pb-1">
+                @foreach (var (node, drawn) in _linkedNodes)
+                {
+                    <NodeSquare Node="node" CellState="drawn ? PlayerCardCellState.Marked : PlayerCardCellState.Default"
+                                ShowTagBadgeTooltip ShowTagBadge />
+                }
+            </MudStack>
+        }
+    </DialogContent>
+</MudDialog>
 
 @code {
-// todo
+    [Parameter]
+    public GameState State { get; set; } = default!;
+
+    [Parameter]
+    public NodeViewModel? Node { get; set; }
+
+    private List<(NodeViewModel node, bool drawn)> _linkedNodes = [];
+
+    protected override void OnInitialized()
+    {
+        if (Node == null) return;
+
+        _linkedNodes = Node.NodeLinks.Select(x => x.LinkedNodeId)
+            .Select(x => State.Pack.Nodes.FirstOrDefault(n => n.Id == x))
+            .Where(x => x != null)
+            .Select(x => (node: x, drawn: State.DrawnNodes.Contains(x!)))
+            .Select(x => (node: new NodeViewModel(x.node!), drawn: x.drawn)).ToList();
+    }
+
+    public static async Task ShowNodeDetails(IDialogService dialog, GameState state, NodeViewModel? nodeModel)
+    {
+        var parameters = new DialogParameters<NodeDetailsDialog>
+        {
+            { x => x.State, state },
+            { x => x.Node, nodeModel },
+        };
+
+        var opts = new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.ExtraSmall,
+                FullWidth = true
+            };
+
+        await dialog.ShowAsync<NodeDetailsDialog>("Item Details", parameters, opts);
+    }
 }

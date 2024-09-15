@@ -1,11 +1,14 @@
 ﻿@using Quingo.Application.State
 
+@inject IDialogService Dialog
+
 @implements IDisposable
 
 <MudStack Spacing="1" Row Wrap="Wrap.Wrap">
     @foreach (var node in Nodes)
     {
-        <NodeSquare Node="node" CellState="GetCellState(node)" ShowTagBadge ShowTagBadgeTooltip="Game.Preset.ShowTagBadges" />
+        <NodeSquare Node="node" CellState="GetCellState(node)" ShowTagBadge 
+            ShowTagBadgeTooltip="Game.Preset.ShowTagBadges" OnClick="() => ShowNodeDetails(node)" />
     }
 </MudStack>
 
@@ -29,7 +32,12 @@
 
     private PlayerCardCellState GetCellState(NodeViewModel node) =>
         node.Id == Game.DrawnNodes.Last().Id && _toggleHighlight ? PlayerCardCellState.Marked : default;
-    
+
+    private async void ShowNodeDetails(NodeViewModel node)
+    {
+        await NodeDetailsDialog.ShowNodeDetails(Dialog, Game, node);
+    }
+
     private void Blink()
     {
         InvokeAsync(async () =>
