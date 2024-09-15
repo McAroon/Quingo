@@ -67,7 +67,7 @@
 
     private string? _badgeText;
 
-    protected override void OnInitialized()
+    protected override void OnParametersSet()
     {
         _imageStyle = string.IsNullOrEmpty(Node?.ImageUrl)
             ? null
