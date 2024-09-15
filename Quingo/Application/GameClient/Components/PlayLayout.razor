@@ -6,22 +6,24 @@
         <PlayerStats />
     </MudItem>
     <MudItem xs="12">
-        <MudText Typo="Typo.h5" GutterBottom>Draw History (@State.GameState.DrawnNodes.Count / @State.GameState.QuestionCount)</MudText>
-        <QuestionList Game="State.GameState" ItemsToDisplay="10" />
+        <MudText Typo="Typo.h5" GutterBottom>Draw History (@Player.GameState.DrawnNodes.Count / @Player.GameState.QuestionCount)</MudText>
+        <QuestionList Game="Player.GameState" ItemsToDisplay="10" />
     </MudItem>
     <MudItem xs="12">
         <MudText Typo="Typo.h5" GutterBottom>Player Card</MudText>
-        <PlayerCard />
+        <PlayerCard ShowDetails="ShowDetails" />
     </MudItem>
     <MudItem xs="12" md="6">
         <MudText Typo="Typo.h5" GutterBottom>Players</MudText>
-        <CascadingValue Value="State.GameState">
-            <PlayerList IsPlayer />
+        <CascadingValue Value="Player.GameState">
+            <PlayerList Player="Player" />
         </CascadingValue>
     </MudItem>
 </MudGrid>
 
 @code {
     [CascadingParameter]
-    public PlayerState State { get; set; } = default!;
+    public PlayerState Player { get; set; } = default!;
+
+    private bool ShowDetails => Player.GameState.State is GameStateEnum.Finished or GameStateEnum.Canceled;
 }

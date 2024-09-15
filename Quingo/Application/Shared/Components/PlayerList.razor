@@ -28,7 +28,7 @@
     </TitleContent>
     <DialogContent>
         <CascadingValue Value="_selectedPlayer">
-            <PlayerCard ReadOnly />
+            <PlayerCard ReadOnly ShowDetails />
         </CascadingValue>
     </DialogContent>
 </MudDialog>
@@ -38,9 +38,9 @@
     public GameState Game { get; set; } = default!;
 
     [Parameter]
-    public bool IsPlayer { get; set; }
+    public PlayerState? Player { get; set; }
 
-    private bool ShowActions => !IsPlayer || Game.State is GameStateEnum.Finished or GameStateEnum.Canceled;
+    private bool ShowActions => Player == null || Game.State is GameStateEnum.Finished or GameStateEnum.Canceled;
 
     private DialogOptions _dialogOptions = new DialogOptions
         {
@@ -66,6 +66,7 @@
         foreach (var player in Game.Players)
         {
             player.StateChanged += OnStateChanged;
+            player.LifeLost += OnLifeLost;
         }
     }
 
@@ -73,11 +74,20 @@
     {
         Snackbar.Add($"{player.PlayerName} has joined!", Severity.Info);
         player.StateChanged += OnStateChanged;
+        player.LifeLost += OnLifeLost;
     }
 
     private void OnStateChanged()
     {
         InvokeAsync(StateHasChanged);
+    }
+
+    private void OnLifeLost(PlayerState player)
+    {
+        if (player != Player)
+        {
+            Snackbar.Add($"{player.PlayerName} has lost a life ({player.LivesNumber})", Severity.Info);
+        }
     }
 
     public void Dispose()
@@ -86,6 +96,7 @@
         foreach (var player in Game.Players)
         {
             player.StateChanged -= OnStateChanged;
+            player.LifeLost -= OnLifeLost;
         }
     }
 }

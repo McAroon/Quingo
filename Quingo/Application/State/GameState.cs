@@ -112,15 +112,23 @@ public class GameState : IDisposable
         var node = _qNodes[idx];
         _qNodes.Remove(node);
         _drawnNodes.Add(node);
+
+        foreach (var player in Players)
+        {
+            player.Validate();
+        }
         NotifyStateChanged();
     }
 
     public void Call(PlayerState player)
     {
-        if (player.LivesNumber <= 0 || (State is not GameStateEnum.Active and not GameStateEnum.FinalCountdown)) return;
+        if (player.LivesNumber <= 0 
+            || WinningPlayers.Contains(player) 
+            || (State is not GameStateEnum.Active and not GameStateEnum.FinalCountdown)) return;
 
         player.Validate();
         var isValid = false;
+        var validPattern = new bool[Preset.CardSize, Preset.CardSize];
 
         foreach (var pattern in _bingoPatterns)
         {
@@ -142,6 +150,7 @@ public class GameState : IDisposable
             if (patternValid)
             {
                 isValid = true;
+                validPattern = pattern;
                 break;
             }
         }
@@ -152,6 +161,16 @@ public class GameState : IDisposable
         }
         else
         {
+            for (var col = 0; col < Preset.CardSize; col++)
+            {
+                for (var row = 0; row < Preset.CardSize; row++)
+                {
+                    var patCell = validPattern[col, row];
+                    var plCell = player.Card.Cells[col, row];
+                    plCell.IsMatchingPattern = patCell;
+                }
+            }
+
             _winningPlayers.Add(player);
             StartCountdown();
         }

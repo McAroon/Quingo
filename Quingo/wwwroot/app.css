@@ -53,10 +53,6 @@
         margin-bottom: 1px;
     }
 
-    .node-square.node-selected .node-text {
-        background-color: var(--mud-palette-primary);
-    }
-
     .node-square.node-header {
         background-color: var(--mud-palette-info-hover);
         max-height: 110px;
@@ -69,11 +65,44 @@
         color: var(--mud-palette-text-primary);
     }
 
-.node-selected {
+.node-primary {
     background-color: var(--mud-palette-primary-hover);
     border: 4px solid var(--mud-palette-primary);
     padding: 0;
 }
+    .node-primary .node-text {
+        background-color: var(--mud-palette-primary);
+    }
+
+.node-success {
+    background-color: var(--mud-palette-success-hover);
+    border: 4px solid var(--mud-palette-success);
+    padding: 0;
+}
+
+    .node-success .node-text {
+        background-color: var(--mud-palette-success);
+    }
+
+.node-error {
+    background-color: var(--mud-palette-error-hover);
+    border: 4px solid var(--mud-palette-error);
+    padding: 0;
+}
+
+    .node-error .node-text {
+        background-color: var(--mud-palette-error);
+    }
+
+.node-warning {
+    background-color: var(--mud-palette-warning-hover);
+    border: 4px solid var(--mud-palette-warning);
+    padding: 0;
+}
+
+    .node-warning .node-text {
+        background-color: var(--mud-palette-warning);
+    }
 
 .node-square .node-square-content .node-badges {
     align-self: flex-end;

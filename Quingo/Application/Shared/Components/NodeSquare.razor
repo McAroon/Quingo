@@ -38,7 +38,7 @@
     public NodeViewModel? Node { get; set; }
 
     [Parameter]
-    public bool Selected { get; set; }
+    public PlayerCardCellState CellState { get; set; }
 
     [Parameter]
     public bool ShowTagBadge { get; set; }
@@ -51,8 +51,17 @@
 
     private Action OnCardClick => OnClick ?? (() => { });
 
+    private string StateClass => CellState switch
+    {
+        PlayerCardCellState.Marked => "node-primary",
+        PlayerCardCellState.Invalid => "node-error",
+        PlayerCardCellState.Missing => "node-warning",
+        PlayerCardCellState.MatchingPattern => "node-success",
+        _ => ""
+    };
+
     private string CardClass => string.Join(" ",
-        ["node-square", Selected ? "node-selected" : "", OnClick != null ? "node-clickable" : ""]);
+        ["node-square", StateClass, OnClick != null ? "node-clickable" : ""]);
 
     private string? _imageStyle;
 

@@ -1,4 +1,4 @@
-﻿<NodeSquare Node="Node" Selected="Cell.IsMarked" OnClick="@(OnClick!)" ShowTagBadge="ShowTagBadge" ShowTagBadgeTooltip="ShowTagBadge" />
+﻿<NodeSquare Node="Node" CellState="CellState" OnClick="@(OnNodeClick!)" ShowTagBadge="ShowTagBadge" ShowTagBadgeTooltip="ShowTagBadge" />
 
 @code {
     [CascadingParameter]
@@ -10,19 +10,29 @@
     [Parameter]
     public bool ReadOnly { get; set; }
 
-    public NodeViewModel? Node => Cell.Node == null ? null : new NodeViewModel(Cell.Node);
+    [Parameter]
+    public bool ShowDetails { get; set; }
 
-    private bool CanMark => !ReadOnly && State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown;
+    [Parameter]
+    public Action<PlayerCardCellData>? OnClick { get; set; }
 
-    private Action? OnClick => CanMark ? Mark : null;
+    private Action? OnNodeClick => OnClick != null ? () => OnClick(Cell) : null;
+
+    private NodeViewModel? Node => Cell.Node == null ? null : new NodeViewModel(Cell.Node);
 
     private bool ShowTagBadge => State.GameState.Preset.ShowTagBadges;
 
-    private void Mark()
+    private PlayerCardCellState CellState
     {
-        if (CanMark)
+        get
         {
-            State.Mark(Cell.Col, Cell.Row);
-        }
+            if (ShowDetails)
+                return Cell.State;
+            else if (Cell.State is PlayerCardCellState.MatchingPattern)
+                return PlayerCardCellState.MatchingPattern;
+            else if (Cell.State is PlayerCardCellState.Marked or PlayerCardCellState.Invalid)
+                return PlayerCardCellState.Marked;
+            return PlayerCardCellState.Default;
+        }    
     }
 }

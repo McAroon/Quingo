@@ -27,7 +27,20 @@ public class PlayerState : IDisposable
 
     public PlayerCardData Card { get; private set; }
 
-    public int LivesNumber { get; private set; }
+    private int _livesNumber;
+    public int LivesNumber 
+    { 
+        get => _livesNumber; 
+        private set 
+        {
+            var decreased = value < _livesNumber;
+            _livesNumber = value;
+            if (decreased)
+            {
+                LifeLost?.Invoke(this);
+            }
+        } 
+    }
 
     public string PlayerUserId { get; private set; }
 
@@ -80,10 +93,8 @@ public class PlayerState : IDisposable
 
         var cell = Card.Cells[col, row];
         cell.IsMarked = !cell.IsMarked;
-        if (!cell.IsMarked)
-        {
-            cell.IsValid = true;
-        }
+        ValidateCell(cell);
+
         NotifyStateChanged();
     }
 
@@ -94,17 +105,24 @@ public class PlayerState : IDisposable
             for (var row = 0; row < Card.Cells.GetLength(1); row++)
             {
                 var cell = Card.Cells[col, row];
-                if (cell.Node == null || !cell.IsMarked)
-                {
-                    cell.IsValid = true;
-                }
-                else
-                {
-                    cell.IsValid = cell.Node.NodeLinks.Any(n => GameState.DrawnNodes.FirstOrDefault(dn => dn.Id == n.NodeFromId || dn.Id == n.NodeToId) != null);
-                }
+                ValidateCell(cell);
             }
         }
         NotifyStateChanged();
+    }
+
+    private void ValidateCell(PlayerCardCellData cell)
+    {
+        if (cell.Node == null)
+        {
+            cell.IsValid = true;
+        }
+        else
+        {
+            var found = cell.Node.NodeLinks.Any(n => GameState.DrawnNodes
+            .FirstOrDefault(dn => dn.Id != cell.Node.Id && (dn.Id == n.NodeFromId || dn.Id == n.NodeToId)) != null);
+            cell.IsValid = cell.IsMarked ? found : !found;
+        }
     }
 
     public void RemoveLife()
@@ -125,6 +143,8 @@ public class PlayerState : IDisposable
     }
 
     public event Action? StateChanged;
+
+    public event Action<PlayerState>? LifeLost;
 
     private void NotifyStateChanged()
     {
@@ -168,7 +188,38 @@ public class PlayerCardCellData(int col, int row, Node? node = null)
 
     public bool IsFree => Node == null;
 
+    public bool IsMatchingPattern { get; set; }
+
     public bool IsMarked { get; set; }
 
     public bool IsValid { get; set; } = true;
+
+    public PlayerCardCellState State 
+    { 
+        get 
+        { 
+            if (IsMatchingPattern)
+            {
+                return PlayerCardCellState.MatchingPattern;
+            }
+            else if (IsMarked)
+            {
+                return IsValid ? PlayerCardCellState.Marked : PlayerCardCellState.Invalid;
+            }
+            else if (!IsValid)
+            {
+                return PlayerCardCellState.Missing;
+            }
+            return PlayerCardCellState.Default;
+        } 
+    }
+}
+
+public enum PlayerCardCellState
+{
+    Default,
+    Marked,
+    Invalid,
+    Missing,
+    MatchingPattern
 }

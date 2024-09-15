@@ -1,4 +1,6 @@
-﻿<MudStack Spacing="1" Row Class="pb-2" Wrap="Wrap.NoWrap">
+﻿@inject IDialogService Dialog
+
+<MudStack Spacing="1" Row Class="pb-2" Wrap="Wrap.NoWrap">
     @foreach (var col in State.GameState.Preset.Columns)
     {
         <MudCard Outlined Class="node-square node-header">
@@ -18,7 +20,7 @@
         @for (int col = 0; col < State.Card.Cells.GetLength(0); col++)
         {
             var cell = State.Card.Cells[col, cRow];
-            <PlayerCardCell Cell="cell" ReadOnly="ReadOnly" />
+            <PlayerCardCell Cell="cell" ReadOnly="ReadOnly" ShowDetails="ShowDetails" OnClick="@(OnClick!)" />
         }
     </MudStack>
 }
@@ -29,4 +31,25 @@
 
     [Parameter]
     public bool ReadOnly { get; set; }
+
+    [Parameter]
+    public bool ShowDetails { get; set; }
+
+    private bool CanMark => !ReadOnly && State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown;
+
+    private Action<PlayerCardCellData>? OnClick => CanMark ? Mark : ShowDetails ? ShowCellDetails : null;
+
+    private void Mark(PlayerCardCellData cell)
+    {
+        if (CanMark)
+        {
+            State.Mark(cell.Col, cell.Row);
+        }
+    }
+
+    private void ShowCellDetails(PlayerCardCellData cell)
+    {
+        if (cell.Node == null) return;    
+        // todo: details dialog
+    }
 }
