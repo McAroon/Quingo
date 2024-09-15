@@ -73,6 +73,7 @@ public class GameState : IDisposable
         GameStateEnum.Active => "Active",
         GameStateEnum.FinalCountdown => "Countdown",
         GameStateEnum.Finished => "Finished",
+        GameStateEnum.Canceled => "Canceled",
         _ => ""
     };
 
@@ -151,7 +152,7 @@ public class GameState : IDisposable
     {
         if (State != GameStateEnum.Active) return;
 
-        State = GameStateEnum.Finished;
+        State = GameStateEnum.Canceled;
         NotifyStateChanged();
     }
 
@@ -246,5 +247,6 @@ public enum GameStateEnum
     Init,
     Active,
     FinalCountdown,
-    Finished
+    Finished,
+    Canceled
 }
