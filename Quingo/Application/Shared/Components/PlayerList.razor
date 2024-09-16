@@ -87,6 +87,15 @@
         {
             Snackbar.Add($"{player.PlayerName} has lost a life ({player.LivesNumber})", Severity.Info);
         }
+        else
+        {
+            var text = player.LivesNumber > 1
+                ? $"{player.LivesNumber} lives left."
+                : player.LivesNumber == 1
+                    ? $"1 life left."
+                    : "You have no more lives. Game over.";
+            Snackbar.Add($"Incorrect! {text}", Severity.Error);
+        }
     }
 
     public void Dispose()
