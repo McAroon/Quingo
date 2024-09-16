@@ -19,7 +19,7 @@
     margin-right: 4px;
 }
 
-.node-clickable {
+.clickable {
     cursor: pointer;
     user-select: none;
 }
@@ -118,3 +118,27 @@
     height: 20px;
     min-width: 20px;
 }
+
+.pack-card {
+    max-width: 300px;
+    width: 100%;
+    aspect-ratio: 3/4;
+    padding: 4px;
+    box-sizing: initial;
+}
+
+    .pack-card.mud-paper-outlined {
+        border: 4px solid var(--mud-palette-primary);
+        padding: 0;
+    }
+
+        .pack-card.mud-paper-outlined .mud-card-media {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+    .pack-card .pack-default-image {
+        height: 300px;
+        background-color: var(--mud-palette-text-primary);
+        mask: url(media/box.svg) no-repeat 50% 50%;
+        mask-size: 80%;
+    }

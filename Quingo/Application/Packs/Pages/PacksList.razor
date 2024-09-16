@@ -19,43 +19,43 @@
 }
 else
 {
-    <MudGrid Class="mb-4">
-        <MudItem>
-            <MudButton Href="game/setup/pack" StartIcon="@Icons.Material.Filled.Add">New Pack</MudButton>
-        </MudItem>
-    </MudGrid>
-    <MudGrid>
+    <MudButton Href="game/setup/pack" StartIcon="@Icons.Material.Filled.Add" Class="mb-4">New Pack</MudButton>
+    <MudStack Row Spacing="2" Wrap="Wrap.Wrap">
         @foreach (var pack in Packs.Where(x => x.DeletedAt == null).OrderBy(x => x.CreatedAt))
         {
-            <MudItem xs="12" md="6" lg="3">
-                <MudCard>
-                    @if (!string.IsNullOrEmpty(pack.ImageUrl))
-                    {
-                        <MudCardMedia Image="@Files.GetFileUrl(pack.ImageUrl)" />
-                    }
-                    <MudCardHeader>
-                        <CardHeaderContent>
-                            <MudText Typo="Typo.h5">@pack.Name</MudText>
-                        </CardHeaderContent>
-                        <CardHeaderActions>
-                            @if (pack.CreatedByUserId == UserId)
-                            {
-                                <MudTooltip Text="Edit Pack">
-                                    <MudIconButton Href="@($"game/setup/pack/{pack.Id}")" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
-                                </MudTooltip>
-                                <MudTooltip Text="Delete Pack" ShowOnFocus="false">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="async () => await ConfirmDelete(pack)"></MudIconButton>
-                                </MudTooltip>
-                            }
-                        </CardHeaderActions>
-                    </MudCardHeader>
-                    <MudCardContent Style="min-height:60px">
-                        <MudText>@pack.Description</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
+
+            <MudCard Class="pack-card">
+                @if (!string.IsNullOrEmpty(pack.ImageUrl))
+                {
+                    <MudCardMedia Image="@Files.GetFileUrl(pack.ImageUrl)" />
+                }
+                else
+                {
+                    <div class="pack-default-image" />
+                }
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">@pack.Name</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        @if (pack.CreatedByUserId == UserId)
+                        {
+                            <MudTooltip Text="Edit Pack">
+                                <MudIconButton Href="@($"game/setup/pack/{pack.Id}")" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
+                            </MudTooltip>
+                            <MudTooltip Text="Delete Pack" ShowOnFocus="false">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="async () => await ConfirmDelete(pack)"></MudIconButton>
+                            </MudTooltip>
+                        }
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText>@pack.Description</MudText>
+                </MudCardContent>
+            </MudCard>
+
         }
-    </MudGrid>
+    </MudStack>
 }
 
 @code {
