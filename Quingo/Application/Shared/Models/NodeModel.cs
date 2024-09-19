@@ -44,6 +44,16 @@ public class NodeViewModel
             .GroupBy(x => (tag: x.Tag.Id, link: x.LinkType.Id, dir: x.LinkDirection))
             .Select(g => g.First())
             .ToList();
+
+        var links = NodeLinks.SelectMany(n => n.LinkedNode.Tags, (n, t) => (n, t))
+            .Select(x => new NodeLinkByTagInfoModel(x.t, x.n.LinkType, x.n.LinkDirection));
+        var indirectLinks = node.NodeTags.Where(x => x.Tag.IndirectLinksFrom.Count > 0).Select(x => x.Tag)
+            .SelectMany(x => x.IndirectLinksFrom, (tag, link) => (tag, link))
+            .Select(x => new NodeLinkByTagInfoModel(new EntityInfoModel(x.tag.Id, x.tag.Name), new EntityInfoModel(x.link.Id, x.link.Name), NodeLinkDirection.Both));
+        NodeLinksByTag = links.Concat(indirectLinks)
+            .GroupBy(x => (tag: x.Tag.Id, link: x.LinkType.Id, x.LinkType.Name, dir: x.LinkDirection))
+            .Select(g => g.First())
+            .ToList();
     }
 
     public NodeViewModel() { }
@@ -107,6 +117,24 @@ public class NodeLinkByTagInfoModel(EntityInfoModel tag, EntityInfoModel linkTyp
     public EntityInfoModel LinkType { get; set; } = linkType;
 
     public NodeLinkDirection LinkDirection { get; set; } = linkDirection;
+}
+
+public class IndirectLinkModel
+{
+    public int? TagFromId { get; set; }
+
+    public int? TagToId { get; set; }
+
+    public string? Name { get; set; }
+
+    public IndirectLinkModel() { }
+
+    public IndirectLinkModel(IndirectLink? link)
+    {
+        TagFromId = link?.TagFromId;
+        TagToId = link?.TagToId;
+        Name = link?.Name;
+    }
 }
 
 public enum NodeLinkDirection

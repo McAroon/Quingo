@@ -1,0 +1,84 @@
+﻿@inject ApplicationDbContext Db
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudText Typo="Typo.h4" GutterBottom>
+    Indirect Links <MudTooltip Text="Add Indirect Link"><MudIconButton OnClick="Add" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip>
+</MudText>
+<MudGrid>
+    <MudItem xs="12" md="6" lg="4">
+        <MudStack Spacing="2">
+            @foreach (var link in Pack.IndirectLinks.Where(x => x.DeletedAt == null))
+            {
+                <IndirectLinkEdit Link="link" OnSave="Save" OnDelete="ConfirmDelete" />
+            }
+        </MudStack>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [CascadingParameter]
+    public Pack Pack { get; set; } = default!;
+
+    private async Task Add()
+    {
+        await Save(0, new IndirectLinkModel());
+    }
+
+    private async Task Save(int id, IndirectLinkModel model)
+    {
+        IndirectLink link;
+        if (id == 0)
+        {
+            link = new();
+            Pack.IndirectLinks.Add(link);
+        }
+        else
+        {
+            link = Pack.IndirectLinks.First(x => x.Id == id);
+        }
+
+        link.TagFromId = model.TagFromId;
+        link.TagToId = model.TagToId;
+        link.Name = model.Name;
+
+        await Db.SaveChangesAsync();
+        StateHasChanged();
+    }
+
+    private async Task Delete(IndirectLink link)
+    {
+        Db.Remove(link);
+        await Db.SaveChangesAsync();
+        StateHasChanged();
+    }
+
+    private async Task ConfirmDelete(int id, bool force)
+    {
+        var link = Pack.IndirectLinks.FirstOrDefault(x => x.Id == id);
+        if (link == null)
+        {
+            Snackbar.Add("Indirect link not found", Severity.Error);
+            return;
+        }
+
+        if (force)
+        {
+            await Delete(link);
+            return;
+        }
+
+        var parameters = new ConfirmDialog.ConfirmDialogParams
+            {
+                Prompt = $"Delete indirect link {link.Name}?",
+                ButtonText = "Delete",
+                ButtonColor = Color.Error
+            };
+        var confirmed = await ConfirmDialog.CallDialog(DialogService, parameters);
+
+        if (confirmed)
+        {
+            await Delete(link);
+        }
+    }
+}

@@ -1,0 +1,142 @@
+﻿<MudCard>
+    @if (_isEditMode)
+    {
+        <MudCardContent>
+            <MudForm @ref="@_form">
+                <MudStack Row Wrap="Wrap.NoWrap" StretchItems="StretchItems.None" Class="pb-2">
+                    <MudSelect T="int?" Label="Tag From" @bind-Value="_model.TagFromId" Required>
+                        @foreach (var tag in Pack.Tags)
+                        {
+                            <MudSelectItem T="int?" Value="@tag.Id">@tag.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudIcon Icon="@NodeLinkDirection.To.MudIcon()" Class="align-self-end" />
+                    <MudSelect T="int?" Label="Tag To" @bind-Value="_model.TagToId" Required>
+                        @foreach (var tag in Pack.Tags)
+                        {
+                            <MudSelectItem T="int?" Value="@tag.Id">@tag.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudIcon Icon="@NodeLinkDirection.From.MudIcon()" Class="align-self-end" />
+                    <MudSelect T="int?" Label="Tag From" @bind-Value="_model.TagFromId" ReadOnly Disabled>
+                        @foreach (var tag in Pack.Tags)
+                        {
+                            <MudSelectItem T="int?" Value="@tag.Id">@tag.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudStack>
+                <MudStack Row Wrap="Wrap.NoWrap" StretchItems="StretchItems.None" Class="p-1">
+                    <MudTextField Label="Indirect Link Name" @bind-Value="_model.Name" Required />
+                    <MudIcon Icon="@NodeLinkDirection.Both.MudIcon()" Class="align-self-end" />
+                </MudStack>
+            </MudForm>
+        </MudCardContent>
+        <MudCardActions>
+            <div class="ml-auto">
+                <MudButton Color="Color.Primary" OnClick="Save" StartIcon="@Icons.Material.Filled.Save">Save</MudButton>
+                <MudButton Color="Color.Secondary" OnClick="CancelEdit" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+            </div>
+        </MudCardActions>
+    }
+    else
+    {
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5">
+                    @Link.Name
+                </MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+                <MudTooltip Text="Edit Indirect Link">
+                    <MudIconButton OnClick="() => _isEditMode = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
+                </MudTooltip>
+                <MudTooltip Text="Delete Indirect Link" ShowOnFocus="false">
+                    <MudIconButton OnClick="() => Delete()" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
+                </MudTooltip>
+            </CardHeaderActions>
+        </MudCardHeader>
+        <MudCardContent>
+            @if (!IsNew)
+            {
+                <MudStack Row Wrap="Wrap.NoWrap" Justify="Justify.Center">
+                    <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@Link.TagTo.Name</MudChip>
+                </MudStack>
+                <MudStack Row Wrap="Wrap.NoWrap" Justify="Justify.Center" Spacing="12">
+                    <MudIcon Icon="@NodeLinkDirection.To.MudIcon()" Style="transform: rotate(-60deg)" />
+                    <MudIcon Icon="@NodeLinkDirection.From.MudIcon()" Style="transform: rotate(60deg)" />
+                </MudStack>
+                <MudStack Row Wrap="Wrap.NoWrap" Justify="Justify.Center" Spacing="5">
+                    <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@Link.TagFrom.Name</MudChip>
+                    <MudIcon Icon="@NodeLinkDirection.Both.MudIcon()" Class="align-self-center" />
+                    <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@Link.TagFrom.Name</MudChip>
+                </MudStack>
+            }
+        </MudCardContent>
+    }
+</MudCard>
+
+@code {
+    [CascadingParameter]
+    public Pack Pack { get; set; } = default!;
+
+    [Parameter]
+    public IndirectLink Link { get; set; } = default!;
+
+    [Parameter]
+    public Func<int, IndirectLinkModel, Task>? OnSave { get; set; }
+
+    [Parameter]
+    public Func<int, bool, Task>? OnDelete { get; set; }
+
+    private bool IsNew => Link.TagFromId == null || Link.TagToId == null || Link.Name == null;
+
+    private IndirectLinkModel _model = default!;
+
+    private bool _isEditMode;
+
+    private MudForm _form = default!;
+
+    protected override void OnParametersSet()
+    {
+        RemapModel();
+        _isEditMode = IsNew;
+    }
+
+    private void RemapModel()
+    {
+        _model = new IndirectLinkModel(Link);
+        StateHasChanged();
+    }
+
+    private async Task Save()
+    {
+        await _form.Validate();
+        if (_form.IsValid && OnSave != null)
+        {
+            await OnSave.Invoke(Link.Id, _model);
+            _isEditMode = false;
+            RemapModel();
+        }
+    }
+
+    private async Task Delete(bool force = false)
+    {
+        if (OnDelete != null)
+            await OnDelete.Invoke(Link.Id, force);
+    }
+
+    private async Task CancelEdit()
+    {
+        if (IsNew)
+        {
+            await Delete(true);
+        }
+        else
+        {
+            _isEditMode = false;
+            RemapModel();
+        }
+    }
+
+
+}

@@ -15,5 +15,7 @@
         public List<Tag> Tags { get; set; } = [];
 
         public List<PackPreset> Presets { get; set; } = [];
+
+        public List<IndirectLink> IndirectLinks { get; set; } = [];
     }
 }

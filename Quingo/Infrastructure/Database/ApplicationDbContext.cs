@@ -22,13 +22,14 @@ namespace Quingo.Infrastructure.Database
         public DbSet<Pack> Packs { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<NodeLinkType> NodeLinkTypes { get; set; }
-
         public DbSet<PackPreset> PackPresets { get; set; }
+        public DbSet<IndirectLink> IndirectLinks { get; set; }
 
         public IQueryable<Pack> PacksWithIncludes => Packs
             .Include(x => x.Tags)
             .Include(x => x.NodeLinkTypes)
             .Include(x => x.Presets)
+            .Include(x => x.IndirectLinks)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeTags)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo);
@@ -56,6 +57,14 @@ namespace Quingo.Infrastructure.Database
                 }
             }
 
+            foreach(var link in pack.IndirectLinks)
+            {
+                if (link.TagFromId != null)
+                    link.TagFrom ??= pack.Tags.First(x => x.Id == link.TagFromId);
+                if (link.TagToId != null)
+                    link.TagTo ??= pack.Tags.First(x => x.Id == link.TagToId);
+            }
+
             return pack;
         }
 
@@ -70,9 +79,12 @@ namespace Quingo.Infrastructure.Database
             new EntityBaseConfiguration<Tag>().Configure(builder.Entity<Tag>());
             new EntityBaseConfiguration<NodeLinkType>().Configure(builder.Entity<NodeLinkType>());
             new EntityBaseConfiguration<PackPreset>().Configure(builder.Entity<PackPreset>());
+            new EntityBaseConfiguration<IndirectLink>().Configure(builder.Entity<IndirectLink>());
 
             builder.Entity<Node>().Ignore(e => e.NodeLinks);
             builder.Entity<Node>().Ignore(e => e.LinkedNodes);
+
+            builder.Entity<Tag>().Ignore(e => e.IndirectLinks);
 
             builder.Entity<NodeLink>().HasOne(e => e.NodeFrom).WithMany(e => e.NodeLinksFrom).HasForeignKey(e => e.NodeFromId).IsRequired();
             builder.Entity<NodeLink>().HasOne(e => e.NodeTo).WithMany(e => e.NodeLinksTo).HasForeignKey(e => e.NodeToId).IsRequired();
@@ -84,12 +96,16 @@ namespace Quingo.Infrastructure.Database
             builder.Entity<Pack>().HasMany(e => e.NodeLinkTypes).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
             builder.Entity<Pack>().HasMany(e => e.Tags).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
             builder.Entity<Pack>().HasMany(e => e.Presets).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
+            builder.Entity<Pack>().HasMany(e => e.IndirectLinks).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
 
             builder.Entity<PackPreset>().OwnsOne(e => e.Data, d =>
             {
                 d.ToJson();
                 d.OwnsMany(x => x.Columns);
             });
+
+            builder.Entity<IndirectLink>().HasOne(e => e.TagTo).WithMany(e => e.IndirectLinksTo).HasForeignKey(e => e.TagToId);
+            builder.Entity<IndirectLink>().HasOne(e => e.TagFrom).WithMany(e => e.IndirectLinksFrom).HasForeignKey(e => e.TagFromId);
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
