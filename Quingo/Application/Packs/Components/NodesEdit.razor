@@ -7,20 +7,60 @@
     Pack Items <MudTooltip Text="Add Item"><MudIconButton OnClick="AddNode" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip>
 </MudText>
 
+<MudGrid Class="pb-4">
+    <MudItem xs="12" md="6" lg="4">
+        <MudStack Row Wrap="Wrap.NoWrap">
+            <MudTextField Placeholder="Search..." @bind-Value="_searchText" DebounceInterval="300" Clearable />
+            <MudSelect T="int" MultiSelection Placeholder="Tags" @bind-SelectedValues="@_filterTags" MultiSelectionTextFunc="GetTagsSelectText" Clearable>
+                @foreach (var tag in Pack.Tags)
+                {
+                    <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudStack>
+    </MudItem>
+</MudGrid>
+
 <MudGrid>
-    @if (Pack?.Nodes != null)
-    @foreach(var node in Pack.Nodes.Where(x => x.DeletedAt == null))
+    @if (NodesFiltered.Count > 0)
     {
-        <MudItem xs="12" md="6" lg="4">
-            <NodeEdit Node="node" OnSave="SaveNode" OnDelete="ConfirmDeleteNode" />
-        </MudItem>
-        <MudFlexBreak />
+        @foreach (var node in NodesFiltered)
+        {
+            <MudItem xs="12" md="6" lg="4">
+                <NodeEdit Node="node" OnSave="SaveNode" OnDelete="ConfirmDeleteNode" />
+            </MudItem>
+            <MudFlexBreak />
+        }
+    }
+    else
+    {
+        <MudItem xs="12" md="6" lg="4" Style="height: 600px"><i>No Items</i></MudItem>
     }
 </MudGrid>
+
+<MudScrollToTop>
+    <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.KeyboardArrowUp" />
+</MudScrollToTop>
 
 @code {
     [CascadingParameter]
     public Pack Pack { get; set; } = default!;
+
+    private string _searchText = "";
+
+    private IEnumerable<int> _filterTags = [];
+
+    private List<Node> NodesFiltered => Pack?.Nodes?
+        .Where(x => (x.Name?.Contains(_searchText, StringComparison.InvariantCultureIgnoreCase) ?? true) && x.DeletedAt == null)
+        .Where(x => !_filterTags.Any() || x.NodeTags.FirstOrDefault(t => _filterTags.Contains(t.TagId)) != null)
+        .Reverse().ToList() ?? [];
+
+    private string GetTagsSelectText(List<string> selected)
+    {
+        var selectedInts = selected.Select(int.Parse).ToList();
+        var tags = Pack.Tags.Where(x => selectedInts.Contains(x.Id)).Select(x => x.Name);
+        return string.Join(", ", tags);
+    }
 
     private async Task AddNode()
     {
@@ -32,10 +72,10 @@
         if (id == 0)
         {
             var node = new Node
-            {
-                Name = model.Name ?? "New Item",
-                Pack = Pack
-            };
+                {
+                    Name = model.Name ?? "New Item",
+                    Pack = Pack
+                };
             Db.Update(node);
         }
         else
@@ -62,10 +102,10 @@
                     }
 
                     nodeTag = new NodeTag
-                    {
-                        Node = node,
-                        Tag = tag
-                    };
+                        {
+                            Node = node,
+                            Tag = tag
+                        };
                     node.NodeTags.Add(nodeTag);
                 }
                 else if (nodeTag.DeletedAt != null)
@@ -102,11 +142,11 @@
                     if (link == null)
                     {
                         link = new NodeLink
-                        {
-                            NodeFrom = node,
-                            NodeTo = linkedNode,
-                            NodeLinkType = linkType
-                        };
+                            {
+                                NodeFrom = node,
+                                NodeTo = linkedNode,
+                                NodeLinkType = linkType
+                            };
                         node.NodeLinksFrom.Add(link);
                     }
                     else
