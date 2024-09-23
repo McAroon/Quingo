@@ -43,14 +43,13 @@ public class NodeViewModel
             .Select(x => new NodeLinkByTagInfoModel(x.t, x.n.LinkType, x.n.LinkDirection, NodeLinkByTagType.Direct));
 
         var indirectLinks = node.NodeTags
-            .Where(x => x.Tag.IndirectLinksFrom.Any(s => s.Order == 0 || s.Order == s.IndirectLink.Steps.Count - 1))
             .Select(x => x.Tag)
-            .SelectMany(x => x.IndirectLinksFrom, (tag, step) => (tag, step, link: step.IndirectLink))
-            .Where(x => x.step.Order == 0 || x.step.Order == x.link.Steps.Count - 1)
+            .SelectMany(x => x.IndirectLinks, (tag, step) => (tag, step, link: step.IndirectLink))
+            .Where(x => (x.step.Order == 0 && x.step.TagFrom == x.tag) || (x.step.Order == x.link.Steps.Count - 1 && x.step.TagTo == x.tag && x.link.Direction != NodeLinkDirection.Both))
             .Select(x =>
             {
                 var tag = x.link.Direction == NodeLinkDirection.Both ? x.tag : x.step.Order == 0 ? x.link.Steps.Last().TagTo : x.link.Steps.First().TagFrom;
-                var direction = x.link.Direction == NodeLinkDirection.Both ? NodeLinkDirection.Both : x.step.Order == 0 ? NodeLinkDirection.From : NodeLinkDirection.To;
+                var direction = x.link.Direction == NodeLinkDirection.Both ? NodeLinkDirection.Both : x.step.Order == 0 ? NodeLinkDirection.To : NodeLinkDirection.From;
                 return new NodeLinkByTagInfoModel(new EntityInfoModel(tag.Id, tag.Name), new EntityInfoModel(x.link.Id, x.link.Name), direction, NodeLinkByTagType.Indirect);
             });
 

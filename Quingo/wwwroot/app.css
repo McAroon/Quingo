@@ -50,11 +50,12 @@
 
     .node-square .node-text {
         border-radius: 30px;
-        padding: 2px 6px;
+        padding: 5px 8px;
         min-width: 36px;
         color: var(--mud-palette-primary-text);
         background-color: rgba(39,39,47,0.5);
         margin-bottom: 1px;
+        line-height: 1.1;
     }
 
     .node-square.node-header {
@@ -113,7 +114,7 @@
 }
 
     .node-square .node-square-content .node-badges .node-badge {
-        margin: 0 2px;
+        margin: 2px;
         opacity: 0.9;
     }
 

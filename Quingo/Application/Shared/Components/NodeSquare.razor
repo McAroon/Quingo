@@ -7,12 +7,27 @@
             {
                 if (ShowTagBadgeTooltip && Node?.NodeLinksByTag?.Count > 0)
                 {
-                    <MudTooltip Placement="Placement.Right">
+                    var from = Node.NodeLinksByTag.Where(x => x.LinkDirection == NodeLinkDirection.From).ToList();
+                    var rest = Node.NodeLinksByTag.Where(x => x.LinkDirection != NodeLinkDirection.From).ToList();
+
+                    <MudTooltip Placement="Placement.Right" Disabled="rest.Count == 0">
                         <ChildContent>
-                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="chip-xs node-badge">@_badgeText</MudChip>
+                            <MudTooltip Placement="Placement.Left" Disabled="from.Count == 0">
+                                <ChildContent>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="chip-xs node-badge">@_badgeText</MudChip>
+                                </ChildContent>
+                                <TooltipContent>
+                                    @foreach (var link in from)
+                                    {
+                                        <div>
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="chip-xs">@link.Tag.Name</MudChip><MudIcon Size="Size.Small" Class="icon-inline" Icon="@NodeLinkDirection.To.MudIcon()" /><MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Filled" Class="chip-xs">@link.LinkType.Name</MudChip>
+                                        </div>
+                                    }
+                                </TooltipContent>
+                            </MudTooltip>
                         </ChildContent>
                         <TooltipContent>
-                            @foreach (var link in Node?.NodeLinksByTag ?? [])
+                            @foreach (var link in rest)
                             {
                                 <div>
                                     <MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Filled" Class="chip-xs">@link.LinkType.Name</MudChip><MudIcon Size="Size.Small" Class="icon-inline" Icon="@link.LinkDirection.MudIcon()" /><MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="chip-xs">@link.Tag.Name</MudChip>
