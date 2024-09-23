@@ -122,24 +122,25 @@ public class PlayerState : IDisposable
             var found = cell.Node.NodeLinks.Any(n => GameState.DrawnNodes
             .FirstOrDefault(dn => dn.Id != cell.Node.Id && (dn.Id == n.NodeFromId || dn.Id == n.NodeToId)) != null);
 
-            if (!found)
-            {
-                var indirectLinks = cell.Node.Pack.IndirectLinks
-                    .Where(l => l.TagFromId != null && l.TagToId != null)
-                    .Where(l => cell.Node.NodeTags.FirstOrDefault(nt => nt.TagId == l.TagFromId) != null);
-                foreach (var link in indirectLinks)
-                {
-                    var toNodes = cell.Node.NodeLinksTo
-                        .Where(nl => nl.NodeTo.NodeTags.FirstOrDefault(nt => nt.TagId == link.TagToId) != null)
-                        .Select(nl => nl.NodeFrom);
-                    var sameTypeNodes = toNodes
-                        .SelectMany(n => n.NodeLinksFrom)
-                        .Select(nl => nl.NodeTo)
-                        .Where(n => n.Id != cell.Node.Id && n.NodeTags.FirstOrDefault(nt => nt.TagId == link.TagFromId) != null);
-                    found = GameState.DrawnNodes.Join(sameTypeNodes, x => x.Id, y => y.Id, (x, y) => x).Any();
-                    if (found) break;
-                }
-            }
+            // todo: indirect links
+            //if (!found)
+            //{
+            //    var indirectLinks = cell.Node.Pack.IndirectLinks
+            //        .Where(l => l.TagFromId != null && l.TagToId != null)
+            //        .Where(l => cell.Node.NodeTags.FirstOrDefault(nt => nt.TagId == l.TagFromId) != null);
+            //    foreach (var link in indirectLinks)
+            //    {
+            //        var toNodes = cell.Node.NodeLinksTo
+            //            .Where(nl => nl.NodeTo.NodeTags.FirstOrDefault(nt => nt.TagId == link.TagToId) != null)
+            //            .Select(nl => nl.NodeFrom);
+            //        var sameTypeNodes = toNodes
+            //            .SelectMany(n => n.NodeLinksFrom)
+            //            .Select(nl => nl.NodeTo)
+            //            .Where(n => n.Id != cell.Node.Id && n.NodeTags.FirstOrDefault(nt => nt.TagId == link.TagFromId) != null);
+            //        found = GameState.DrawnNodes.Join(sameTypeNodes, x => x.Id, y => y.Id, (x, y) => x).Any();
+            //        if (found) break;
+            //    }
+            //}
             cell.IsValid = cell.IsMarked ? found : !found;
         }
     }

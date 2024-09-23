@@ -4,31 +4,35 @@
         <MudCardContent>
             <MudForm @ref="@_form">
                 <MudStack Row Wrap="Wrap.NoWrap" StretchItems="StretchItems.None" Class="pb-2">
-                    <MudSelect T="int?" Label="Tag From" @bind-Value="_model.TagFromId" Required>
-                        @foreach (var tag in Pack.Tags)
-                        {
-                            <MudSelectItem T="int?" Value="@tag.Id">@tag.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                    <MudIcon Icon="@NodeLinkDirection.To.MudIcon()" Class="align-self-end" />
-                    <MudSelect T="int?" Label="Tag To" @bind-Value="_model.TagToId" Required>
-                        @foreach (var tag in Pack.Tags)
-                        {
-                            <MudSelectItem T="int?" Value="@tag.Id">@tag.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                    <MudIcon Icon="@NodeLinkDirection.From.MudIcon()" Class="align-self-end" />
-                    <MudSelect T="int?" Label="Tag From" @bind-Value="_model.TagFromId" ReadOnly Disabled>
-                        @foreach (var tag in Pack.Tags)
-                        {
-                            <MudSelectItem T="int?" Value="@tag.Id">@tag.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudStack>
-                <MudStack Row Wrap="Wrap.NoWrap" StretchItems="StretchItems.None" Class="p-1">
                     <MudTextField Label="Indirect Link Name" @bind-Value="_model.Name" Required />
-                    <MudIcon Icon="@NodeLinkDirection.Both.MudIcon()" Class="align-self-end" />
+                    <MudSelect T="NodeLinkDirection" Label="Indirect Link Direction" @bind-Value="@_model.Direction">
+                        <MudSelectItem Value="NodeLinkDirection.To"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.To.MudIcon()" Class="icon-inline-select" /> One Way</MudSelectItem>
+                        <MudSelectItem Value="NodeLinkDirection.Both"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.Both.MudIcon()" Class="icon-inline-select" /> Both Ways</MudSelectItem>
+                    </MudSelect>
                 </MudStack>
+
+                <MudText Typo="Typo.h6">Indirect Link Steps <MudTooltip Text="Add Step"><MudIconButton OnClick="AddStep" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip></MudText>
+                @foreach (var (step, index) in _model.Steps.Select((step, index) => (step, index)))
+                {
+                    <MudStack Row Wrap="Wrap.NoWrap" StretchItems="StretchItems.None" Class="pb-2">
+                        <MudSelect T="int?" Label="Tag From" @bind-Value="step.TagFromId" Required ReadOnly="index > 0" Disabled="index > 0">
+                            @foreach (var tag in Pack.Tags)
+                            {
+                                <MudSelectItem T="int?" Value="@tag.Id">@tag.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudIcon Icon="@NodeLinkDirection.To.MudIcon()" Class="align-self-end" />
+                        <MudSelect T="int?" Label="Tag To" @bind-Value="step.TagToId" Required @bind-Value:after="() => OnStepTagToSelected(step)">
+                            @foreach (var tag in Pack.Tags)
+                            {
+                                <MudSelectItem T="int?" Value="@tag.Id">@tag.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudTooltip Text="Remove Step">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => DeleteStep(step)" Disabled="index != _model.Steps.Count - 1" />
+                        </MudTooltip>
+                    </MudStack>
+                }
             </MudForm>
         </MudCardContent>
         <MudCardActions>
@@ -58,17 +62,32 @@
         <MudCardContent>
             @if (!IsNew)
             {
-                <MudStack Row Wrap="Wrap.NoWrap" Justify="Justify.Center">
-                    <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@Link.TagTo.Name</MudChip>
-                </MudStack>
-                <MudStack Row Wrap="Wrap.NoWrap" Justify="Justify.Center" Spacing="12">
-                    <MudIcon Icon="@NodeLinkDirection.To.MudIcon()" Style="transform: rotate(-60deg)" />
-                    <MudIcon Icon="@NodeLinkDirection.From.MudIcon()" Style="transform: rotate(60deg)" />
-                </MudStack>
-                <MudStack Row Wrap="Wrap.NoWrap" Justify="Justify.Center" Spacing="5">
-                    <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@Link.TagFrom.Name</MudChip>
-                    <MudIcon Icon="@NodeLinkDirection.Both.MudIcon()" Class="align-self-center" />
-                    <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@Link.TagFrom.Name</MudChip>
+                var steps = Link.Steps.Where(x => x.DeletedAt == null).ToList();
+                <MudStack Row Wrap="Wrap.Wrap" Spacing="0">
+                    @foreach (var (step, i) in steps.Select((step, i) => (step, i)))
+                    {
+                        <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@step.TagFrom.Name</MudChip>
+                        <MudIcon Icon="@NodeLinkDirection.To.MudIcon()" Class="align-self-center" />
+                        @if (i >= steps.Count - 1)
+                        {
+                            <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@step.TagTo.Name</MudChip>
+                        }
+                    }
+                    @if (Link.Direction == NodeLinkDirection.Both)
+                    {
+                        @foreach (var (step, i) in steps.AsEnumerable().Reverse().Select((step, i) => (step, i)))
+                        {
+                            if (i > 0)
+                            {
+                                <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@step.TagTo.Name</MudChip>
+                            }
+                            <MudIcon Icon="@NodeLinkDirection.From.MudIcon()" Class="align-self-center" />
+                            @if (i >= steps.Count - 1)
+                            {
+                                <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@step.TagFrom.Name</MudChip>
+                            }
+                        }
+                    }
                 </MudStack>
             }
         </MudCardContent>
@@ -88,7 +107,7 @@
     [Parameter]
     public Func<int, bool, Task>? OnDelete { get; set; }
 
-    private bool IsNew => Link.TagFromId == null || Link.TagToId == null || Link.Name == null;
+    private bool IsNew => Link.Name == null || Link.Steps.Count == 0;
 
     private IndirectLinkModel _model = default!;
 
@@ -100,6 +119,32 @@
     {
         RemapModel();
         _isEditMode = IsNew;
+    }
+
+    private void AddStep()
+    {
+        var step = new IndirectLinkStepModel();
+        _model.Steps.Add(step);
+        var index = _model.Steps.IndexOf(step);
+        if (index <= 0) return;
+        var prevStep = _model.Steps[index - 1];
+        step.TagFromId = prevStep.TagToId;
+        StateHasChanged();
+    }
+
+    private void DeleteStep(IndirectLinkStepModel step)
+    {
+        _model.Steps.Remove(step);
+        StateHasChanged();
+    }
+
+    private void OnStepTagToSelected(IndirectLinkStepModel step)
+    {
+        var index = _model.Steps.IndexOf(step);
+        if (index < 0 || _model.Steps.Count <= index + 1) return;
+        var nextStep = _model.Steps[index + 1];
+        nextStep.TagFromId = step.TagToId;
+        StateHasChanged();
     }
 
     private void RemapModel()

@@ -19,10 +19,10 @@
 
         public Pack Pack { get; set; } = default!;
 
-        public List<IndirectLink> IndirectLinksFrom { get; set; } = [];
+        public List<IndirectLinkStep> IndirectLinksFrom { get; set; } = [];
 
-        public List<IndirectLink> IndirectLinksTo { get; set; } = [];
+        public List<IndirectLinkStep> IndirectLinksTo { get; set; } = [];
 
-        public List<IndirectLink> IndirectLinks => [.. IndirectLinksFrom, .. IndirectLinksTo];
+        public List<IndirectLinkStep> IndirectLinks => [.. IndirectLinksFrom, .. IndirectLinksTo];
     }
 }

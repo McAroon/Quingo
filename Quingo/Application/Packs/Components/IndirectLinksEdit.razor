@@ -38,9 +38,21 @@
             link = Pack.IndirectLinks.First(x => x.Id == id);
         }
 
-        link.TagFromId = model.TagFromId;
-        link.TagToId = model.TagToId;
         link.Name = model.Name;
+        link.Direction = model.Direction;
+
+        foreach (var step in link.Steps)
+        {
+            Db.Remove(step);
+        }
+
+        link.Steps = model.Steps.Select((step, i) => new IndirectLinkStep
+            {
+                IndirectLink = link,
+                Order = i,
+                TagFromId = step.TagFromId ?? throw new InvalidOperationException(),
+                TagToId = step.TagToId ?? throw new InvalidOperationException()
+            }).ToList();
 
         await Db.SaveChangesAsync();
         StateHasChanged();

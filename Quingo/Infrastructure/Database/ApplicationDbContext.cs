@@ -24,12 +24,13 @@ namespace Quingo.Infrastructure.Database
         public DbSet<NodeLinkType> NodeLinkTypes { get; set; }
         public DbSet<PackPreset> PackPresets { get; set; }
         public DbSet<IndirectLink> IndirectLinks { get; set; }
+        public DbSet<IndirectLinkStep> IndirectLinkSteps { get; set; }
 
         public IQueryable<Pack> PacksWithIncludes => Packs
             .Include(x => x.Tags)
             .Include(x => x.NodeLinkTypes)
             .Include(x => x.Presets)
-            .Include(x => x.IndirectLinks)
+            .Include(x => x.IndirectLinks).ThenInclude(x => x.Steps)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeTags)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo);
@@ -57,12 +58,13 @@ namespace Quingo.Infrastructure.Database
                 }
             }
 
-            foreach(var link in pack.IndirectLinks)
+            foreach (var link in pack.IndirectLinks)
             {
-                if (link.TagFromId != null)
-                    link.TagFrom ??= pack.Tags.First(x => x.Id == link.TagFromId);
-                if (link.TagToId != null)
-                    link.TagTo ??= pack.Tags.First(x => x.Id == link.TagToId);
+                foreach (var step in link.Steps)
+                {
+                    step.TagFrom ??= pack.Tags.First(x => x.Id == step.TagFromId);
+                    step.TagTo ??= pack.Tags.First(x => x.Id == step.TagToId);
+                }
             }
 
             return pack;
@@ -80,6 +82,7 @@ namespace Quingo.Infrastructure.Database
             new EntityBaseConfiguration<NodeLinkType>().Configure(builder.Entity<NodeLinkType>());
             new EntityBaseConfiguration<PackPreset>().Configure(builder.Entity<PackPreset>());
             new EntityBaseConfiguration<IndirectLink>().Configure(builder.Entity<IndirectLink>());
+            new EntityBaseConfiguration<IndirectLinkStep>().Configure(builder.Entity<IndirectLinkStep>());
 
             builder.Entity<Node>().Ignore(e => e.NodeLinks);
             builder.Entity<Node>().Ignore(e => e.LinkedNodes);
@@ -104,8 +107,11 @@ namespace Quingo.Infrastructure.Database
                 d.OwnsMany(x => x.Columns);
             });
 
-            builder.Entity<IndirectLink>().HasOne(e => e.TagTo).WithMany(e => e.IndirectLinksTo).HasForeignKey(e => e.TagToId);
-            builder.Entity<IndirectLink>().HasOne(e => e.TagFrom).WithMany(e => e.IndirectLinksFrom).HasForeignKey(e => e.TagFromId);
+            builder.Entity<IndirectLink>().Property(e => e.Direction).HasConversion<string>();
+            builder.Entity<IndirectLink>().HasMany(e => e.Steps).WithOne(e => e.IndirectLink).HasForeignKey(e => e.IndirectLinkId).IsRequired();
+
+            builder.Entity<IndirectLinkStep>().HasOne(e => e.TagTo).WithMany(e => e.IndirectLinksTo).HasForeignKey(e => e.TagToId).IsRequired();
+            builder.Entity<IndirectLinkStep>().HasOne(e => e.TagFrom).WithMany(e => e.IndirectLinksFrom).HasForeignKey(e => e.TagFromId).IsRequired();
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

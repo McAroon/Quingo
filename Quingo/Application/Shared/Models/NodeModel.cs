@@ -39,19 +39,23 @@ public class NodeViewModel
         NodeTags = node.NodeTags.Where(x => x.DeletedAt == null).Select(x => new EntityInfoModel(x.Id, x.Tag.Name)).ToList();
         ImageUrl = node.ImageUrl;
 
-        NodeLinksByTag = NodeLinks.SelectMany(n => n.LinkedNode.Tags, (n, t) => (n, t))
-            .Select(x => new NodeLinkByTagInfoModel(x.t, x.n.LinkType, x.n.LinkDirection))
-            .GroupBy(x => (tag: x.Tag.Id, link: x.LinkType.Id, dir: x.LinkDirection))
-            .Select(g => g.First())
-            .ToList();
-
         var links = NodeLinks.SelectMany(n => n.LinkedNode.Tags, (n, t) => (n, t))
-            .Select(x => new NodeLinkByTagInfoModel(x.t, x.n.LinkType, x.n.LinkDirection));
-        var indirectLinks = node.NodeTags.Where(x => x.Tag.IndirectLinksFrom.Count > 0).Select(x => x.Tag)
-            .SelectMany(x => x.IndirectLinksFrom, (tag, link) => (tag, link))
-            .Select(x => new NodeLinkByTagInfoModel(new EntityInfoModel(x.tag.Id, x.tag.Name), new EntityInfoModel(x.link.Id, x.link.Name), NodeLinkDirection.Both));
+            .Select(x => new NodeLinkByTagInfoModel(x.t, x.n.LinkType, x.n.LinkDirection, NodeLinkByTagType.Direct));
+
+        var indirectLinks = node.NodeTags
+            .Where(x => x.Tag.IndirectLinksFrom.Any(s => s.Order == 0 || s.Order == s.IndirectLink.Steps.Count - 1))
+            .Select(x => x.Tag)
+            .SelectMany(x => x.IndirectLinksFrom, (tag, step) => (tag, step, link: step.IndirectLink))
+            .Where(x => x.step.Order == 0 || x.step.Order == x.link.Steps.Count - 1)
+            .Select(x =>
+            {
+                var tag = x.link.Direction == NodeLinkDirection.Both ? x.tag : x.step.Order == 0 ? x.link.Steps.Last().TagTo : x.link.Steps.First().TagFrom;
+                var direction = x.link.Direction == NodeLinkDirection.Both ? NodeLinkDirection.Both : x.step.Order == 0 ? NodeLinkDirection.From : NodeLinkDirection.To;
+                return new NodeLinkByTagInfoModel(new EntityInfoModel(tag.Id, tag.Name), new EntityInfoModel(x.link.Id, x.link.Name), direction, NodeLinkByTagType.Indirect);
+            });
+
         NodeLinksByTag = links.Concat(indirectLinks)
-            .GroupBy(x => (tag: x.Tag.Id, link: x.LinkType.Id, x.LinkType.Name, dir: x.LinkDirection))
+            .GroupBy(x => (tag: x.Tag.Id, name: x.LinkType.Name, dir: x.LinkDirection, type: x.Type))
             .Select(g => g.First())
             .ToList();
     }
@@ -110,38 +114,60 @@ public class LinkedNodeInfoModel(Node node) : EntityInfoModel(node.Id, node.Name
     public IEnumerable<EntityInfoModel> Tags { get; set; } = node.NodeTags.Select(x => new EntityInfoModel(x.TagId, x.Tag.Name));
 }
 
-public class NodeLinkByTagInfoModel(EntityInfoModel tag, EntityInfoModel linkType, NodeLinkDirection linkDirection)
+public class NodeLinkByTagInfoModel(EntityInfoModel tag, EntityInfoModel linkType, NodeLinkDirection linkDirection, NodeLinkByTagType type)
 {
     public EntityInfoModel Tag { get; set; } = tag;
 
     public EntityInfoModel LinkType { get; set; } = linkType;
 
     public NodeLinkDirection LinkDirection { get; set; } = linkDirection;
+
+    public NodeLinkByTagType Type { get; set; } = type;
+}
+
+public enum NodeLinkByTagType
+{
+    Direct,
+    Indirect
 }
 
 public class IndirectLinkModel
+{
+    public string? Name { get; set; }
+
+    public NodeLinkDirection Direction { get; set; } = NodeLinkDirection.To;
+
+    public List<IndirectLinkStepModel> Steps { get; set; } = [];
+
+    public IndirectLinkModel()
+    {
+        
+    }
+
+    public IndirectLinkModel(IndirectLink link)
+    {
+        Name = link.Name;
+        Direction = link.Direction;
+        Steps = link.Steps.Select(x => new IndirectLinkStepModel(x)).ToList();
+    }
+}
+
+public class IndirectLinkStepModel
 {
     public int? TagFromId { get; set; }
 
     public int? TagToId { get; set; }
 
-    public string? Name { get; set; }
-
-    public IndirectLinkModel() { }
-
-    public IndirectLinkModel(IndirectLink? link)
+    public IndirectLinkStepModel()
     {
-        TagFromId = link?.TagFromId;
-        TagToId = link?.TagToId;
-        Name = link?.Name;
+        
     }
-}
 
-public enum NodeLinkDirection
-{
-    From,
-    To,
-    Both
+    public IndirectLinkStepModel(IndirectLinkStep step)
+    {
+        TagFromId = step.TagFromId;
+        TagToId = step.TagToId;
+    }
 }
 
 public static partial class Extensions
