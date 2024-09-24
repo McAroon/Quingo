@@ -19,5 +19,7 @@
         public List<NodeLink> NodeLinks => [.. NodeLinksFrom, .. NodeLinksTo];
 
         public List<Node> LinkedNodes => NodeLinks.Select(x => x.NodeFrom).Concat(NodeLinks.Select(x => x.NodeTo)).Where(x => x != this).ToList();
+
+        public IEnumerable<Tag> Tags => NodeTags.Select(x => x.Tag);
     }
 }

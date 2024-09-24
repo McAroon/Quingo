@@ -60,6 +60,7 @@ namespace Quingo.Infrastructure.Database
 
             foreach (var link in pack.IndirectLinks)
             {
+                link.Steps = [.. link.Steps.OrderBy(x => x.Order)];
                 foreach (var step in link.Steps)
                 {
                     step.TagFrom ??= pack.Tags.First(x => x.Id == step.TagFromId);
@@ -86,6 +87,7 @@ namespace Quingo.Infrastructure.Database
 
             builder.Entity<Node>().Ignore(e => e.NodeLinks);
             builder.Entity<Node>().Ignore(e => e.LinkedNodes);
+            builder.Entity<Node>().Ignore(e => e.Tags);
 
             builder.Entity<Tag>().Ignore(e => e.IndirectLinks);
 
@@ -109,6 +111,8 @@ namespace Quingo.Infrastructure.Database
 
             builder.Entity<IndirectLink>().Property(e => e.Direction).HasConversion<string>();
             builder.Entity<IndirectLink>().HasMany(e => e.Steps).WithOne(e => e.IndirectLink).HasForeignKey(e => e.IndirectLinkId).IsRequired();
+            builder.Entity<IndirectLink>().Ignore(e => e.TagFrom);
+            builder.Entity<IndirectLink>().Ignore(e => e.TagTo);
 
             builder.Entity<IndirectLinkStep>().HasOne(e => e.TagTo).WithMany(e => e.IndirectLinksTo).HasForeignKey(e => e.TagToId).IsRequired();
             builder.Entity<IndirectLinkStep>().HasOne(e => e.TagFrom).WithMany(e => e.IndirectLinksFrom).HasForeignKey(e => e.TagFromId).IsRequired();

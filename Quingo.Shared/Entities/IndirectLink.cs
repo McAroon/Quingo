@@ -11,4 +11,10 @@ public class IndirectLink : EntityBase
     public Pack Pack { get; set; } = default!;
 
     public List<IndirectLinkStep> Steps { get; set; } = [];
+
+    public Tag? TagFrom => Steps.FirstOrDefault()?.TagFrom;
+
+    public Tag? TagTo => Steps.LastOrDefault()?.TagTo;
+
+    public bool IsLinkedNode(Node node) => node.Tags.Contains(TagFrom) || (node.Tags.Contains(TagTo) && Direction != NodeLinkDirection.Both);
 }
