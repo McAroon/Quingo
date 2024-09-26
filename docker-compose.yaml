@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  quingo:
+    container_name: quingo
+    # image: ghcr.io/mcaroon/quingo:latest
+    build: .
+    restart: unless-stopped
+    links:
+      - quingo_db
+      - quingo_minio
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+  quingo_db:
+    container_name: quingo_db
+    image: postgres
+    restart: unless-stopped
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    # or set shared memory limit when deploy via swarm stack
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    #  - type: tmpfs
+    #    target: /dev/shm
+    #    tmpfs:
+    #      size: 134217728 # 128*2^20 bytes = 128Mb
+    environment:
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - 5432:5432
+  quingo_minio:
+    container_name: quingo_minio
+    image: quay.io/minio/minio
+    restart: unless-stopped
+    volumes:
+      - './data/minio:/data'
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
