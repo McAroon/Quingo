@@ -30,11 +30,12 @@
     {
         if (Node == null) return;
 
-        _linkedNodes = Node.NodeLinks.Select(x => x.LinkedNodeId)
-            .Select(x => State.Pack.Nodes.FirstOrDefault(n => n.Id == x))
-            .Where(x => x != null)
-            .Select(x => (node: x, drawn: State.DrawnNodes.Contains(x!)))
-            .Select(x => (node: new NodeViewModel(x.node!), drawn: x.drawn)).ToList();
+        _linkedNodes = new NodeLinkSearch(State.Pack.Nodes.First(x => x.Id == Node.Id), State.Pack.Nodes.AsReadOnly())
+            .Search()
+            .GroupBy(x => x)
+            .Select(x => x.First())
+            .Select(x => (node: new NodeViewModel(x), drawn: State.DrawnNodes.Contains(x)))
+            .ToList();
     }
 
     public static async Task ShowNodeDetails(IDialogService dialog, GameState state, NodeViewModel? nodeModel)
@@ -48,7 +49,7 @@
         var opts = new DialogOptions
             {
                 CloseButton = true,
-                MaxWidth = MaxWidth.ExtraSmall,
+                MaxWidth = MaxWidth.Small,
                 FullWidth = true
             };
 

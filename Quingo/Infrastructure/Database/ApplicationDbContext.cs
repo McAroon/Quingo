@@ -35,9 +35,9 @@ namespace Quingo.Infrastructure.Database
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo);
 
-        public async Task<Pack?> GetPack(int packId, bool noTracking = false)
+        public async Task<Pack?> GetPack(int packId)
         {
-            var pack = await (noTracking ? PacksWithIncludes.AsNoTracking() : PacksWithIncludes).FirstOrDefaultAsync(x => x.Id == packId);
+            var pack = await PacksWithIncludes.FirstOrDefaultAsync(x => x.Id == packId);
             if (pack == null) return null;
 
             foreach (var node in pack.Nodes)
