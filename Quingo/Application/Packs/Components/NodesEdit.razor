@@ -225,8 +225,8 @@
 
             if (model.ImageFile != null)
             {
-                await Files.UploadBrowserFile(model.ImageFile);
-                node.ImageUrl = model.ImageFile.Name;
+                var filename = await Files.UploadBrowserFile(model.ImageFile);
+                node.ImageUrl = filename;
             }
         }
 

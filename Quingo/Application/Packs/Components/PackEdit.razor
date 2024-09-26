@@ -106,8 +106,8 @@ else
     {
         if (_upload.File == null) return;
 
-        await Files.UploadBrowserFile(_upload.File);
-        pack.ImageUrl = _upload.File.Name;
+        var filename = await Files.UploadBrowserFile(_upload.File);
+        pack.ImageUrl = filename;
     }
 
     private void CancelEdit()

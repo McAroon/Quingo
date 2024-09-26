@@ -20,11 +20,11 @@ public class GenerateStandardBingo
             Description = "Classic bingo",
             Tags =
             [
-                new("QB"),
-                new("QI"),
-                new("QN"),
-                new("QG"),
-                new("QO"),
+                new("B"),
+                new("I"),
+                new("N"),
+                new("G"),
+                new("O"),
                 new("AB"),
                 new("AI"),
                 new("AN"),
@@ -48,7 +48,7 @@ public class GenerateStandardBingo
                 { 
                     new NodeTag 
                     { 
-                        Tag = pack.Tags.First(t => t.Name == $"Q{letter}")
+                        Tag = pack.Tags.First(t => t.Name == letter)
                     } 
                 }
             };

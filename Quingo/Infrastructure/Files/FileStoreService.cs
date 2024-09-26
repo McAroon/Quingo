@@ -16,8 +16,9 @@ public class FileStoreService
         _client = client;
     }
 
-    public async Task UploadBrowserFile(IBrowserFile file)
+    public async Task<string> UploadBrowserFile(IBrowserFile file)
     {
+        var filename = $"{Guid.NewGuid():N}_{file.Name}";
         using var data = file.OpenReadStream();
 
         var req = new PutObjectRequest
@@ -29,6 +30,7 @@ public class FileStoreService
         };
 
         var res = await _client.PutObjectAsync(req);
+        return filename;
     }
 
     public string GetFileUrl(string? filename)
