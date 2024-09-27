@@ -24,7 +24,7 @@ public class FileStoreService
         var req = new PutObjectRequest
         {
             BucketName = _fileSettings.Bucket,
-            Key = file.Name,
+            Key = filename,
             InputStream = data,
             ContentType = file.ContentType,
         };
