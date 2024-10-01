@@ -38,7 +38,7 @@ else
                         <MudText Typo="Typo.h5">@pack.Name</MudText>
                     </CardHeaderContent>
                     <CardHeaderActions>
-                        @if (pack.CreatedByUserId == UserId)
+                        @if (UserCanEdit(pack))
                         {
                             <MudTooltip Text="Edit Pack">
                                 <MudIconButton Href="@($"game/setup/pack/{pack.Id}")" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
@@ -66,12 +66,17 @@ else
 
     public string? UserId { get; set; }
 
+    private ClaimsPrincipal? _user;
+
+    private bool UserCanEdit(Pack pack) => pack.CreatedByUserId == UserId || _user?.IsInRole("admin") == true;
+
     protected override async Task OnInitializedAsync()
     {
         Packs = await Db.Packs.ToListAsync();
         if (AuthenticationState != null)
         {
-            UserId = (await AuthenticationState)?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            _user = (await AuthenticationState)?.User;
+            UserId = _user?.FindFirstValue(ClaimTypes.NameIdentifier);
         }
     }
 
@@ -93,6 +98,7 @@ else
 
     private async Task DeletePack(Pack pack)
     {
+        if (!UserCanEdit(pack)) return;
         Db.Remove(pack);
         await Db.SaveChangesAsync();
         StateHasChanged();

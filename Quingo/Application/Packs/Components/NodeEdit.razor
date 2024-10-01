@@ -20,8 +20,8 @@
                         <MudGrid>
                             <MudItem xs="12">
                                 <MudSelect T="NodeLinkDirection" Label="Link Direction" @bind-Value="@link.LinkDirection">
-                                    <MudSelectItem Value="NodeLinkDirection.From"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.From.MudIcon()" Class="icon-inline-select" /> From</MudSelectItem>
                                     <MudSelectItem Value="NodeLinkDirection.To"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.To.MudIcon()" Class="icon-inline-select" /> To</MudSelectItem>
+                                    <MudSelectItem Value="NodeLinkDirection.From"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.From.MudIcon()" Class="icon-inline-select" /> From</MudSelectItem>
                                     <MudSelectItem Value="NodeLinkDirection.Both"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.Both.MudIcon()" Class="icon-inline-select" /> Both</MudSelectItem>
                                 </MudSelect>
                                 <MudAutocomplete T="LinkedNodeInfoModel" Label="Link Item" @bind-Value="@link.LinkedNode" SearchFunc="SearchNode" ToStringFunc="x => x?.Name" ResetValueOnEmptyText Clearable Required />

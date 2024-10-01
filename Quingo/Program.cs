@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+using Quingo;
 using Quingo.Application.State;
 using Quingo.Components;
 using Quingo.Components.Account;
@@ -50,6 +51,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     options.Password.RequireNonAlphanumeric = false;
     options.User.RequireUniqueEmail = true;
 })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
@@ -108,5 +110,7 @@ app.MapGet("/scripts/generate-bingo", async (GenerateStandardBingo script) =>
     await script.Execute();
     return Results.Ok();
 });
+
+await app.EnsureRolesCreated();
 
 app.Run();

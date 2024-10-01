@@ -96,7 +96,7 @@ public class NodeLinkModel
 
     public EntityInfoModel LinkType { get; set; } = default!;
 
-    public NodeLinkDirection LinkDirection { get; set; }
+    public NodeLinkDirection LinkDirection { get; set; } = NodeLinkDirection.To;
 
     public int? LinkTypeId { get; set; }
 }

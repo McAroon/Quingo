@@ -35,6 +35,9 @@ else
 }
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+
     [CascadingParameter(Name = "UserId")]
     public string UserId { get; set; } = default!;
 
@@ -52,7 +55,9 @@ else
             _pack = await Db.GetPack(PackId.Value);
         }
 
-        if (PackId != null && (_pack == null || UserId != _pack.CreatedByUserId))
+        var user = (await (AuthenticationState ?? Task.FromResult<AuthenticationState>(null!)))?.User;
+
+        if (PackId != null && (_pack == null || !(UserId == _pack.CreatedByUserId || user?.IsInRole("admin") == true)))
         {
             NavigationManager.NavigateTo("game/setup/pack");
         }
