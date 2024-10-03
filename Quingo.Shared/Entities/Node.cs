@@ -25,6 +25,7 @@
         public Meta Meta { get; set; } = new();
 
         public bool HasTag(string tag) => Tags.FirstOrDefault(x => x.Name == tag) != null;
+        public bool HasTag(int id) => Tags.FirstOrDefault(x => x.Id == id) != null;
     }
 
     public class Meta

@@ -24,7 +24,8 @@
 
     private bool _toggleHighlight = true;
 
-    private IEnumerable<NodeViewModel> Nodes => (ItemsToDisplay > 0 ? Game.DrawnNodes.TakeLast(ItemsToDisplay) : Game.DrawnNodes).Select(x => new NodeViewModel(x));
+    private IEnumerable<NodeViewModel> Nodes => (ItemsToDisplay > 0 ? Game.DrawnNodes.TakeLast(ItemsToDisplay) : Game.DrawnNodes)
+        .Select(x => new NodeViewModel(x, ShowLinksByTagEnum.Question));
 
     private Func<NodeViewModel, Action?> OnClick => (node) => ShowDetails ? () => ShowNodeDetails(node) : null;
 

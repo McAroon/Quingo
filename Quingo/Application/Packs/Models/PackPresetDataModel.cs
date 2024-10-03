@@ -34,7 +34,8 @@ public class PackPresetDataModel
             {
                 Name = c.Name,
                 QuestionTags = c.QuestionTags.ToList(),
-                AnswerTags = c.AnswerTags.ToList()
+                AnswerTags = c.AnswerTags.ToList(),
+                ExcludeTags = c.ExcludeTags.ToList(),
             }).ToList()
         };
     }
@@ -78,6 +79,7 @@ public class PackPresetColumnModel
         Name = col.Name;
         QuestionTags = new List<int>(col.QuestionTags);
         AnswerTags = new List<int>(col.AnswerTags);
+        ExcludeTags = new List<int>(col.ExcludeTags);
     }
 
     public string Name { get; set; } = "";
@@ -85,4 +87,6 @@ public class PackPresetColumnModel
     public IEnumerable<int> QuestionTags { get; set; } = [];
 
     public IEnumerable<int> AnswerTags { get; set; } = [];
+
+    public IEnumerable<int> ExcludeTags { get; set; } = [];
 }

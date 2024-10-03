@@ -6,7 +6,7 @@ namespace Quingo.Application.Shared.Models;
 
 public class NodeViewModel
 {
-    public NodeViewModel(Node node)
+    public NodeViewModel(Node node, ShowLinksByTagEnum showLinks = ShowLinksByTagEnum.All)
     {
         var fromIds = node.NodeLinksFrom.Where(x => x.DeletedAt == null).Select(x => (id: x.NodeToId, node: x.NodeTo, linkType: x.NodeLinkType)).ToList();
         var toIds = node.NodeLinksTo.Where(x => x.DeletedAt == null).Select(x => (id: x.NodeFromId, node: x.NodeFrom, linkType: x.NodeLinkType)).ToList();
@@ -54,9 +54,16 @@ public class NodeViewModel
                 return new NodeLinkByTagInfoModel(new EntityInfoModel(tag.Id, tag.Name), new EntityInfoModel(x.link.Id, x.link.Name), direction, NodeLinkByTagType.Indirect);
             });
 
+        var inclTags = showLinks == ShowLinksByTagEnum.Question 
+            ? node.Pack.Presets.FirstOrDefault()?.Data.Columns.SelectMany(x => x.AnswerTags).Distinct().ToList() 
+            : node.Pack.Presets.FirstOrDefault()?.Data.Columns.SelectMany(x => x.QuestionTags).Distinct().ToList();
+        var exclTags = node.Pack.Presets.FirstOrDefault()?.Data.Columns.SelectMany(x => x.ExcludeTags).Distinct().ToList();
+
         NodeLinksByTag = links.Concat(indirectLinks)
             .GroupBy(x => (tag: x.Tag.Id, name: x.LinkType.Name, dir: x.LinkDirection, type: x.Type))
             .Select(g => g.First())
+            .Where(x => exclTags == null || !exclTags.Contains(x.Tag.Id))
+            .Where(x => showLinks == ShowLinksByTagEnum.All || inclTags == null || inclTags.Contains(x.Tag.Id))
             .ToList();
     }
 
@@ -73,6 +80,13 @@ public class NodeViewModel
     public List<NodeLinkByTagInfoModel> NodeLinksByTag { get; set; } = [];
 
     public string? ImageUrl { get; set; }
+}
+
+public enum ShowLinksByTagEnum
+{
+    All,
+    Question,
+    Answer
 }
 
 public class NodeModel : NodeViewModel
