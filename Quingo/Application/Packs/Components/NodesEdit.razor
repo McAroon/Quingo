@@ -10,8 +10,8 @@
 <MudGrid Class="pb-4">
     <MudItem xs="12" md="6" lg="4">
         <MudStack Row Wrap="Wrap.NoWrap">
-            <MudTextField Placeholder="Search..." @bind-Value="_searchText" DebounceInterval="300" Clearable />
-            <MudSelect T="int" MultiSelection Placeholder="Tags" @bind-SelectedValues="@_filterTags" MultiSelectionTextFunc="GetTagsSelectText" Clearable>
+            <MudTextField Placeholder="Search..." @bind-Value="_searchText" @bind-Value:after="ResetPage" DebounceInterval="300" Clearable />
+            <MudSelect T="int" MultiSelection Placeholder="Tags" @bind-SelectedValues="@_filterTags" @bind-SelectedValues:after="ResetPage" MultiSelectionTextFunc="GetTagsSelectText" Clearable>
                 @foreach (var tag in Pack.Tags)
                 {
                     <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
@@ -24,13 +24,20 @@
 <MudGrid>
     @if (NodesFiltered.Count > 0)
     {
-        @foreach (var node in NodesFiltered)
+        <MudItem xs="12" md="6" lg="4">
+            <MudPagination Color="Color.Primary" Count="NumberOfPages" @bind-Selected="_selectedPage" />
+        </MudItem>
+        <MudFlexBreak />
+        @foreach (var node in PageNodes)
         {
             <MudItem xs="12" md="6" lg="4">
                 <NodeEdit Node="node" OnSave="SaveNode" OnDelete="ConfirmDeleteNode" />
             </MudItem>
             <MudFlexBreak />
         }
+        <MudItem xs="12" md="6" lg="4">
+            <MudPagination Color="Color.Primary" Count="NumberOfPages" @bind-Selected="_selectedPage" />
+        </MudItem>
     }
     else
     {
@@ -54,6 +61,20 @@
         .Where(x => (x.Name?.Contains(_searchText, StringComparison.InvariantCultureIgnoreCase) ?? true) && x.DeletedAt == null)
         .Where(x => !_filterTags.Any() || x.NodeTags.FirstOrDefault(t => _filterTags.Contains(t.TagId)) != null)
         .Reverse().ToList() ?? [];
+
+    private const int NodesPerPage = 10;
+
+    private int NumberOfPages => (int)Math.Ceiling((decimal)NodesFiltered.Count / NodesPerPage);
+
+    private int _selectedPage = 1;
+
+    private List<Node> PageNodes => NodesFiltered.Skip((_selectedPage - 1) * NodesPerPage).Take(NodesPerPage).ToList();
+
+    private void ResetPage()
+    {
+        _selectedPage = 1;
+        StateHasChanged();
+    }
 
     private string GetTagsSelectText(List<string> selected)
     {
