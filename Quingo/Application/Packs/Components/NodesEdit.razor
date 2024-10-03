@@ -122,7 +122,7 @@
 
             foreach (var linkModel in model.NodeLinks)
             {
-                if (linkModel.LinkDirection is NodeLinkDirection.From or NodeLinkDirection.Both)
+                if (linkModel.LinkDirection is NodeLinkDirection.To or NodeLinkDirection.Both)
                 {
                     var link = node.NodeLinksFrom.FirstOrDefault(x => x.NodeToId == linkModel.LinkedNodeId);
                     var linkType = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == linkModel.LinkTypeId);
@@ -163,7 +163,7 @@
                     }
                 }
 
-                if (linkModel.LinkDirection is NodeLinkDirection.To or NodeLinkDirection.Both)
+                if (linkModel.LinkDirection is NodeLinkDirection.From or NodeLinkDirection.Both)
                 {
                     var link = node.NodeLinksTo.FirstOrDefault(x => x.NodeFromId == linkModel.LinkedNodeId);
                     var linkType = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == linkModel.LinkTypeId);
@@ -207,7 +207,8 @@
 
             foreach (var nodeLink in node.NodeLinksFrom)
             {
-                var linkModel = model.NodeLinks.FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeTo.Id);
+                var linkModel = model.NodeLinks
+                    .FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeTo.Id && (x.LinkDirection is NodeLinkDirection.Both or NodeLinkDirection.To));
                 if (linkModel == null)
                 {
                     Db.Remove(nodeLink);
@@ -216,7 +217,8 @@
 
             foreach (var nodeLink in node.NodeLinksTo)
             {
-                var linkModel = model.NodeLinks.FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeFrom.Id);
+                var linkModel = model.NodeLinks
+                    .FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeFrom.Id && (x.LinkDirection is NodeLinkDirection.Both or NodeLinkDirection.From));
                 if (linkModel == null)
                 {
                     Db.Remove(nodeLink);

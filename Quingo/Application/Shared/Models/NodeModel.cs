@@ -16,14 +16,14 @@ public class NodeViewModel
             LinkedNode = new LinkedNodeInfoModel(x.node),
             LinkType = new EntityInfoModel(x.linkType.Id, x.linkType.Name),
             LinkTypeId = x.linkType.Id,
-            LinkDirection = NodeLinkDirection.From
+            LinkDirection = NodeLinkDirection.To
         });
         var linksTo = toIds.Except(bothIds).Select(x => new NodeLinkModel
         {
             LinkedNode = new LinkedNodeInfoModel(x.node),
             LinkType = new EntityInfoModel(x.linkType.Id, x.linkType.Name),
             LinkTypeId = x.linkType.Id,
-            LinkDirection = NodeLinkDirection.To
+            LinkDirection = NodeLinkDirection.From
         });
         var linksBoth = bothIds.Select(x => new NodeLinkModel
         {
@@ -36,6 +36,7 @@ public class NodeViewModel
         Id = node.Id;
         Name = node.Name;
         NodeLinks = [.. linksFrom, .. linksTo, .. linksBoth];
+        NodeLinks = NodeLinks.OrderBy(x => x.LinkDirection).ThenBy(x => x.LinkType.Name).ToList();
         NodeTags = node.NodeTags.Where(x => x.DeletedAt == null).Select(x => new EntityInfoModel(x.Id, x.Tag.Name)).ToList();
         ImageUrl = node.ImageUrl;
 

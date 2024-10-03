@@ -23,6 +23,8 @@
         public IEnumerable<Tag> Tags => NodeTags.Select(x => x.Tag);
 
         public Meta Meta { get; set; } = new();
+
+        public bool HasTag(string tag) => Tags.FirstOrDefault(x => x.Name == tag) != null;
     }
 
     public class Meta

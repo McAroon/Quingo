@@ -102,6 +102,7 @@ public class GameState : IDisposable
         if (State != GameStateEnum.Active) return;
 
         _players.Add(player);
+        player.Validate();
     }
 
     public void Draw()

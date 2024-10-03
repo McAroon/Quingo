@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.Options;
 using Quingo.Shared.Entities;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace Quingo.Infrastructure.Database
 {
@@ -93,6 +94,9 @@ namespace Quingo.Infrastructure.Database
             builder.Entity<Node>().OwnsOne(e => e.Meta, d =>
             {
                 d.ToJson();
+                d.Property(x => x.Props).HasConversion(
+                    x => JsonSerializer.Serialize(x, default(JsonSerializerOptions)), 
+                    x => JsonSerializer.Deserialize<Dictionary<string, string>>(x, default(JsonSerializerOptions)) ?? new Dictionary<string, string>());
             });
 
             builder.Entity<Tag>().Ignore(e => e.IndirectLinks);
@@ -102,6 +106,9 @@ namespace Quingo.Infrastructure.Database
             builder.Entity<NodeLink>().OwnsOne(e => e.Meta, d =>
             {
                 d.ToJson();
+                d.Property(x => x.Props).HasConversion(
+                    x => JsonSerializer.Serialize(x, default(JsonSerializerOptions)),
+                    x => JsonSerializer.Deserialize<Dictionary<string, string>>(x, default(JsonSerializerOptions)) ?? new Dictionary<string, string>());
             });
 
             builder.Entity<NodeTag>().HasOne(e => e.Node).WithMany(e => e.NodeTags).HasForeignKey(e => e.NodeId).IsRequired();
@@ -137,10 +144,6 @@ namespace Quingo.Infrastructure.Database
         private void SetFieldsOnSave()
         {
             var userId = _httpContextAccessor?.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-            {
-                return;
-            }
 
             foreach (var entry in ChangeTracker.Entries())
             {
@@ -150,18 +153,28 @@ namespace Quingo.Infrastructure.Database
                     {
                         entity.CreatedAt = DateTime.UtcNow;
                         entity.UpdatedAt = DateTime.UtcNow;
-                        entity.CreatedByUserId = userId;
-                        entity.UpdatedByUserId = userId;
+                        if (userId != null)
+                        {
+                            entity.CreatedByUserId = userId;
+                            entity.UpdatedByUserId = userId;
+                        }
                     }
                     else if (entry.State == EntityState.Modified)
                     {
                         entity.UpdatedAt = DateTime.UtcNow;
-                        entity.UpdatedByUserId = userId;
+                        if (userId != null)
+                        {
+                            entity.UpdatedByUserId = userId;
+                        }
                     }
-                    else if (entry.State == EntityState.Deleted)
+                    else if (entry.State == EntityState.Deleted && entity.Id > 0)
                     {
                         entity.DeletedAt = DateTime.UtcNow;
-                        entity.DeletedByUserId = userId;
+                        if (userId != null)
+                        {
+                            entity.DeletedByUserId = userId;
+                        }
+                        
                         entry.State = EntityState.Modified;
                     }
                 }

@@ -12,7 +12,7 @@ namespace Quingo.Application.State
         public IEnumerable<Node> Search()
         {
             var resultFrom = Node.NodeLinks.Where(n => SearchNodes
-            .FirstOrDefault(dn => dn.Id != Node.Id && dn.Id == n.NodeFromId) != null)
+                .FirstOrDefault(dn => dn.Id != Node.Id && dn.Id == n.NodeFromId) != null)
                 .Select(x => x.NodeFrom);
             foreach (var item in resultFrom)
             {
@@ -20,7 +20,8 @@ namespace Quingo.Application.State
             }
 
             var resultTo = Node.NodeLinks.Where(n => SearchNodes
-            .FirstOrDefault(dn => dn.Id != Node.Id && dn.Id == n.NodeToId) != null).Select(x => x.NodeTo);
+                .FirstOrDefault(dn => dn.Id != Node.Id && dn.Id == n.NodeToId) != null)
+                .Select(x => x.NodeTo);
             foreach (var item in resultTo)
             {
                 yield return item;
@@ -65,8 +66,8 @@ namespace Quingo.Application.State
                 foreach (var stepNode in stepNodes)
                 {
                     var result = reverse 
-                        ? stepNode.NodeLinksFrom.Select(x => x.NodeTo).FirstOrDefault(x => x == nodeTo) 
-                        : stepNode.NodeLinksTo.Select(x => x.NodeFrom).FirstOrDefault(x => x == nodeTo);
+                        ? stepNode.NodeLinksTo.Select(x => x.NodeFrom).FirstOrDefault(x => x == nodeTo) 
+                        : stepNode.NodeLinksFrom.Select(x => x.NodeTo).FirstOrDefault(x => x == nodeTo);
                     if (result != null)
                     {
                         yield return result;
@@ -77,7 +78,7 @@ namespace Quingo.Application.State
             {
                 foreach (var stepNode in stepNodes)
                 {
-                    var nextStepNodes = stepNode.NodeLinksTo.Select(x => x.NodeFrom).Where(x => x != nodeTo && x.Tags.Contains(step.TagTo));
+                    var nextStepNodes = stepNode.NodeLinksFrom.Select(x => x.NodeTo).Where(x => x != nodeTo && x.Tags.Contains(step.TagTo));
                     var nextResult = IndirectLinkSearchStep(link, step, nextStepNodes, nodeTo, true);
                     foreach (var result in nextResult)
                     {
@@ -90,8 +91,8 @@ namespace Quingo.Application.State
                 foreach (var stepNode in stepNodes)
                 {
                     var nextStepNodes = reverse 
-                        ? stepNode.NodeLinksFrom.Select(x => x.NodeTo).Where(x => x != nodeTo && x.Tags.Contains(step.TagFrom)) 
-                        : stepNode.NodeLinksTo.Select(x => x.NodeFrom).Where(x => x != nodeTo && x.Tags.Contains(step.TagTo));
+                        ? stepNode.NodeLinksTo.Select(x => x.NodeFrom).Where(x => x != nodeTo && x.Tags.Contains(step.TagFrom)) 
+                        : stepNode.NodeLinksFrom.Select(x => x.NodeTo).Where(x => x != nodeTo && x.Tags.Contains(step.TagTo));
                     var nextResult = IndirectLinkSearchStep(link, nextStep!, nextStepNodes, nodeTo, reverse);
                     foreach (var result in nextResult)
                     {
