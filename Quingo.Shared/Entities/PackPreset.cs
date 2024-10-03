@@ -31,6 +31,8 @@ public record PackPresetColumn
     public IList<int> QuestionTags { get; set; } = [];
 
     public IList<int> AnswerTags { get; set; } = [];
+
+    public IList<int> ExcludeTags { get; set; } = [];
 }
 
 

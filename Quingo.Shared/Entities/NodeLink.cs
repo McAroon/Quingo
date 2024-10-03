@@ -13,5 +13,7 @@
         public int NodeLinkTypeId { get; set; }
 
         public required NodeLinkType NodeLinkType { get; set; }
+
+        public Meta Meta { get; set; } = new();
     }
 }

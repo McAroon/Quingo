@@ -21,5 +21,12 @@
         public List<Node> LinkedNodes => NodeLinks.Select(x => x.NodeFrom).Concat(NodeLinks.Select(x => x.NodeTo)).Where(x => x != this).ToList();
 
         public IEnumerable<Tag> Tags => NodeTags.Select(x => x.Tag);
+
+        public Meta Meta { get; set; } = new();
+    }
+
+    public class Meta
+    {
+        public Dictionary<string, string> Props { get; set; } = [];
     }
 }
