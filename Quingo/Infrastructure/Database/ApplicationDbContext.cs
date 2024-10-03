@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -7,7 +8,7 @@ using System.Security.Claims;
 
 namespace Quingo.Infrastructure.Database
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IDataProtectionKeyContext
     {
         private readonly IHttpContextAccessor? _httpContextAccessor;
 
@@ -25,6 +26,7 @@ namespace Quingo.Infrastructure.Database
         public DbSet<PackPreset> PackPresets { get; set; }
         public DbSet<IndirectLink> IndirectLinks { get; set; }
         public DbSet<IndirectLinkStep> IndirectLinkSteps { get; set; }
+        public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 
         public IQueryable<Pack> PacksWithIncludes => Packs
             .Include(x => x.Tags)
@@ -35,7 +37,7 @@ namespace Quingo.Infrastructure.Database
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo);
 
-        public async Task<Pack?> GetPack(int packId)
+    public async Task<Pack?> GetPack(int packId)
         {
             var pack = await PacksWithIncludes.FirstOrDefaultAsync(x => x.Id == packId);
             if (pack == null) return null;
