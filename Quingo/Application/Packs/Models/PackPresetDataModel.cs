@@ -17,6 +17,7 @@ public class PackPresetDataModel
         LivesNumber = data.LivesNumber;
         EndgameTimer = data.EndgameTimer;
         ShowTagBadges = data.ShowTagBadges;
+        Pattern = data.Pattern;
 
         Columns.MatchListSize(data.CardSize, () => new PackPresetColumnModel());
     }
@@ -30,6 +31,7 @@ public class PackPresetDataModel
             LivesNumber = LivesNumber,
             EndgameTimer = EndgameTimer,
             ShowTagBadges = ShowTagBadges,
+            Pattern = Pattern,
             Columns = Columns.Select(c => new PackPresetColumn
             {
                 Name = c.Name,
@@ -51,6 +53,8 @@ public class PackPresetDataModel
     public int EndgameTimer { get; set; } = 20;
 
     public bool ShowTagBadges { get; set; } = true;
+
+    public PackPresetPattern Pattern { get; set; } = PackPresetPattern.Lines;
 
     public List<PackPresetColumnModel> Columns { get; set; } =
     [

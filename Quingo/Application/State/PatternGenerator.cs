@@ -1,8 +1,33 @@
-﻿namespace Quingo.Application.State;
+﻿using Quingo.Shared.Entities;
+
+namespace Quingo.Application.State;
 
 public class PatternGenerator
 {
-    public static List<bool[,]> GenerateDefaultPatterns(int size)
+    public static List<bool[,]> GeneratePatterns(int size, PackPresetPattern pattern)
+    {
+        return pattern switch
+        {
+            PackPresetPattern.Lines => GenerateLinePatterns(size),
+            PackPresetPattern.FullCard => GenerateFullCardPattern(size),
+            _ => throw new InvalidOperationException($"Pattern {pattern} is not supported")
+        };
+    }
+    private static List<bool[,]> GenerateFullCardPattern(int size)
+    {
+        var pattern = new bool[size, size];
+        for (int col = 0; col < pattern.GetLength(0); col++)
+        {
+            for (int row = 0; row < pattern.GetLength(1); row++)
+            {
+                pattern[col, row] = true;
+            }
+        }
+
+        return [pattern];
+    }
+
+    private static List<bool[,]> GenerateLinePatterns(int size)
     {
         var result = new List<bool[,]>();
 

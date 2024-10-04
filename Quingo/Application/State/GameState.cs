@@ -94,7 +94,7 @@ public class GameState : IDisposable
         var exclTagIds = Preset.Columns.SelectMany(x => x.ExcludeTags).Distinct().ToList();
         _qNodes = Pack.Nodes.Where(x => qTagIds.Any(t => x.HasTag(t)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
         QuestionCount = _qNodes.Count;
-        _bingoPatterns = PatternGenerator.GenerateDefaultPatterns(Preset.CardSize);
+        _bingoPatterns = PatternGenerator.GeneratePatterns(Preset.CardSize, Preset.Pattern);
         State = GameStateEnum.Active;
     }
 

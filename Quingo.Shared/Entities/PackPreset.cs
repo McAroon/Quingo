@@ -21,6 +21,8 @@ public record PackPresetData
 
     public bool ShowTagBadges { get; set; } = true;
 
+    public PackPresetPattern Pattern { get; set; }
+
     public List<PackPresetColumn> Columns { get; set; } = [];
 }
 
@@ -33,6 +35,12 @@ public record PackPresetColumn
     public IList<int> AnswerTags { get; set; } = [];
 
     public IList<int> ExcludeTags { get; set; } = [];
+}
+
+public enum PackPresetPattern
+{
+    Lines,
+    FullCard
 }
 
 
