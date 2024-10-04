@@ -30,6 +30,36 @@
 
     public class Meta
     {
-        public Dictionary<string, string> Props { get; set; } = [];
+        public List<MetaProperty> Properties { get; set; } = [];
+
+        public Dictionary<string, string> PropertiesDict 
+        { 
+            get 
+            { 
+                return Properties.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value);
+            } 
+            set 
+            { 
+                foreach (var kv in value)
+                {
+                    var prop = Properties.FirstOrDefault(x => x.Key == kv.Key);
+                    if (prop == null)
+                    {
+                        prop = new MetaProperty { Key = kv.Key, Value = kv.Value };
+                        Properties.Add(prop);
+                    }
+                    else
+                    {
+                        prop.Value = kv.Value;
+                    }
+                }
+            } 
+        }
+
+        public class MetaProperty
+        {
+            public string Key { get; set; } = default!;
+            public string Value { get; set; } = default!;
+        }
     }
 }

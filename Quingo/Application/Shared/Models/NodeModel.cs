@@ -8,22 +8,26 @@ public class NodeViewModel
 {
     public NodeViewModel(Node node, ShowLinksByTagEnum showLinks = ShowLinksByTagEnum.All)
     {
-        var fromIds = node.NodeLinksFrom.Where(x => x.DeletedAt == null).Select(x => (id: x.NodeToId, node: x.NodeTo, linkType: x.NodeLinkType)).ToList();
-        var toIds = node.NodeLinksTo.Where(x => x.DeletedAt == null).Select(x => (id: x.NodeFromId, node: x.NodeFrom, linkType: x.NodeLinkType)).ToList();
+        var fromIds = node.NodeLinksFrom.Where(x => x.DeletedAt == null)
+            .Select(x => (id: x.NodeToId, node: x.NodeTo, linkType: x.NodeLinkType, meta: x.Meta)).ToList();
+        var toIds = node.NodeLinksTo.Where(x => x.DeletedAt == null)
+            .Select(x => (id: x.NodeFromId, node: x.NodeFrom, linkType: x.NodeLinkType, meta: x.Meta)).ToList();
         var bothIds = fromIds.Join(toIds, x => x.id, y => y.id, (x, y) => x).ToList();
         var linksFrom = fromIds.Except(bothIds).Select(x => new NodeLinkModel
         {
             LinkedNode = new LinkedNodeInfoModel(x.node),
             LinkType = new EntityInfoModel(x.linkType.Id, x.linkType.Name),
             LinkTypeId = x.linkType.Id,
-            LinkDirection = NodeLinkDirection.To
+            LinkDirection = NodeLinkDirection.To,
+            Meta = x.meta?.Properties?.Count > 0 ? x.meta : null
         });
         var linksTo = toIds.Except(bothIds).Select(x => new NodeLinkModel
         {
             LinkedNode = new LinkedNodeInfoModel(x.node),
             LinkType = new EntityInfoModel(x.linkType.Id, x.linkType.Name),
             LinkTypeId = x.linkType.Id,
-            LinkDirection = NodeLinkDirection.From
+            LinkDirection = NodeLinkDirection.From,
+            Meta = x.meta?.Properties?.Count > 0 ? x.meta : null
         });
         var linksBoth = bothIds.Select(x => new NodeLinkModel
         {
@@ -55,9 +59,9 @@ public class NodeViewModel
             });
 
         var inclTags = showLinks == ShowLinksByTagEnum.Question 
-            ? node.Pack.Presets.FirstOrDefault()?.Data.Columns.SelectMany(x => x.AnswerTags).Distinct().ToList() 
-            : node.Pack.Presets.FirstOrDefault()?.Data.Columns.SelectMany(x => x.QuestionTags).Distinct().ToList();
-        var exclTags = node.Pack.Presets.FirstOrDefault()?.Data.Columns.SelectMany(x => x.ExcludeTags).Distinct().ToList();
+            ? node.Pack.Presets.FirstOrDefault()?.Data.Columns.SelectMany(x => x.AnswerTags ?? []).Distinct().ToList() 
+            : node.Pack.Presets.FirstOrDefault()?.Data.Columns.SelectMany(x => x.QuestionTags ?? []).Distinct().ToList();
+        var exclTags = node.Pack.Presets.FirstOrDefault()?.Data.Columns.SelectMany(x => x.ExcludeTags ?? []).Distinct().ToList();
 
         NodeLinksByTag = links.Concat(indirectLinks)
             .GroupBy(x => (tag: x.Tag.Id, name: x.LinkType.Name, dir: x.LinkDirection, type: x.Type))
@@ -65,6 +69,11 @@ public class NodeViewModel
             .Where(x => exclTags == null || !exclTags.Contains(x.Tag.Id))
             .Where(x => showLinks == ShowLinksByTagEnum.All || inclTags == null || inclTags.Contains(x.Tag.Id))
             .ToList();
+
+        if (node.Meta?.Properties?.Count > 0)
+        {
+            Meta = node.Meta;
+        }
     }
 
     public NodeViewModel() { }
@@ -80,6 +89,8 @@ public class NodeViewModel
     public List<NodeLinkByTagInfoModel> NodeLinksByTag { get; set; } = [];
 
     public string? ImageUrl { get; set; }
+
+    public Meta? Meta { get; set; }
 }
 
 public enum ShowLinksByTagEnum
@@ -114,6 +125,8 @@ public class NodeLinkModel
     public NodeLinkDirection LinkDirection { get; set; } = NodeLinkDirection.To;
 
     public int? LinkTypeId { get; set; }
+
+    public Meta? Meta { get; set; }
 }
 
 public class EntityInfoModel(int id, string? name)

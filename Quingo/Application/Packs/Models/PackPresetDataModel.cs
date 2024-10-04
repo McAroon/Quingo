@@ -77,9 +77,9 @@ public class PackPresetColumnModel
     public PackPresetColumnModel(PackPresetColumn col)
     {
         Name = col.Name;
-        QuestionTags = new List<int>(col.QuestionTags);
-        AnswerTags = new List<int>(col.AnswerTags);
-        ExcludeTags = new List<int>(col.ExcludeTags);
+        QuestionTags = new List<int>(col.QuestionTags ?? []);
+        AnswerTags = new List<int>(col.AnswerTags ?? []);
+        ExcludeTags = new List<int>(col.ExcludeTags ?? []);
     }
 
     public string Name { get; set; } = "";

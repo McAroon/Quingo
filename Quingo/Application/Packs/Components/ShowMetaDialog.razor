@@ -1,0 +1,36 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="1" Class="pt-1 pb-1">
+            <MudTable Items="Meta.PropertiesDict">
+                <HeaderContent>
+                    <MudTh>Key</MudTh>
+                    <MudTh>Value</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Key</MudTd>
+                    <MudTd>@context.Value</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudStack>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter, EditorRequired]
+    public Meta Meta { get; set; } = default!;
+
+    public static async Task ShowDialog(IDialogService dialog, string title, Meta meta)
+    {
+        var parameters = new DialogParameters<ShowMetaDialog>
+        {
+            { x => x.Meta, meta }
+        };
+        var opts = new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true
+            };
+        await dialog.ShowAsync<ShowMetaDialog>(title, parameters, opts);
+    }
+}

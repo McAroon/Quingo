@@ -94,9 +94,8 @@ namespace Quingo.Infrastructure.Database
             builder.Entity<Node>().OwnsOne(e => e.Meta, d =>
             {
                 d.ToJson();
-                d.Property(x => x.Props).HasConversion(
-                    x => JsonSerializer.Serialize(x, default(JsonSerializerOptions)), 
-                    x => JsonSerializer.Deserialize<Dictionary<string, string>>(x, default(JsonSerializerOptions)) ?? new Dictionary<string, string>());
+                d.Ignore(x => x.PropertiesDict);
+                d.OwnsMany(x => x.Properties);
             });
 
             builder.Entity<Tag>().Ignore(e => e.IndirectLinks);
@@ -106,9 +105,8 @@ namespace Quingo.Infrastructure.Database
             builder.Entity<NodeLink>().OwnsOne(e => e.Meta, d =>
             {
                 d.ToJson();
-                d.Property(x => x.Props).HasConversion(
-                    x => JsonSerializer.Serialize(x, default(JsonSerializerOptions)),
-                    x => JsonSerializer.Deserialize<Dictionary<string, string>>(x, default(JsonSerializerOptions)) ?? new Dictionary<string, string>());
+                d.Ignore(x => x.PropertiesDict);
+                d.OwnsMany(x => x.Properties);
             });
 
             builder.Entity<NodeTag>().HasOne(e => e.Node).WithMany(e => e.NodeTags).HasForeignKey(e => e.NodeId).IsRequired();

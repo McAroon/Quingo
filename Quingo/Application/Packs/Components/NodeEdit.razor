@@ -1,4 +1,6 @@
-﻿<MudCard>
+﻿@inject IDialogService Dialog
+
+<MudCard>
     @if (_isEditMode)
     {
         <MudCardContent>
@@ -60,6 +62,12 @@
                 </MudText>
             </CardHeaderContent>
             <CardHeaderActions>
+                @if (_model.Meta != null)
+                {
+                    <MudTooltip Text="Show Metadata">
+                        <MudIconButton OnClick="ShowNodeMetaDialog" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
+                    </MudTooltip>
+                }
                 <MudTooltip Text="Edit Item">
                     <MudIconButton OnClick="() => _isEditMode = true" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
                 </MudTooltip>
@@ -96,11 +104,23 @@
                                 <MudTh>Direction</MudTh>
                                 <MudTh>Item</MudTh>
                                 <MudTh>Type</MudTh>
+                                @if (_model.NodeLinks.Any(x => x.Meta != null))
+                                {
+                                    <MudTh></MudTh>
+                                }
                             </HeaderContent>
                             <RowTemplate>
                                 <MudTd><MudIcon Icon="@context.LinkDirection.MudIcon()" Class="icon-inline" /> <span>@context.LinkDirection</span></MudTd>
                                 <MudTd>@context.LinkedNode?.Name</MudTd>
                                 <MudTd>@GetLinkTypeName(context.LinkTypeId)</MudTd>
+                                @if (context.Meta != null)
+                                {
+                                    <MudTd>
+                                        <MudTooltip Text="Show Metadata">
+                                            <MudIconButton OnClick="() => ShowLinkMetaDialog(context)" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
+                                        </MudTooltip>
+                                    </MudTd>
+                                }
                             </RowTemplate>
                         </MudTable>
                     }
@@ -199,12 +219,24 @@
 
     private IEnumerable<string> GetTagNames(IEnumerable<int> tagIds)
     {
-        var tagIdList = tagIds.ToList(); 
+        var tagIdList = tagIds.ToList();
         return Node.Pack.Tags.Where(x => tagIdList.Contains(x.Id)).Select(x => x.Name!);
     }
 
     private string? GetLinkTypeName(int? id)
     {
         return Node.Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == id)?.Name;
+    }
+
+    private async Task ShowNodeMetaDialog()
+    {
+        if (_model.Meta == null) return;
+        await ShowMetaDialog.ShowDialog(Dialog, $"Item Metadata: {_model.Name}", _model.Meta);
+    }
+
+    private async Task ShowLinkMetaDialog(NodeLinkModel link)
+    {
+        if (link.Meta == null) return;
+        await ShowMetaDialog.ShowDialog(Dialog, $"Link Metadata: {_model.Name}", link.Meta);
     }
 }
