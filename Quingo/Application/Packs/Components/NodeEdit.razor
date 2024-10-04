@@ -64,7 +64,7 @@
             <CardHeaderActions>
                 @if (_model.Meta != null)
                 {
-                    <MudTooltip Text="Show Metadata">
+                    <MudTooltip Text="Show Metadata" ShowOnFocus="false">
                         <MudIconButton OnClick="ShowNodeMetaDialog" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
                     </MudTooltip>
                 }
@@ -116,7 +116,7 @@
                                 @if (context.Meta != null)
                                 {
                                     <MudTd>
-                                        <MudTooltip Text="Show Metadata">
+                                        <MudTooltip Text="Show Metadata" ShowOnFocus="false">
                                             <MudIconButton OnClick="() => ShowLinkMetaDialog(context)" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
                                         </MudTooltip>
                                     </MudTd>
