@@ -6,7 +6,7 @@
     Indirect Links <MudTooltip Text="Add Indirect Link"><MudIconButton OnClick="Add" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip>
 </MudText>
 <MudGrid>
-    <MudItem xs="12" md="6" lg="4">
+    <MudItem xs="12">
         <MudStack Spacing="2">
             @foreach (var link in Pack.IndirectLinks.Where(x => x.DeletedAt == null))
             {

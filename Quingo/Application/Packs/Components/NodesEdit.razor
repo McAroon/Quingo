@@ -8,7 +8,7 @@
 </MudText>
 
 <MudGrid Class="pb-4">
-    <MudItem xs="12" md="6" lg="4">
+    <MudItem xs="12">
         <MudStack Row Wrap="Wrap.NoWrap">
             <MudTextField Placeholder="Search..." @bind-Value="_searchText" @bind-Value:after="ResetPage" DebounceInterval="300" Clearable />
             <MudSelect T="int" MultiSelection Placeholder="Tags" @bind-SelectedValues="@_filterTags" @bind-SelectedValues:after="ResetPage" MultiSelectionTextFunc="GetTagsSelectText" Clearable>
@@ -24,24 +24,24 @@
 <MudGrid>
     @if (NodesFiltered.Count > 0)
     {
-        <MudItem xs="12" md="6" lg="4">
+        <MudItem xs="12">
             <MudPagination Color="Color.Primary" Count="NumberOfPages" @bind-Selected="_selectedPage" />
         </MudItem>
         <MudFlexBreak />
         @foreach (var node in PageNodes)
         {
-            <MudItem xs="12" md="6" lg="4">
+            <MudItem xs="12">
                 <NodeEdit Node="node" OnSave="SaveNode" OnDelete="ConfirmDeleteNode" />
             </MudItem>
             <MudFlexBreak />
         }
-        <MudItem xs="12" md="6" lg="4">
+        <MudItem xs="12">
             <MudPagination Color="Color.Primary" Count="NumberOfPages" @bind-Selected="_selectedPage" />
         </MudItem>
     }
     else
     {
-        <MudItem xs="12" md="6" lg="4" Style="height: 600px"><i>No Items</i></MudItem>
+        <MudItem xs="12" Style="height: 600px"><i>No Items</i></MudItem>
     }
 </MudGrid>
 

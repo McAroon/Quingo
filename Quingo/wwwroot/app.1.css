@@ -147,3 +147,7 @@
         mask: url(media/box.svg) no-repeat 50% 50%;
         mask-size: 80%;
     }
+
+.pack-edit-container {
+    max-width: 600px;
+}

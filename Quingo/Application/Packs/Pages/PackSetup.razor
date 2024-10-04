@@ -13,26 +13,31 @@
 
 <MudText Typo="Typo.h3" GutterBottom>@(IsCreate ? "Create" : "Edit") Pack</MudText>
 
-@if (_pack == null && !IsCreate)
-{
-    <MudText><em>Loading...</em></MudText>
-}
-else
-{
-    <PackEdit Pack="_pack" PackId="PackId" />
-}
+<MudGrid>
+    <MudItem xs="12" Class="pack-edit-container">
+        @if (_pack == null && !IsCreate)
+        {
+            <MudText><em>Loading...</em></MudText>
+        }
+        else
+        {
+            <PackEdit Pack="_pack" PackId="PackId" />
+        }
 
 
-@if (_pack != null && !IsCreate)
-{
-    <CascadingValue Value="_pack">
-        <TagsEdit />
-        <NodeLinksEdit />
-        <IndirectLinksEdit />
-        <PackPresetEdit />
-        <NodesEdit />
-    </CascadingValue>
-}
+        @if (_pack != null && !IsCreate)
+        {
+            <CascadingValue Value="_pack">
+                <TagsEdit />
+                <NodeLinksEdit />
+                <IndirectLinksEdit />
+                <PackPresetEdit />
+                <NodesEdit />
+            </CascadingValue>
+        }
+    </MudItem>
+</MudGrid>
+
 
 @code {
     [CascadingParameter]

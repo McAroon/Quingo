@@ -7,7 +7,7 @@
 </MudText>
 
 <MudGrid>
-    <MudItem xs="12" md="6" lg="4">
+    <MudItem xs="12">
         @if (Pack?.Tags != null)
         {
             @foreach (var tag in Pack.Tags.Where(x => x.DeletedAt == null))
