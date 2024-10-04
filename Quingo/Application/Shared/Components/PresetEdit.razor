@@ -123,8 +123,8 @@
     private string GetTagsSelectText(IEnumerable<int> selected)
     {
         var selectedList = selected.ToList();
-        var tags = Pack.Tags.Where(x => selectedList.Contains(x.Id)).Select(x => x.Name);
-        return string.Join(", ", tags);
+        var tags = Pack.Tags.Where(x => selectedList.Contains(x.Id)).Select(x => x.Name).ToList();
+        return tags.Count > 0 ? string.Join(", ", tags) : "-";
     }
 
     private async Task Save()

@@ -34,7 +34,7 @@
             .Search()
             .GroupBy(x => x)
             .Select(x => x.First())
-            .Select(x => (node: new NodeViewModel(x), drawn: State.DrawnNodes.Contains(x)))
+            .Select(x => (node: new NodeViewModel(x, State.Preset), drawn: State.DrawnNodes.Contains(x)))
             .ToList();
     }
 

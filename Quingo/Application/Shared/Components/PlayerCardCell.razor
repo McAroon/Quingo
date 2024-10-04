@@ -18,7 +18,7 @@
 
     private Action? OnNodeClick => OnClick != null ? () => OnClick(Cell) : null;
 
-    private NodeViewModel? Node => Cell.Node == null ? null : new NodeViewModel(Cell.Node, ShowLinksByTagEnum.Answer);
+    private NodeViewModel? Node => Cell.Node == null ? null : new NodeViewModel(Cell.Node, State.GameState.Preset, ShowLinksByTagEnum.Answer);
 
     private bool ShowTagBadge => State.GameState.Preset.ShowTagBadges;
 

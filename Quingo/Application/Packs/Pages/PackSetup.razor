@@ -10,33 +10,30 @@
 @attribute [Authorize]
 
 <PageTitle>Pack</PageTitle>
+<MudContainer MaxWidth="MaxWidth.Small" Gutters="false" Class="ml-0">
+    <MudText Typo="Typo.h3" GutterBottom>@(IsCreate ? "Create" : "Edit") Pack</MudText>
 
-<MudText Typo="Typo.h3" GutterBottom>@(IsCreate ? "Create" : "Edit") Pack</MudText>
-
-<MudGrid>
-    <MudItem xs="12" Class="pack-edit-container">
-        @if (_pack == null && !IsCreate)
-        {
-            <MudText><em>Loading...</em></MudText>
-        }
-        else
-        {
-            <PackEdit Pack="_pack" PackId="PackId" />
-        }
+    @if (_pack == null && !IsCreate)
+    {
+        <MudText><em>Loading...</em></MudText>
+    }
+    else
+    {
+        <PackEdit Pack="_pack" PackId="PackId" />
+    }
 
 
-        @if (_pack != null && !IsCreate)
-        {
-            <CascadingValue Value="_pack">
-                <TagsEdit />
-                <NodeLinksEdit />
-                <IndirectLinksEdit />
-                <PackPresetEdit />
-                <NodesEdit />
-            </CascadingValue>
-        }
-    </MudItem>
-</MudGrid>
+    @if (_pack != null && !IsCreate)
+    {
+        <CascadingValue Value="_pack">
+            <TagsEdit />
+            <NodeLinksEdit />
+            <IndirectLinksEdit />
+            <PackPresetEdit />
+            <NodesEdit />
+        </CascadingValue>
+    }
+</MudContainer>
 
 
 @code {

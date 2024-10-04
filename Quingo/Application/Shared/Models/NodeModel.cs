@@ -6,7 +6,7 @@ namespace Quingo.Application.Shared.Models;
 
 public class NodeViewModel
 {
-    public NodeViewModel(Node node, ShowLinksByTagEnum showLinks = ShowLinksByTagEnum.All)
+    public NodeViewModel(Node node, PackPresetData? preset, ShowLinksByTagEnum showLinks = ShowLinksByTagEnum.All)
     {
         var fromIds = node.NodeLinksFrom.Where(x => x.DeletedAt == null)
             .Select(x => (id: x.NodeToId, node: x.NodeTo, linkType: x.NodeLinkType, meta: x.Meta)).ToList();
@@ -59,9 +59,9 @@ public class NodeViewModel
             });
 
         var inclTags = showLinks == ShowLinksByTagEnum.Question 
-            ? node.Pack.Presets.FirstOrDefault()?.Data.Columns.SelectMany(x => x.AnswerTags ?? []).Distinct().ToList() 
-            : node.Pack.Presets.FirstOrDefault()?.Data.Columns.SelectMany(x => x.QuestionTags ?? []).Distinct().ToList();
-        var exclTags = node.Pack.Presets.FirstOrDefault()?.Data.Columns.SelectMany(x => x.ExcludeTags ?? []).Distinct().ToList();
+            ? preset?.Columns.SelectMany(x => x.AnswerTags ?? []).Distinct().ToList() 
+            : preset?.Columns.SelectMany(x => x.QuestionTags ?? []).Distinct().ToList();
+        var exclTags = preset?.Columns.SelectMany(x => x.ExcludeTags ?? []).Distinct().ToList();
 
         NodeLinksByTag = links.Concat(indirectLinks)
             .GroupBy(x => (tag: x.Tag.Id, name: x.LinkType.Name, dir: x.LinkDirection, type: x.Type))
@@ -104,7 +104,7 @@ public class NodeModel : NodeViewModel
 {
     public NodeModel() { }
 
-    public NodeModel(Node node) : base(node)
+    public NodeModel(Node node) : base(node, node.Pack.Presets.FirstOrDefault()?.Data)
     {
         TagIds = node.NodeTags.Where(x => x.DeletedAt == null).Select(x => x.TagId).ToList();
     }

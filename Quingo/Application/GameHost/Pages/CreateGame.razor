@@ -40,8 +40,23 @@
         </MudCard>
     }
 </MudStack>
-<MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow" 
-    OnClick="StartGame" Disabled="_pack == null || _isLoading">Start Game</MudButton>
+@if (_pack != null && _preset != null)
+{
+    <MudText Typo="Typo.h6" GutterBottom>
+        Pack Preset @if (!_isPresetEdit)
+        {
+            <MudTooltip Text="Edit Preset">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => _isPresetEdit = true"></MudIconButton>
+            </MudTooltip>
+        }
+    </MudText>
+    <MudContainer MaxWidth="MaxWidth.Small" Gutters="false" Class="ml-0 pb-2">
+        <PresetEdit Preset="_preset" IsEdit="_isPresetEdit" OnSave="SetPresetData" OnCancelEdit="CancelPresetEdit" />
+    </MudContainer>
+}
+
+<MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow"
+           OnClick="StartGame" Disabled="_pack == null || _isPresetEdit || _isLoading">Start Game</MudButton>
 
 @code {
     [CascadingParameter(Name = "UserId")]
@@ -50,6 +65,10 @@
     private List<Pack> _packs = [];
 
     private Pack? _pack;
+
+    private PackPreset? _preset;
+
+    private bool _isPresetEdit;
 
     private bool _isLoading;
 
@@ -61,12 +80,14 @@
             NavigationManager.NavigateTo($"/game/host/{exGame.GameSessionId}");
             return;
         }
-        _packs = await Db.Packs.ToListAsync();
+        _packs = await Db.Packs.Include(x => x.Tags).Include(x => x.Presets).AsNoTracking().ToListAsync();
     }
 
     private void SelectPack(Pack pack)
     {
         _pack = pack;
+        _preset = _pack.Presets.FirstOrDefault();
+        StateHasChanged();
     }
 
     private async Task StartGame()
@@ -75,9 +96,10 @@
         {
             ArgumentNullException.ThrowIfNull(_pack, nameof(_pack));
             ArgumentNullException.ThrowIfNull(UserId, nameof(UserId));
+            ArgumentNullException.ThrowIfNull(_preset, nameof(_preset));
 
             _isLoading = true;
-            var game = await StateService.StartGame(_pack.Id, UserId);
+            var game = await StateService.StartGame(_pack.Id, _preset.Data, UserId);
             NavigationManager.NavigateTo($"/game/host/{game.GameSessionId}");
         }
         catch (Exception e)
@@ -89,5 +111,20 @@
         {
             _isLoading = false;
         }
+    }
+
+    private Task SetPresetData(PackPresetData data)
+    {
+        if (_preset != null)
+            _preset.Data = data;
+        _isPresetEdit = false;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private void CancelPresetEdit()
+    {
+        _isPresetEdit = false;
+        StateHasChanged();
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Quingo.Infrastructure.Database;
+using Quingo.Shared.Entities;
 using System.Collections.Concurrent;
 
 namespace Quingo.Application.State;
@@ -16,7 +17,7 @@ public class GameStateService
         _dbContextFactory = dbContextFactory;
     }
 
-    public async Task<GameState> StartGame(int packId, string userId)
+    public async Task<GameState> StartGame(int packId, PackPresetData preset, string userId)
     {
         try
         {
@@ -31,12 +32,6 @@ public class GameStateService
             if (pack == null)
             {
                 throw new GameStateException("Pack not found");
-            }
-
-            var preset = pack.Presets.FirstOrDefault();
-            if (preset == null)
-            {
-                throw new GameStateException("Preset not found");
             }
 
             var user = await db.Users.FirstOrDefaultAsync(x => x.Id == userId);

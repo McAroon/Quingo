@@ -49,7 +49,7 @@
 
     private async void ShowCellDetails(PlayerCardCellData cell)
     {
-        var model = cell.Node == null ? null : new NodeViewModel(cell.Node);
+        var model = cell.Node == null ? null : new NodeViewModel(cell.Node, State.GameState.Preset);
         await NodeDetailsDialog.ShowNodeDetails(Dialog, State.GameState, model);
     }
 }

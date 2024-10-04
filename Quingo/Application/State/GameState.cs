@@ -5,17 +5,17 @@ namespace Quingo.Application.State;
 
 public class GameState : IDisposable
 {
-    public GameState(Guid gameSessionId, Pack pack, PackPreset preset, string hostUserId, string? hostName)
+    public GameState(Guid gameSessionId, Pack pack, PackPresetData preset, string hostUserId, string? hostName)
     {
         GameSessionId = gameSessionId;
         PackId = pack.Id;
         Pack = pack;
-        Preset = preset.Data;
+        Preset = preset;
         HostUserId = hostUserId;
         HostName = hostName;
         StartedAt = UpdatedAt = DateTime.UtcNow;
         State = GameStateEnum.Init;
-        EndgameTimer = preset.Data.EndgameTimer;
+        EndgameTimer = preset.EndgameTimer;
 
         _random = new Random(gameSessionId.GetHashCode());
 
@@ -91,7 +91,7 @@ public class GameState : IDisposable
         if (State != GameStateEnum.Init) return;
 
         var qTagIds = Preset.Columns.SelectMany(x => x.QuestionTags).Distinct().ToList();
-        var exclTagIds = Preset.Columns.SelectMany(x => x.ExcludeTags).Distinct().ToList();
+        var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct().ToList();
         _qNodes = Pack.Nodes.Where(x => qTagIds.Any(t => x.HasTag(t)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
         QuestionCount = _qNodes.Count;
         _bingoPatterns = PatternGenerator.GeneratePatterns(Preset.CardSize, Preset.Pattern);

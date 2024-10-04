@@ -58,7 +58,7 @@ public class PlayerState : IDisposable
         }
 
         var aTagIds = Preset.Columns.SelectMany(x => x.AnswerTags).Distinct().ToList();
-        var exclTagIds = Preset.Columns.SelectMany(x => x.ExcludeTags).Distinct().ToList();
+        var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct().ToList();
         var aNodes = Pack.Nodes.Where(x => aTagIds.Any(t => x.HasTag(t)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
 
         for (var col = 0; col < Card.Cells.GetLength(0); col++)
