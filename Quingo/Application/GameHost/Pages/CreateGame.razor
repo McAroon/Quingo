@@ -41,7 +41,7 @@
     }
 </MudStack>
 <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow" 
-    OnClick="StartGame" Disabled="_pack == null">Start Game</MudButton>
+    OnClick="StartGame" Disabled="_pack == null || _isLoading">Start Game</MudButton>
 
 @code {
     [CascadingParameter(Name = "UserId")]
@@ -50,6 +50,8 @@
     private List<Pack> _packs = [];
 
     private Pack? _pack;
+
+    private bool _isLoading;
 
     protected override async Task OnInitializedAsync()
     {
@@ -74,6 +76,7 @@
             ArgumentNullException.ThrowIfNull(_pack, nameof(_pack));
             ArgumentNullException.ThrowIfNull(UserId, nameof(UserId));
 
+            _isLoading = true;
             var game = await StateService.StartGame(_pack.Id, UserId);
             NavigationManager.NavigateTo($"/game/host/{game.GameSessionId}");
         }
@@ -81,6 +84,10 @@
         {
             Logger.LogError(e, e.Message);
             Snackbar.Add(e.Message, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
         }
     }
 }

@@ -74,8 +74,13 @@ public class PlayerState : IDisposable
                 }
                 else
                 {
-                    var idx = GameState.Random.Next(0, colNodes.Count - 1);
-                    var node = colNodes[idx];
+                    var tagIds = colNodes.SelectMany(x => x.Tags).Select(x => x.Id).Distinct().ToList();
+                    var tagIdx = GameState.Random.Next(0, tagIds.Count - 1);
+                    var tagId = tagIds[tagIdx];
+                    var tagNodes = colNodes.Where(x => x.HasTag(tagId)).ToList();
+
+                    var idx = GameState.Random.Next(0, tagNodes.Count - 1);
+                    var node = tagNodes[idx];
                     colNodes.Remove(node);
                     aNodes.Remove(node);
 
