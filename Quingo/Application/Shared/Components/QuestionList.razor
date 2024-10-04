@@ -5,7 +5,7 @@
 @implements IDisposable
 
 <MudStack Spacing="1" Row Wrap="Wrap.Wrap">
-    @foreach (var node in Nodes)
+    @foreach (var node in _nodes)
     {
         <NodeSquare Node="node" CellState="GetCellState(node)" ShowTagBadge
                     ShowTagBadgeTooltip="Game.Preset.ShowTagBadges" OnClick="OnClick(node)!" />
@@ -24,8 +24,7 @@
 
     private bool _toggleHighlight = true;
 
-    private IEnumerable<NodeViewModel> Nodes => (ItemsToDisplay > 0 ? Game.DrawnNodes.TakeLast(ItemsToDisplay) : Game.DrawnNodes)
-        .Select(x => new NodeViewModel(x, Game.Preset, ShowLinksByTagEnum.Question));
+    private List<NodeViewModel> _nodes = [];
 
     private Func<NodeViewModel, Action?> OnClick => (node) => ShowDetails ? () => ShowNodeDetails(node) : null;
 
@@ -33,7 +32,8 @@
 
     protected override void OnInitialized()
     {
-        Game.NodeDrawn += Blink;
+        _nodes = GetNodes();
+        Game.NodeDrawn += OnNodeDrawn;
     }
 
     private PlayerCardCellState GetCellState(NodeViewModel node) =>
@@ -44,34 +44,46 @@
         await NodeDetailsDialog.ShowNodeDetails(Dialog, Game, node);
     }
 
-    private void Blink()
+    private List<NodeViewModel> GetNodes()
+    {
+        return (ItemsToDisplay > 0 ? Game.DrawnNodes.TakeLast(ItemsToDisplay) : Game.DrawnNodes)
+        .Select(x => new NodeViewModel(x, Game.Preset, ShowLinksByTagEnum.Question)).ToList();
+    }
+
+    private void OnNodeDrawn()
     {
         InvokeAsync(async () =>
+      {
+          _nodes = GetNodes();
+          await Blink();
+      });
+    }
+
+    private async Task Blink()
+    {
+        _blinkCancelSrc.Cancel();
+        _blinkCancelSrc = new();
+        var token = _blinkCancelSrc.Token;
+
+        for (int i = 0; i < 6; i++)
         {
-            _blinkCancelSrc.Cancel();
-            _blinkCancelSrc = new();
-            var token = _blinkCancelSrc.Token;
+            if (token.IsCancellationRequested) break;
 
-            for (int i = 0; i < 6; i++)
-            {
-                if (token.IsCancellationRequested) break;
+            _toggleHighlight = !_toggleHighlight;
+            StateHasChanged();
+            await Task.Delay(500, token);
+        }
 
-                _toggleHighlight = !_toggleHighlight;
-                StateHasChanged();
-                await Task.Delay(500, token);
-            }
-
-            if (!_toggleHighlight && !token.IsCancellationRequested)
-            {
-                _toggleHighlight = true;
-                StateHasChanged();
-            }
-        });
+        if (!_toggleHighlight && !token.IsCancellationRequested)
+        {
+            _toggleHighlight = true;
+            StateHasChanged();
+        }
     }
 
     public void Dispose()
     {
-        Game.NodeDrawn += Blink;
+        Game.NodeDrawn -= OnNodeDrawn;
     }
 
 }

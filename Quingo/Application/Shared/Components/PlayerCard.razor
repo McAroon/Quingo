@@ -20,7 +20,7 @@
         @for (int col = 0; col < State.Card.Cells.GetLength(0); col++)
         {
             var cell = State.Card.Cells[col, cRow];
-            <PlayerCardCell Cell="cell" ReadOnly="ReadOnly" ShowDetails="ShowDetails" OnClick="@(OnClick!)" />
+            <PlayerCardCell Cell="cell" ShowDetails="ShowDetails" OnClick="@(OnCellClick(cell)!)" />
         }
     </MudStack>
 }
@@ -35,13 +35,19 @@
     [Parameter]
     public bool ShowDetails { get; set; }
 
-    private bool CanMark => !ReadOnly && State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown;
+    private PackPresetData Preset => State.GameState.Preset;
 
-    private Action<PlayerCardCellData>? OnClick => CanMark ? Mark : ShowDetails ? ShowCellDetails : null;
+    private bool CanMark => !ReadOnly && State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown && (Preset.MatchRule is PackPresetMatchRule.Default || State.GameState.DrawnNodes.Count > 0); 
+
+    private bool CanUndoMark(PlayerCardCellData cell) => !cell.IsMarked || Preset.MatchRule is PackPresetMatchRule.Default || cell.MatchedQNode == State.GameState.DrawnNodes.LastOrDefault();
+
+    private bool CanMarkCell(PlayerCardCellData cell) => CanMark && CanUndoMark(cell);
+
+    private Action<PlayerCardCellData>? OnCellClick(PlayerCardCellData cell) => CanMarkCell(cell) ? Mark : ShowDetails ? ShowCellDetails : null;
 
     private void Mark(PlayerCardCellData cell)
     {
-        if (CanMark)
+        if (CanMarkCell(cell))
         {
             State.Mark(cell.Col, cell.Row);
         }

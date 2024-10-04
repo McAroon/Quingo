@@ -8,9 +8,6 @@
     public PlayerCardCellData Cell { get; set; } = default!;
 
     [Parameter]
-    public bool ReadOnly { get; set; }
-
-    [Parameter]
     public bool ShowDetails { get; set; }
 
     [Parameter]
@@ -22,6 +19,12 @@
 
     private bool ShowTagBadge => State.GameState.Preset.ShowTagBadges;
 
+    private bool IsPending => State.GameState.Preset.MatchRule == PackPresetMatchRule.LastDrawn 
+        && Cell.State is PlayerCardCellState.Marked or PlayerCardCellState.Invalid 
+        && Cell.Node != null
+        && Cell.MatchedQNode != null 
+        && Cell.MatchedQNode == State.GameState.DrawnNodes.LastOrDefault();
+
     private PlayerCardCellState CellState
     {
         get
@@ -30,6 +33,8 @@
                 return Cell.State;
             else if (Cell.State is PlayerCardCellState.MatchingPattern)
                 return PlayerCardCellState.MatchingPattern;
+            else if (IsPending)
+                return PlayerCardCellState.Missing;
             else if (Cell.State is PlayerCardCellState.Marked or PlayerCardCellState.Invalid)
                 return PlayerCardCellState.Marked;
             return PlayerCardCellState.Default;

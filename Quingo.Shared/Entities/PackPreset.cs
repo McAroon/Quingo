@@ -23,6 +23,8 @@ public record PackPresetData
 
     public PackPresetPattern Pattern { get; set; }
 
+    public PackPresetMatchRule MatchRule { get; set; }
+
     public List<PackPresetColumn> Columns { get; set; } = [];
 }
 
@@ -41,6 +43,12 @@ public enum PackPresetPattern
 {
     Lines,
     FullCard
+}
+
+public enum PackPresetMatchRule
+{
+    Default,
+    LastDrawn
 }
 
 

@@ -99,6 +99,11 @@ public class PlayerState : IDisposable
 
         var cell = Card.Cells[col, row];
         cell.IsMarked = !cell.IsMarked;
+        if (GameState.Preset.MatchRule is PackPresetMatchRule.LastDrawn && GameState.DrawnNodes.Count > 0)
+        {
+            cell.MatchedQNode = cell.IsMarked ? GameState.DrawnNodes.Last() : null;
+        }
+
         ValidateCell(cell);
 
         NotifyStateChanged();
@@ -125,7 +130,11 @@ public class PlayerState : IDisposable
         }
         else
         {
-            var found = new NodeLinkSearch(cell.Node, GameState.DrawnNodes).Search().FirstOrDefault() != null;
+            var search = new NodeLinkSearch(cell.Node, GameState.DrawnNodes).Search();
+            var found = GameState.Preset.MatchRule is PackPresetMatchRule.Default || !cell.IsMarked 
+                ? search.FirstOrDefault() != null 
+                : cell.MatchedQNode != null && search.FirstOrDefault(x => x.Id == cell.MatchedQNode.Id) != null;
+
             cell.IsValid = cell.IsMarked ? found : !found;
         }
     }
@@ -198,6 +207,8 @@ public class PlayerCardCellData(int col, int row, Node? node = null)
     public bool IsMarked { get; set; }
 
     public bool IsValid { get; set; } = true;
+
+    public Node? MatchedQNode { get; set; }
 
     public PlayerCardCellState State 
     { 
