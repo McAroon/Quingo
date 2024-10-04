@@ -1,0 +1,43 @@
+﻿@inject ApplicationDbContext Db
+
+<MudText Typo="Typo.h4" GutterBottom>
+    Default Preset @if (!_isEdit)
+    {
+        <MudTooltip Text="Edit Preset">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => _isEdit = true"></MudIconButton>
+        </MudTooltip>
+    }
+</MudText>
+
+<PresetEdit Preset="_preset" IsEdit="_isEdit" OnSave="Save" OnCancelEdit="CancelEdit" />
+
+
+@code {
+    [CascadingParameter]
+    public Pack Pack { get; set; } = default!;
+
+    private PackPreset _preset = default!;
+
+    private bool _isEdit;
+
+    protected override void OnParametersSet()
+    {
+        _preset = Pack.Presets.OrderBy(x => x.CreatedAt).FirstOrDefault()
+            ?? new PackPreset { Pack = Pack };
+    }
+
+    private async Task Save(PackPresetData data)
+    {
+        _preset.Data = data;
+        Db.Update(_preset);
+        await Db.SaveChangesAsync();
+        _isEdit = false;
+        StateHasChanged();
+    }
+
+    private void CancelEdit()
+    {
+        _isEdit = false;
+        StateHasChanged();
+    }
+}

@@ -1,6 +1,6 @@
 ﻿using Quingo.Shared.Entities;
 
-namespace Quingo.Application.Packs.Models;
+namespace Quingo.Application.Shared.Models;
 
 public class PackPresetDataModel
 {

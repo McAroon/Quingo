@@ -1,17 +1,6 @@
-﻿@inject ApplicationDbContext Db
-
-<MudText Typo="Typo.h4" GutterBottom>
-    Default Preset @if (!_isEdit)
-    {
-        <MudTooltip Text="Edit Preset">
-            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => _isEdit = true"></MudIconButton>
-        </MudTooltip>
-    }
-</MudText>
-
-<MudGrid>
+﻿<MudGrid>
     <MudItem xs="12" md="4">
-        @if (_isEdit)
+        @if (IsEdit)
         {
             <MudCard>
                 <MudCardContent>
@@ -93,22 +82,27 @@
 
 
 @code {
-    [CascadingParameter]
-    public Pack Pack { get; set; } = default!;
+    [Parameter, EditorRequired]
+    public PackPreset Preset { get; set; } = default!;
 
-    private PackPreset _preset = default!;
+    [Parameter]
+    public bool IsEdit { get; set; }
+
+    [Parameter]
+    public Func<PackPresetData, Task>? OnSave { get; set; }
+
+    [Parameter]
+    public Action? OnCancelEdit { get; set; }
+
+    public Pack Pack => Preset.Pack;
 
     private MudForm _form = default!;
-
-    private bool _isEdit;
 
     private PackPresetDataModel _model = default!;
 
     protected override void OnParametersSet()
     {
-        _preset = Pack.Presets.OrderBy(x => x.CreatedAt).FirstOrDefault()
-            ?? new PackPreset { Pack = Pack };
-        _model = new PackPresetDataModel(_preset.Data);
+        _model = new PackPresetDataModel(Preset.Data);
     }
 
     private void OnCardSizeUpdated()
@@ -136,20 +130,16 @@
     private async Task Save()
     {
         await _form.Validate();
-        if (_form.IsValid)
+        if (_form.IsValid && OnSave != null)
         {
-            _preset.Data = _model.ToData();
-            Db.Update(_preset);
-            await Db.SaveChangesAsync();
-            _isEdit = false;
-            StateHasChanged();
+            await OnSave(_model.ToData());
         }
     }
 
     private void CancelEdit()
     {
-        _isEdit = false;
-        _model = new PackPresetDataModel(_preset.Data);
+        OnCancelEdit?.Invoke();
+        _model = new PackPresetDataModel(Preset.Data);
         StateHasChanged();
     }
 }
