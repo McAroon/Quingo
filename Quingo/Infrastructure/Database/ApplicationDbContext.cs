@@ -36,7 +36,8 @@ namespace Quingo.Infrastructure.Database
             .Include(x => x.IndirectLinks).ThenInclude(x => x.Steps)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeTags)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
-            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo);
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo)
+            .AsSplitQuery();
 
     public async Task<Pack?> GetPack(int packId)
         {
