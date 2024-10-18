@@ -29,8 +29,7 @@
 }
 
 .node-square {
-    width: 100%;
-    max-width: 150px;
+    width: 150px;
     aspect-ratio: 1;
     padding: 4px;
 }
@@ -109,8 +108,11 @@
         background-color: var(--mud-palette-warning);
     }
 
-.node-square .node-square-content .node-badges {
-    align-self: flex-end;
+.node-square .node-square-content .node-row {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    flex-direction: row-reverse;
 }
 
     .node-square .node-square-content .node-badges .node-badge {

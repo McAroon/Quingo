@@ -121,6 +121,10 @@
                                         </MudTooltip>
                                     </MudTd>
                                 }
+                                else if (_model.NodeLinks.Any(x => x.Meta != null))
+                                {
+                                    <MudTd></MudTd>
+                                }
                             </RowTemplate>
                         </MudTable>
                     }

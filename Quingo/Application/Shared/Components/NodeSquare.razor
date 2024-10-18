@@ -2,44 +2,63 @@
 
 <MudCard Class="@CardClass" @onclick="OnCardClick">
     <MudCardContent Class="node-square-content" Style="@_imageStyle">
-        <div class="node-badges">
-            @if (ShowTagBadge && _badgeText != null)
-            {
-                if (ShowTagBadgeTooltip && Node?.NodeLinksByTag?.Count > 0)
+        <div class="node-row">
+            <div class="node-badges">
+                @if (ShowTagBadge && _badgeText != null)
                 {
-                    var from = Node.NodeLinksByTag.Where(x => x.LinkDirection == NodeLinkDirection.From).ToList();
-                    var rest = Node.NodeLinksByTag.Where(x => x.LinkDirection != NodeLinkDirection.From).ToList();
+                    if (ShowTagBadgeTooltip && Node?.NodeLinksByTag?.Count > 0)
+                    {
+                        var from = Node.NodeLinksByTag.Where(x => x.LinkDirection == NodeLinkDirection.From).ToList();
+                        var rest = Node.NodeLinksByTag.Where(x => x.LinkDirection != NodeLinkDirection.From).ToList();
 
-                    <MudTooltip Placement="Placement.Right" Disabled="rest.Count == 0">
-                        <ChildContent>
-                            <MudTooltip Placement="Placement.Left" Disabled="from.Count == 0">
-                                <ChildContent>
-                                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="chip-xs node-badge">@_badgeText</MudChip>
-                                </ChildContent>
-                                <TooltipContent>
-                                    @foreach (var link in from)
-                                    {
-                                        <div>
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="chip-xs">@link.Tag.Name</MudChip><MudIcon Size="Size.Small" Class="icon-inline" Icon="@NodeLinkDirection.To.MudIcon()" /><MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Filled" Class="chip-xs">@link.LinkType.Name</MudChip>
-                                        </div>
-                                    }
-                                </TooltipContent>
-                            </MudTooltip>
-                        </ChildContent>
-                        <TooltipContent>
-                            @foreach (var link in rest)
+                        <MudTooltip Placement="Placement.Right" Disabled="rest.Count == 0">
+                            <ChildContent>
+                                <MudTooltip Placement="Placement.Left" Disabled="from.Count == 0">
+                                    <ChildContent>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="chip-xs node-badge">@_badgeText</MudChip>
+                                    </ChildContent>
+                                    <TooltipContent>
+                                        @foreach (var link in from)
+                                        {
+                                            <div>
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="chip-xs">@link.Tag.Name</MudChip><MudIcon Size="Size.Small" Class="icon-inline" Icon="@NodeLinkDirection.To.MudIcon()" /><MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Filled" Class="chip-xs">@link.LinkType.Name</MudChip>
+                                            </div>
+                                        }
+                                    </TooltipContent>
+                                </MudTooltip>
+                            </ChildContent>
+                            <TooltipContent>
+                                @foreach (var link in rest)
+                                {
+                                    <div>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Filled" Class="chip-xs">@link.LinkType.Name</MudChip><MudIcon Size="Size.Small" Class="icon-inline" Icon="@link.LinkDirection.MudIcon()" /><MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="chip-xs">@link.Tag.Name</MudChip>
+                                    </div>
+                                }
+                            </TooltipContent>
+                        </MudTooltip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="chip-xs node-badge">@_badgeText</MudChip>
+                    }
+                }
+            </div>
+            @if (MatchedNode != null)
+            {
+                <div class="node-matched">
+                    <MudTooltip Text="@MatchedNode.Name">
+                        <MudAvatar>
+                            @if (!string.IsNullOrEmpty(MatchedNode.ImageUrl))
                             {
-                                <div>
-                                    <MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Filled" Class="chip-xs">@link.LinkType.Name</MudChip><MudIcon Size="Size.Small" Class="icon-inline" Icon="@link.LinkDirection.MudIcon()" /><MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="chip-xs">@link.Tag.Name</MudChip>
-                                </div>
+                                <MudImage Src="@Files.GetFileUrl(MatchedNode.ImageUrl)" ObjectFit="ObjectFit.Cover" />
                             }
-                        </TooltipContent>
+                            else
+                            {
+                                @MatchedNode.Name?.Substring(0, 1)
+                            }
+                        </MudAvatar>
                     </MudTooltip>
-                }
-                else
-                {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Class="chip-xs node-badge">@_badgeText</MudChip>
-                }
+                </div>
             }
         </div>
         <MudText Align="Align.Center" Typo="Typo.h6" Class="node-text">
@@ -63,6 +82,9 @@
 
     [Parameter]
     public Action? OnClick { get; set; }
+
+    [Parameter]
+    public Node? MatchedNode { get; set; }
 
     private Action OnCardClick => OnClick ?? (() => { });
 
