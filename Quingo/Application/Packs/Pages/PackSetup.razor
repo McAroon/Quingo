@@ -2,9 +2,8 @@
 @page "/game/setup/pack/{PackId:int}"
 
 @using Microsoft.AspNetCore.Authorization
-@using System.Security.Claims
 
-@inject ApplicationDbContext Db
+@inject PackRepo Repo
 @inject NavigationManager NavigationManager
 
 @attribute [Authorize]
@@ -54,7 +53,7 @@
     {
         if (PackId != null && _pack?.Id != PackId)
         {
-            _pack = await Db.GetPack(PackId.Value);
+            _pack = await Repo.GetPackExclNodes(PackId.Value);
         }
 
         var user = (await (AuthenticationState ?? Task.FromResult<AuthenticationState>(null!)))?.User;

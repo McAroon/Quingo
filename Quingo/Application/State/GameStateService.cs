@@ -2,6 +2,7 @@
 using Quingo.Infrastructure.Database;
 using Quingo.Shared.Entities;
 using System.Collections.Concurrent;
+using Quingo.Infrastructure.Database.Repos;
 
 namespace Quingo.Application.State;
 
@@ -26,9 +27,10 @@ public class GameStateService
                 throw new GameStateException("User is already hosting a game");
             }
 
-            using var db = await _dbContextFactory.CreateDbContextAsync();
+            await using var db = await _dbContextFactory.CreateDbContextAsync();
+            var repo = new PackRepo(db);
 
-            var pack = await db.GetPack(packId);
+            var pack = await repo.GetPack(packId);
             if (pack == null)
             {
                 throw new GameStateException("Pack not found");

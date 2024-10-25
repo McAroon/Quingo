@@ -9,6 +9,7 @@ using Quingo.Application.State;
 using Quingo.Components;
 using Quingo.Components.Account;
 using Quingo.Infrastructure.Database;
+using Quingo.Infrastructure.Database.Repos;
 using Quingo.Infrastructure.Files;
 using Quingo.Scripts;
 using Quingo.Shared;
@@ -65,6 +66,7 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 builder.Services.AddSingleton<GameStateService>();
 builder.Services.AddScoped<GenerateStandardBingo>();
 builder.Services.AddSingleton<TempUserStorage>();
+builder.Services.AddScoped<PackRepo>();
 
 // S3
 var s3Settings = builder.Configuration.GetSection(nameof(S3Settings)).Get<S3Settings>() ?? new();

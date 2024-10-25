@@ -2,10 +2,8 @@ using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.Extensions.Options;
 using Quingo.Shared.Entities;
 using System.Security.Claims;
-using System.Text.Json;
 
 namespace Quingo.Infrastructure.Database
 {
@@ -28,52 +26,6 @@ namespace Quingo.Infrastructure.Database
         public DbSet<IndirectLink> IndirectLinks { get; set; }
         public DbSet<IndirectLinkStep> IndirectLinkSteps { get; set; }
         public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
-
-        public IQueryable<Pack> PacksWithIncludes => Packs
-            .Include(x => x.Tags)
-            .Include(x => x.NodeLinkTypes)
-            .Include(x => x.Presets)
-            .Include(x => x.IndirectLinks).ThenInclude(x => x.Steps)
-            .Include(x => x.Nodes).ThenInclude(x => x.NodeTags)
-            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
-            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo)
-            .AsSplitQuery();
-
-    public async Task<Pack?> GetPack(int packId)
-        {
-            var pack = await PacksWithIncludes.FirstOrDefaultAsync(x => x.Id == packId);
-            if (pack == null) return null;
-
-            foreach (var node in pack.Nodes)
-            {
-                foreach (var tag in node.NodeTags)
-                {
-                    tag.Tag ??= pack.Tags.First(x => x.Id == tag.TagId);
-                }
-                foreach (var link in node.NodeLinksFrom)
-                {
-                    link.NodeLinkType ??= pack.NodeLinkTypes.First(x => x.Id == link.NodeLinkTypeId);
-                    link.NodeTo ??= pack.Nodes.First(x => x.Id == link.NodeToId);
-                }
-                foreach (var link in node.NodeLinksTo)
-                {
-                    link.NodeLinkType ??= pack.NodeLinkTypes.First(x => x.Id == link.NodeLinkTypeId);
-                    link.NodeFrom ??= pack.Nodes.First(x => x.Id == link.NodeFromId);
-                }
-            }
-
-            foreach (var link in pack.IndirectLinks)
-            {
-                link.Steps = [.. link.Steps.OrderBy(x => x.Order)];
-                foreach (var step in link.Steps)
-                {
-                    step.TagFrom ??= pack.Tags.First(x => x.Id == step.TagFromId);
-                    step.TagTo ??= pack.Tags.First(x => x.Id == step.TagToId);
-                }
-            }
-
-            return pack;
-        }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -98,6 +50,9 @@ namespace Quingo.Infrastructure.Database
                 d.Ignore(x => x.PropertiesDict);
                 d.OwnsMany(x => x.Properties);
             });
+            builder.Entity<Node>().HasIndex(e => e.Name);
+            builder.Entity<Node>().HasIndex(e => e.CreatedAt);
+            builder.Entity<Node>().HasIndex(e => e.ImageUrl);
 
             builder.Entity<Tag>().Ignore(e => e.IndirectLinks);
 
@@ -190,6 +145,8 @@ namespace Quingo.Infrastructure.Database
             builder.HasOne(e => e.UpdatedByUser).WithMany().HasForeignKey(e => e.UpdatedByUserId);
             builder.HasOne(e => e.DeletedByUser).WithMany().HasForeignKey(e => e.DeletedByUserId);
             builder.HasQueryFilter(e => e.DeletedAt == null);
+
+            builder.HasIndex(e => e.DeletedAt);
         }
     }
 }

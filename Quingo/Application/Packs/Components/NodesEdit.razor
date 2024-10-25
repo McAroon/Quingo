@@ -1,8 +1,11 @@
-﻿@inject ApplicationDbContext Db
+﻿@inject PackRepo Repo
 @inject FileStoreService Files
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
 
+<div id="nodes-edit"></div>
 <MudText Typo="Typo.h4" GutterBottom>
     Pack Items <MudTooltip Text="Add Item"><MudIconButton OnClick="AddNode" Icon="@Icons.Material.Filled.Add"></MudIconButton></MudTooltip>
 </MudText>
@@ -10,8 +13,8 @@
 <MudGrid Class="pb-4">
     <MudItem xs="12">
         <MudStack Row Wrap="Wrap.NoWrap">
-            <MudTextField Placeholder="Search..." @bind-Value="_searchText" @bind-Value:after="ResetPage" DebounceInterval="300" Clearable />
-            <MudSelect T="int" MultiSelection Placeholder="Tags" @bind-SelectedValues="@_filterTags" @bind-SelectedValues:after="ResetPage" MultiSelectionTextFunc="GetTagsSelectText" Clearable>
+            <MudTextField Placeholder="Search..." @bind-Value="Search" @bind-Value:after="() => OnQueryChange(true)" DebounceInterval="500" Clearable />
+            <MudSelect T="int" MultiSelection Placeholder="Tags" @bind-SelectedValues="@TagIdsEnumerable" @bind-SelectedValues:after="() => OnQueryChange(true)" MultiSelectionTextFunc="GetTagsSelectText" Clearable>
                 @foreach (var tag in Pack.Tags)
                 {
                     <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
@@ -22,13 +25,13 @@
 </MudGrid>
 
 <MudGrid>
-    @if (NodesFiltered.Count > 0)
+    @if (_nodes is { Count: > 0 })
     {
         <MudItem xs="12">
-            <MudPagination Color="Color.Primary" Count="NumberOfPages" @bind-Selected="_selectedPage" />
+            <MudPagination Color="Color.Primary" Count="NumberOfPages" @bind-Selected="Page" @bind-Selected:after="() => OnQueryChange()" />
         </MudItem>
         <MudFlexBreak />
-        @foreach (var node in PageNodes)
+        @foreach (var node in _nodes.Data)
         {
             <MudItem xs="12">
                 <NodeEdit Node="node" OnSave="SaveNode" OnDelete="ConfirmDeleteNode" />
@@ -36,7 +39,7 @@
             <MudFlexBreak />
         }
         <MudItem xs="12">
-            <MudPagination Color="Color.Primary" Count="NumberOfPages" @bind-Selected="_selectedPage" />
+            <MudPagination Color="Color.Primary" Count="NumberOfPages" @bind-Selected="Page" @bind-Selected:after="() => OnQueryChange()" />
         </MudItem>
     }
     else
@@ -50,30 +53,68 @@
 </MudScrollToTop>
 
 @code {
-    [CascadingParameter]
-    public Pack Pack { get; set; } = default!;
+    [CascadingParameter] public Pack Pack { get; set; } = default!;
 
-    private string _searchText = "";
+    [SupplyParameterFromQuery(Name = "page")] private int Page { get; set; } = 1;
 
-    private IEnumerable<int> _filterTags = [];
+    [SupplyParameterFromQuery(Name = "search")] private string Search { get; set; } = "";
 
-    private List<Node> NodesFiltered => Pack?.Nodes?
-        .Where(x => (x.Name?.Contains(_searchText, StringComparison.InvariantCultureIgnoreCase) ?? true) && x.DeletedAt == null)
-        .Where(x => !_filterTags.Any() || x.NodeTags.FirstOrDefault(t => _filterTags.Contains(t.TagId)) != null)
-        .Reverse().ToList() ?? [];
+    [SupplyParameterFromQuery(Name = "tag_id")] private int[] TagIds { get; set; } = [];
+
+    [SupplyParameterFromQuery(Name = "order_by")] private int? OrderBy { get; set; } = (int)PackNodesOrderBy.CreatedAt;
+
+    [SupplyParameterFromQuery(Name = "direction")] private int? Direction { get; set; } = (int)OrderDirection.Descending;
+
+    private Dictionary<string, object?> QueryParameters => new()
+    {
+        ["page"] = Page,
+        ["search"] = Search,
+        ["tag_id"] = TagIds,
+        ["order_by"] = OrderBy,
+        ["direction"] = Direction,
+    };
+    
+    private PagedResult<Node> _nodes = default!;
+    
+    private IEnumerable<int> TagIdsEnumerable
+    {
+        get => TagIds;
+        set => TagIds = value.ToArray();
+    }
 
     private const int NodesPerPage = 10;
 
-    private int NumberOfPages => (int)Math.Ceiling((decimal)NodesFiltered.Count / NodesPerPage);
+    private int NumberOfPages => (int)Math.Ceiling((decimal)_nodes.Count / NodesPerPage);
 
-    private int _selectedPage = 1;
-
-    private List<Node> PageNodes => NodesFiltered.Skip((_selectedPage - 1) * NodesPerPage).Take(NodesPerPage).ToList();
-
-    private void ResetPage()
+    private async Task LoadPackNodes()
     {
-        _selectedPage = 1;
+        if (Page < 1)
+        {
+            Page = 1;
+        }
+        var orderBy = OrderBy.HasValue && Enum.IsDefined(typeof(PackNodesOrderBy), OrderBy) ? (PackNodesOrderBy)OrderBy : PackNodesOrderBy.CreatedAt;
+        var direction = Direction.HasValue && Enum.IsDefined(typeof(OrderDirection), Direction) ? (OrderDirection)Direction : OrderDirection.Descending;
+        _nodes = await Repo.GetPackNodes(Pack, Page, NodesPerPage, Search, TagIds.ToList(), orderBy, direction);
         StateHasChanged();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadPackNodes();
+    }
+
+    private async Task OnQueryChange(bool resetPage = false)
+    {
+        if (resetPage)
+            Page = 1;
+
+        var uri = Navigation.GetUriWithQueryParameters(QueryParameters);
+        if (!uri.Contains("#nodes-edit"))
+            uri += "#nodes-edit";
+        
+        await LoadPackNodes();
+        await Js.InvokeAsync<string>("window.history.pushState", null, "", uri);
+        await Js.InvokeAsync<bool>("window.scrollToElementId", "nodes-edit");
     }
 
     private string GetTagsSelectText(List<string> selected)
@@ -97,7 +138,7 @@
                     Name = model.Name ?? "New Item",
                     Pack = Pack
                 };
-            Db.Update(node);
+            Repo.Context.Update(node);
         }
         else
         {
@@ -138,7 +179,7 @@
 
             foreach (var nodeTag in node.NodeTags.Where(x => !model.TagIds.Contains(x.Tag.Id)))
             {
-                Db.Remove(nodeTag);
+                Repo.Context.Remove(nodeTag);
             }
 
             foreach (var linkModel in model.NodeLinks)
@@ -232,7 +273,7 @@
                     .FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeTo.Id && (x.LinkDirection is NodeLinkDirection.Both or NodeLinkDirection.To));
                 if (linkModel == null)
                 {
-                    Db.Remove(nodeLink);
+                    Repo.Context.Remove(nodeLink);
                 }
             }
 
@@ -242,7 +283,7 @@
                     .FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeFrom.Id && (x.LinkDirection is NodeLinkDirection.Both or NodeLinkDirection.From));
                 if (linkModel == null)
                 {
-                    Db.Remove(nodeLink);
+                    Repo.Context.Remove(nodeLink);
                 }
             }
 
@@ -253,7 +294,7 @@
             }
         }
 
-        await Db.SaveChangesAsync();
+        await Repo.Context.SaveChangesAsync();
         StateHasChanged();
     }
 
@@ -282,8 +323,8 @@
 
     private async Task DeleteNode(Node node)
     {
-        Db.Remove(node);
-        await Db.SaveChangesAsync();
+        Repo.Context.Remove(node);
+        await Repo.Context.SaveChangesAsync();
         StateHasChanged();
     }
 }
