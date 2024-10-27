@@ -26,7 +26,7 @@
                                     <MudSelectItem Value="NodeLinkDirection.From"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.From.MudIcon()" Class="icon-inline-select" /> From</MudSelectItem>
                                     <MudSelectItem Value="NodeLinkDirection.Both"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.Both.MudIcon()" Class="icon-inline-select" /> Both</MudSelectItem>
                                 </MudSelect>
-                                <MudAutocomplete T="LinkedNodeInfoModel" Label="Link Item" @bind-Value="@link.LinkedNode" SearchFunc="SearchNode" ToStringFunc="x => x?.Name" ResetValueOnEmptyText Clearable Required />
+                                <MudAutocomplete T="LinkedNodeInfoModel" Label="Link Item" @bind-Value="@link.LinkedNode" SearchFunc="SearchNode" ToStringFunc="x => x?.Name ?? string.Empty" ResetValueOnEmptyText Clearable Required />
                                 <MudSelect T="int?" Label="Link Type" @bind-Value="@link.LinkTypeId" Required>
                                     @foreach (var linkType in Node.Pack.NodeLinkTypes)
                                     {
@@ -148,6 +148,9 @@
     [Parameter]
     public Func<int, Task>? OnDelete { get; set; }
 
+    [Parameter, EditorRequired] 
+    public List<LinkedNodeInfoModel> NodeInfos { get; set; } = default!;
+
     private NodeModel _model = default!;
 
     private bool _isEditMode;
@@ -155,10 +158,9 @@
     private MudForm _form = default!;
 
     private ImageUpload? _upload;
-
-
-    private IEnumerable<Node> LinkableNodes => Node.Pack.Nodes.Where(
-        x => x.DeletedAt == null && x != Node && !_model.NodeLinks.Select(y => y.LinkedNodeId).Contains(x.Id));
+    
+    private IEnumerable<LinkedNodeInfoModel> LinkableNodes => NodeInfos.Where(
+        x => x.Id != Node.Id && !_model.NodeLinks.Select(y => y.LinkedNodeId).Contains(x.Id));
 
     protected override void OnParametersSet()
     {
@@ -209,9 +211,10 @@
 
     private Task<IEnumerable<LinkedNodeInfoModel>> SearchNode(string value, CancellationToken token)
     {
-        var nodes = string.IsNullOrEmpty(value) ? LinkableNodes : LinkableNodes.Where(x => x.Name!.Contains(value, StringComparison.InvariantCultureIgnoreCase));
-        var result = nodes.Select(x => new LinkedNodeInfoModel(x));
-        return Task.FromResult(result);
+        var nodes = string.IsNullOrEmpty(value) 
+            ? LinkableNodes 
+            : LinkableNodes.Where(x => x.Name?.Contains(value, StringComparison.InvariantCultureIgnoreCase) == true);
+        return Task.FromResult(nodes);
     }
 
     private string GetTagsSelectText(List<string> selected)

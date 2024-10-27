@@ -136,9 +136,19 @@ public class EntityInfoModel(int id, string? name)
     public string? Name { get; set; } = name;
 }
 
-public class LinkedNodeInfoModel(Node node) : EntityInfoModel(node.Id, node.Name)
+public class LinkedNodeInfoModel : EntityInfoModel
 {
-    public IEnumerable<EntityInfoModel> Tags { get; set; } = node.NodeTags.Select(x => new EntityInfoModel(x.TagId, x.Tag.Name));
+    public LinkedNodeInfoModel(Node node) : base(node.Id, node.Name)
+    {
+        Tags = node.NodeTags.Select(x => new EntityInfoModel(x.TagId, x.Tag.Name));
+    }
+
+    public LinkedNodeInfoModel(int id, string? name) : base(id, name)
+    {
+        
+    }
+
+    public IEnumerable<EntityInfoModel> Tags { get; set; } = [];
 }
 
 public class NodeLinkByTagInfoModel(EntityInfoModel tag, EntityInfoModel linkType, NodeLinkDirection linkDirection, NodeLinkByTagType type)

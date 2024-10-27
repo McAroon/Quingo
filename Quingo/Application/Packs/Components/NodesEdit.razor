@@ -34,7 +34,7 @@
         @foreach (var node in _nodes.Data)
         {
             <MudItem xs="12">
-                <NodeEdit Node="node" OnSave="SaveNode" OnDelete="ConfirmDeleteNode" />
+                <NodeEdit Node="node" OnSave="SaveNode" OnDelete="ConfirmDeleteNode" NodeInfos="_nodeInfos" />
             </MudItem>
             <MudFlexBreak />
         }
@@ -86,6 +86,8 @@
 
     private int NumberOfPages => (int)Math.Ceiling((decimal)_nodes.Count / NodesPerPage);
 
+    private List<LinkedNodeInfoModel> _nodeInfos = [];
+
     private async Task LoadPackNodes()
     {
         if (Page < 1)
@@ -96,6 +98,12 @@
         var direction = Direction.HasValue && Enum.IsDefined(typeof(OrderDirection), Direction) ? (OrderDirection)Direction : OrderDirection.Descending;
         _nodes = await Repo.GetPackNodes(Pack, Page, NodesPerPage, Search, TagIds.ToList(), orderBy, direction);
         StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var nodeNames = await Repo.GetPackNodeNames(Pack.Id);
+        _nodeInfos = nodeNames.Select(x => new LinkedNodeInfoModel(x.id, x.name)).ToList();
     }
 
     protected override async Task OnParametersSetAsync()

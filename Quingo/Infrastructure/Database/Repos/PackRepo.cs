@@ -95,6 +95,23 @@ public class PackRepo(ApplicationDbContext context)
         return result;
     }
 
+    public async Task<List<(int id, string? name)>> GetPackNodeNames(int packId, string? search = null)
+    {
+        var query = context.Nodes
+            .Where(x => x.PackId == packId)
+            .OrderBy(x => x.Name)
+            .Select(x => new { x.Id, x.Name });
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(x => EF.Functions.ILike(x.Name ?? "", $"%{search}%"));
+        }
+        
+        var result = await query.ToListAsync();
+        var resTuples = result.Select(x => (id: x.Id, name: x.Name)).ToList();
+        return resTuples;
+    }
+
     private static IOrderedQueryable<Node> OrderNodes(IQueryable<Node> nodes, PackNodesOrderBy orderBy,
         OrderDirection direction)
     {
