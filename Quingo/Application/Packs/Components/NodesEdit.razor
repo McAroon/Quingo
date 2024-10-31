@@ -13,11 +13,20 @@
 <MudGrid Class="pb-4">
     <MudItem xs="12">
         <MudStack Row Wrap="Wrap.NoWrap">
-            <MudTextField Placeholder="Search..." @bind-Value="Search" @bind-Value:after="() => OnQueryChange(true)" DebounceInterval="500" Clearable Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
-            <MudSelect T="int" MultiSelection Placeholder="Tags" @bind-SelectedValues="@TagIdsEnumerable" @bind-SelectedValues:after="() => OnQueryChange(true)" MultiSelectionTextFunc="GetTagsSelectText" Clearable>
+            <MudTextField Placeholder="Search..." @bind-Value="Search" @bind-Value:after="() => OnQueryChange(true)" 
+                          DebounceInterval="500" Clearable Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+        </MudStack>
+        <MudStack Row Wrap="Wrap.NoWrap">
+            <MudSelect T="int?" Label="Order By" @bind-Value="OrderBy" @bind-Value:after="() => OnQueryChange(true)"
+                       Adornment="Adornment.End" AdornmentIcon="@OrderDirectionIcon" OnAdornmentClick="OnOrderDirectionClick">
+                <MudSelectItem T="int?" Value="(int)PackNodesOrderBy.CreatedAt">Created Date</MudSelectItem>
+                <MudSelectItem T="int?" Value="(int)PackNodesOrderBy.Name">Name</MudSelectItem>
+                <MudSelectItem T="int?" Value="(int)PackNodesOrderBy.Image">Image</MudSelectItem>
+            </MudSelect>
+            <MudSelect T="int" MultiSelection Label="Tags" @bind-SelectedValues="@TagIdsEnumerable" @bind-SelectedValues:after="() => OnQueryChange(true)" MultiSelectionTextFunc="GetTagsSelectText" Clearable>
                 @foreach (var tag in Pack.Tags)
                 {
-                    <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
+                <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
                 }
             </MudSelect>
         </MudStack>
@@ -61,9 +70,9 @@
 
     [SupplyParameterFromQuery(Name = "tag_id")] private int[] TagIds { get; set; } = [];
 
-    [SupplyParameterFromQuery(Name = "order_by")] private int? OrderBy { get; set; } = (int)PackNodesOrderBy.CreatedAt;
+    [SupplyParameterFromQuery(Name = "order_by")] private int? OrderBy { get; set; } = (int)PackNodesOrderBy.Name;
 
-    [SupplyParameterFromQuery(Name = "direction")] private int? Direction { get; set; } = (int)OrderDirection.Descending;
+    [SupplyParameterFromQuery(Name = "direction")] private int? Direction { get; set; } = (int)OrderDirection.Ascending;
 
     private Dictionary<string, object?> QueryParameters => new()
     {
@@ -88,14 +97,19 @@
 
     private List<LinkedNodeInfoModel> _nodeInfos = [];
 
+    private string OrderDirectionIcon => Direction == (int)OrderDirection.Descending 
+        ? Icons.Material.Filled.ArrowUpward
+        : Icons.Material.Filled.ArrowDownward;
+
     private async Task LoadPackNodes()
     {
         if (Page < 1)
-        {
             Page = 1;
-        }
-        var orderBy = OrderBy.HasValue && Enum.IsDefined(typeof(PackNodesOrderBy), OrderBy) ? (PackNodesOrderBy)OrderBy : PackNodesOrderBy.CreatedAt;
-        var direction = Direction.HasValue && Enum.IsDefined(typeof(OrderDirection), Direction) ? (OrderDirection)Direction : OrderDirection.Descending;
+        OrderBy ??= (int)PackNodesOrderBy.Name;
+        Direction ??= (int)OrderDirection.Ascending;
+        
+        var orderBy = OrderBy.HasValue && Enum.IsDefined(typeof(PackNodesOrderBy), OrderBy) ? (PackNodesOrderBy)OrderBy : PackNodesOrderBy.Name;
+        var direction = Direction.HasValue && Enum.IsDefined(typeof(OrderDirection), Direction) ? (OrderDirection)Direction : OrderDirection.Ascending;
         _nodes = await Repo.GetPackNodes(Pack, Page, NodesPerPage, Search, TagIds.ToList(), orderBy, direction);
         Pack.Nodes = _nodes.Data;
         StateHasChanged();
@@ -124,6 +138,14 @@
         await LoadPackNodes();
         await Js.InvokeAsync<string>("window.history.pushState", null, "", uri);
         await Js.InvokeAsync<bool>("window.scrollToElementId", "nodes-edit");
+    }
+
+    private async Task OnOrderDirectionClick()
+    {
+        Direction = Direction == (int)OrderDirection.Descending 
+            ? (int)OrderDirection.Ascending 
+            : (int)OrderDirection.Descending;
+        await OnQueryChange(true);
     }
 
     private string GetTagsSelectText(List<string> selected)
