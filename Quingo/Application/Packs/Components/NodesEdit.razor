@@ -13,7 +13,7 @@
 <MudGrid Class="pb-4">
     <MudItem xs="12">
         <MudStack Row Wrap="Wrap.NoWrap">
-            <MudTextField Placeholder="Search..." @bind-Value="Search" @bind-Value:after="() => OnQueryChange(true)" DebounceInterval="500" Clearable />
+            <MudTextField Placeholder="Search..." @bind-Value="Search" @bind-Value:after="() => OnQueryChange(true)" DebounceInterval="500" Clearable Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
             <MudSelect T="int" MultiSelection Placeholder="Tags" @bind-SelectedValues="@TagIdsEnumerable" @bind-SelectedValues:after="() => OnQueryChange(true)" MultiSelectionTextFunc="GetTagsSelectText" Clearable>
                 @foreach (var tag in Pack.Tags)
                 {
