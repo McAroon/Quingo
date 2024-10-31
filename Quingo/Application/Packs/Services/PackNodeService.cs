@@ -199,10 +199,17 @@ public class PackNodeService
     public async Task<Result> DeleteNode(int id)
     {
         await using var context = await _repo.CreateDbContext();
-        var node = await context.Nodes.FirstOrDefaultAsync(x => x.Id == id);
+        var node = await context.Nodes
+            .Include(x => x.NodeLinksFrom)
+            .Include(x => x.NodeLinksTo)
+            .FirstOrDefaultAsync(x => x.Id == id);
         if (node == null) return Result.Ok();
         
         context.Remove(node);
+        foreach (var link in node.NodeLinks)
+        {
+            context.Remove(link);
+        }
         await context.SaveChangesAsync();
         return Result.Ok();
     }
