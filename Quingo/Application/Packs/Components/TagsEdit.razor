@@ -1,4 +1,4 @@
-﻿@inject ApplicationDbContext Db
+﻿@inject PackRepo Repo
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -24,6 +24,8 @@
 
     private async Task SaveTag(int id, string value)
     {
+        await using var context = await Repo.CreateDbContext();
+        
         if (id == 0)
         {
             var tag = new Tag
@@ -31,7 +33,7 @@
                     Name = value,
                     Pack = Pack
                 };
-            Db.Update(tag);
+            context.Update(tag);
         }
         else
         {
@@ -43,9 +45,9 @@
             }
 
             tag.Name = value;
-            Db.Update(tag);
+            context.Update(tag);
         }
-        await Db.SaveChangesAsync();
+        await context.SaveChangesAsync();
         StateHasChanged();
     }
 
@@ -80,8 +82,9 @@
 
     private async Task DeleteTag(Tag tag)
     {
-        Db.Remove(tag);
-        await Db.SaveChangesAsync();
+        await using var context = await Repo.CreateDbContext();
+        context.Remove(tag);
+        await context.SaveChangesAsync();
         StateHasChanged();
     }
 

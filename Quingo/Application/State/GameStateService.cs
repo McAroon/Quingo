@@ -26,9 +26,10 @@ public class GameStateService
             {
                 throw new GameStateException("User is already hosting a game");
             }
-
-            await using var db = await _dbContextFactory.CreateDbContextAsync();
-            var repo = new PackRepo(db);
+            
+            var repo = new PackRepo(_dbContextFactory);
+            
+            await using var db = await repo.CreateDbContext();
 
             var pack = await repo.GetPack(packId);
             if (pack == null)

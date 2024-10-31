@@ -3,7 +3,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
 
-@inject ApplicationDbContext Db
+@inject PackRepo Repo
 @inject FileStoreService Files
 @inject IDialogService DialogService
 
@@ -72,7 +72,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        Packs = await Db.Packs.ToListAsync();
+        await using var context = await Repo.CreateDbContext();
+        
+        Packs = await context.Packs.ToListAsync();
         if (AuthenticationState != null)
         {
             _user = (await AuthenticationState)?.User;
@@ -99,8 +101,10 @@ else
     private async Task DeletePack(Pack pack)
     {
         if (!UserCanEdit(pack)) return;
-        Db.Remove(pack);
-        await Db.SaveChangesAsync();
+        
+        await using var context = await Repo.CreateDbContext();
+        context.Remove(pack);
+        await context.SaveChangesAsync();
         StateHasChanged();
     }
 }

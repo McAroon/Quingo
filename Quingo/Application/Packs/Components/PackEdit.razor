@@ -1,4 +1,4 @@
-﻿@inject ApplicationDbContext Db
+﻿@inject PackRepo Repo
 @inject NavigationManager NavigationManager
 @inject FileStoreService Files
 
@@ -91,8 +91,10 @@ else
         pack.Description = _model.Description;
 
         await UploadImage(pack);
-        Db.Update(pack);
-        await Db.SaveChangesAsync();
+        
+        await using var context = await Repo.CreateDbContext();
+        context.Update(pack);
+        await context.SaveChangesAsync();
 
         _isEdit = false;
 

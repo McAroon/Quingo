@@ -1,10 +1,10 @@
 ﻿@page "/game/host"
 
 @using Microsoft.AspNetCore.Authorization
-@using System.Security.Claims
+@using Quingo.Infrastructure.Database.Repos
 
 @inject ILogger<CreateGame> Logger
-@inject ApplicationDbContext Db
+@inject PackRepo Repo
 @inject GameStateService StateService
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
@@ -74,13 +74,18 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var exGame = StateService.Games.FirstOrDefault(x => x.HostUserId == UserId && (x.State is not GameStateEnum.Finished and not GameStateEnum.Canceled));
+        var exGame = StateService.Games
+            .FirstOrDefault(x => x.HostUserId == UserId 
+                                 && (x.State is not GameStateEnum.Finished and not GameStateEnum.Canceled));
         if (exGame != null)
         {
             NavigationManager.NavigateTo($"/game/host/{exGame.GameSessionId}");
             return;
         }
-        _packs = await Db.Packs.Include(x => x.Tags).Include(x => x.Presets).AsNoTracking().ToListAsync();
+        
+        await using var context = await Repo.CreateDbContext();
+        _packs = await context.Packs.Include(x => x.Tags)
+            .Include(x => x.Presets).AsNoTracking().ToListAsync();
     }
 
     private void SelectPack(Pack pack)

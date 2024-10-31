@@ -2,24 +2,26 @@
 using Quingo.Shared.Entities;
 
 namespace Quingo.Infrastructure.Database.Repos;
-
-public class PackRepo(ApplicationDbContext context)
+public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
 {
-    public ApplicationDbContext Context => context;
-    
-    private IQueryable<Pack> PacksWithIncludes => context.Packs
-        .Include(x => x.Tags)
-        .Include(x => x.NodeLinkTypes)
-        .Include(x => x.Presets)
-        .Include(x => x.IndirectLinks).ThenInclude(x => x.Steps)
-        .Include(x => x.Nodes).ThenInclude(x => x.NodeTags)
-        .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
-        .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo)
-        .AsSplitQuery();
+    public async Task<ApplicationDbContext> CreateDbContext()
+    {
+        return await dbContextFactory.CreateDbContextAsync();
+    }
 
     public async Task<Pack?> GetPack(int packId)
     {
-        var pack = await PacksWithIncludes.FirstOrDefaultAsync(x => x.Id == packId);
+        await using var context = await CreateDbContext();
+        var packQ = context.Packs
+            .Include(x => x.Tags)
+            .Include(x => x.NodeLinkTypes)
+            .Include(x => x.Presets)
+            .Include(x => x.IndirectLinks).ThenInclude(x => x.Steps)
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeTags)
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
+            .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo)
+            .AsSplitQuery();
+        var pack = await packQ.FirstOrDefaultAsync(x => x.Id == packId);
         if (pack == null) return null;
 
         PopulatePackNodes(pack, pack.Nodes);
@@ -29,6 +31,7 @@ public class PackRepo(ApplicationDbContext context)
 
     public async Task<Pack?> GetPackExclNodes(int packId)
     {
+        await using var context = await CreateDbContext();
         var packQ = context.Packs
             .Include(x => x.Tags)
             .Include(x => x.NodeLinkTypes)
@@ -45,6 +48,7 @@ public class PackRepo(ApplicationDbContext context)
         string search = "", List<int>? tagIds = null, 
         PackNodesOrderBy orderBy = PackNodesOrderBy.CreatedAt, OrderDirection direction = OrderDirection.Descending)
     {
+        await using var context = await CreateDbContext();
         var result = new PagedResult<Node>
         {
             Page = page,
@@ -97,6 +101,7 @@ public class PackRepo(ApplicationDbContext context)
 
     public async Task<List<(int id, string? name)>> GetPackNodeNames(int packId, string? search = null)
     {
+        await using var context = await CreateDbContext();
         var query = context.Nodes
             .Where(x => x.PackId == packId)
             .OrderBy(x => x.Name)
@@ -134,6 +139,8 @@ public class PackRepo(ApplicationDbContext context)
     {
         foreach (var node in nodes)
         {
+            node.Pack ??= pack;
+            
             foreach (var tag in node.NodeTags)
             {
                 tag.Tag ??= pack.Tags.First(x => x.Id == tag.TagId);

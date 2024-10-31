@@ -1,4 +1,4 @@
-﻿@inject ApplicationDbContext Db
+﻿@inject PackRepo Repo
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -27,6 +27,8 @@
 
     private async Task Save(int id, IndirectLinkModel model)
     {
+        await using var context = await Repo.CreateDbContext();
+        
         IndirectLink link;
         if (id == 0)
         {
@@ -43,7 +45,7 @@
 
         foreach (var step in link.Steps)
         {
-            Db.Remove(step);
+            context.Remove(step);
         }
 
         link.Steps = model.Steps.Select((step, i) => new IndirectLinkStep
@@ -54,14 +56,15 @@
                 TagToId = step.TagToId ?? throw new InvalidOperationException()
             }).ToList();
 
-        await Db.SaveChangesAsync();
+        await context.SaveChangesAsync();
         StateHasChanged();
     }
 
     private async Task Delete(IndirectLink link)
     {
-        Db.Remove(link);
-        await Db.SaveChangesAsync();
+        await using var context = await Repo.CreateDbContext();
+        context.Remove(link);
+        await context.SaveChangesAsync();
         StateHasChanged();
     }
 

@@ -139,6 +139,8 @@
 
     private async Task SaveNode(int id, NodeModel model)
     {
+        await using var context = await Repo.CreateDbContext();
+        
         if (id == 0)
         {
             var node = new Node
@@ -146,11 +148,11 @@
                     Name = model.Name ?? "New Item",
                     Pack = Pack
                 };
-            Repo.Context.Update(node);
+            context.Update(node);
         }
         else
         {
-            var node = Pack.Nodes.FirstOrDefault(x => x.Id == id);
+            var node = _nodes.Data.FirstOrDefault(x => x.Id == id);
             if (node == null)
             {
                 Snackbar.Add("Item not found", Severity.Error);
@@ -187,7 +189,7 @@
 
             foreach (var nodeTag in node.NodeTags.Where(x => !model.TagIds.Contains(x.Tag.Id)))
             {
-                Repo.Context.Remove(nodeTag);
+                context.Remove(nodeTag);
             }
 
             foreach (var linkModel in model.NodeLinks)
@@ -202,7 +204,7 @@
                         return;
                     }
 
-                    var linkedNode = Pack.Nodes.FirstOrDefault(x => x.Id == linkModel.LinkedNodeId);
+                    var linkedNode = _nodeInfos.FirstOrDefault(x => x.Id == linkModel.LinkedNodeId);
                     if (linkedNode == null)
                     {
                         Snackbar.Add("Linked Item not found", Severity.Error);
@@ -214,7 +216,7 @@
                         link = new NodeLink
                             {
                                 NodeFrom = node,
-                                NodeTo = linkedNode,
+                                NodeToId = linkedNode.Id,
                                 NodeLinkType = linkType
                             };
                         node.NodeLinksFrom.Add(link);
@@ -243,7 +245,7 @@
                         return;
                     }
 
-                    var linkedNode = Pack.Nodes.FirstOrDefault(x => x.Id == linkModel.LinkedNodeId);
+                    var linkedNode = _nodeInfos.FirstOrDefault(x => x.Id == linkModel.LinkedNodeId);
                     if (linkedNode == null)
                     {
                         Snackbar.Add("Linked Item not found", Severity.Error);
@@ -254,7 +256,7 @@
                     {
                         link = new NodeLink
                             {
-                                NodeFrom = linkedNode,
+                                NodeFromId = linkedNode.Id,
                                 NodeTo = node,
                                 NodeLinkType = linkType
                             };
@@ -278,20 +280,20 @@
             foreach (var nodeLink in node.NodeLinksFrom)
             {
                 var linkModel = model.NodeLinks
-                    .FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeTo.Id && (x.LinkDirection is NodeLinkDirection.Both or NodeLinkDirection.To));
+                    .FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeToId && (x.LinkDirection is NodeLinkDirection.Both or NodeLinkDirection.To));
                 if (linkModel == null)
                 {
-                    Repo.Context.Remove(nodeLink);
+                    context.Remove(nodeLink);
                 }
             }
 
             foreach (var nodeLink in node.NodeLinksTo)
             {
                 var linkModel = model.NodeLinks
-                    .FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeFrom.Id && (x.LinkDirection is NodeLinkDirection.Both or NodeLinkDirection.From));
+                    .FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeFromId && (x.LinkDirection is NodeLinkDirection.Both or NodeLinkDirection.From));
                 if (linkModel == null)
                 {
-                    Repo.Context.Remove(nodeLink);
+                    context.Remove(nodeLink);
                 }
             }
 
@@ -302,13 +304,13 @@
             }
         }
 
-        await Repo.Context.SaveChangesAsync();
-        StateHasChanged();
+        await context.SaveChangesAsync();
+        await LoadPackNodes();
     }
 
     private async Task ConfirmDeleteNode(int id)
     {
-        var node = Pack.Nodes.FirstOrDefault(x => x.Id == id);
+        var node = _nodes.Data.FirstOrDefault(x => x.Id == id);
         if (node == null)
         {
             Snackbar.Add("Item not found", Severity.Error);
@@ -331,8 +333,9 @@
 
     private async Task DeleteNode(Node node)
     {
-        Repo.Context.Remove(node);
-        await Repo.Context.SaveChangesAsync();
+        await using var context = await Repo.CreateDbContext();
+        context.Remove(node);
+        await context.SaveChangesAsync();
         StateHasChanged();
     }
 }

@@ -1,4 +1,4 @@
-﻿@inject ApplicationDbContext Db
+﻿@inject PackRepo Repo
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -22,6 +22,8 @@
 
     private async Task SaveLinkType(int id, string value)
     {
+        await using var context = await Repo.CreateDbContext();
+        
         if (id == 0)
         {
             var link = new NodeLinkType
@@ -29,7 +31,7 @@
                     Name = value,
                     Pack = Pack
                 };
-            Db.Update(link);
+            context.Update(link);
         }
         else
         {
@@ -41,9 +43,9 @@
             }
 
             link.Name = value;
-            Db.Update(link);
+            context.Update(link);
         }
-        await Db.SaveChangesAsync();
+        await context.SaveChangesAsync();
         StateHasChanged();
     }
 
@@ -78,8 +80,9 @@
 
     private async Task DeleteLinkType(NodeLinkType link)
     {
-        Db.Remove(link);
-        await Db.SaveChangesAsync();
+        await using var context = await Repo.CreateDbContext();
+        context.Remove(link);
+        await context.SaveChangesAsync();
         StateHasChanged();
     }
 

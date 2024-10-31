@@ -1,4 +1,4 @@
-﻿@inject ApplicationDbContext Db
+﻿@inject PackRepo Repo
 
 <MudText Typo="Typo.h4" GutterBottom>
     Default Preset @if (!_isEdit)
@@ -28,9 +28,10 @@
 
     private async Task Save(PackPresetData data)
     {
+        await using var context = await Repo.CreateDbContext();
         _preset.Data = data;
-        Db.Update(_preset);
-        await Db.SaveChangesAsync();
+        context.Update(_preset);
+        await context.SaveChangesAsync();
         _isEdit = false;
         StateHasChanged();
     }
