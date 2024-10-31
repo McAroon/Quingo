@@ -1,0 +1,142 @@
+﻿@inject IDialogService Dialog
+
+<MudCard>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h5">
+                @_model.Name
+            </MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            @if (_model.Meta != null)
+            {
+            <MudTooltip Text="Show Metadata" ShowOnFocus="false">
+                <MudIconButton OnClick="ShowNodeMetaDialog" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
+            </MudTooltip>
+            }
+            <MudTooltip Text="Edit Item" ShowOnFocus="false">
+                <MudIconButton OnClick="Edit" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
+            </MudTooltip>
+            <MudTooltip Text="Delete Item" ShowOnFocus="false">
+                <MudIconButton OnClick="Delete" Icon="@Icons.Material.Filled.Delete"></MudIconButton>
+            </MudTooltip>
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <NodeSquare Node="_model" ShowTagBadge ShowTagBadgeTooltip />
+            </MudItem>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" GutterBottom>Tags</MudText>
+                @if (_model.TagIds.Any())
+                {
+                @foreach (var tag in GetTagNames(_model.TagIds))
+                {
+                <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@tag</MudChip>
+                }
+                }
+                else
+                {
+                <i>none</i>
+                }
+            </MudItem>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" GutterBottom>Linked Items</MudText>
+                @if (_model.NodeLinks.Any())
+                {
+                <MudTable Items="_model.NodeLinks">
+                    <HeaderContent>
+                        <MudTh>Direction</MudTh>
+                        <MudTh>Item</MudTh>
+                        <MudTh>Type</MudTh>
+                        @if (_model.NodeLinks.Any(x => x.Meta != null))
+                        {
+                        <MudTh></MudTh>
+                        }
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd><MudIcon Icon="@context.LinkDirection.MudIcon()" Class="icon-inline" /> <span>@context.LinkDirection</span></MudTd>
+                        <MudTd>@context.LinkedNode?.Name</MudTd>
+                        <MudTd>@GetLinkTypeName(context.LinkTypeId)</MudTd>
+                        @if (context.Meta != null)
+                        {
+                        <MudTd>
+                            <MudTooltip Text="Show Metadata" ShowOnFocus="false">
+                                <MudIconButton OnClick="() => ShowLinkMetaDialog(context)" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
+                            </MudTooltip>
+                        </MudTd>
+                        }
+                        else if (_model.NodeLinks.Any(x => x.Meta != null))
+                        {
+                        <MudTd></MudTd>
+                        }
+                    </RowTemplate>
+                </MudTable>
+                }
+                else
+                {
+                <i>none</i>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudCardContent>
+</MudCard>
+@code {
+    [Parameter]
+    public Node Node { get; set; } = default!;
+    
+    [Parameter]
+    public Func<int, Task>? OnDelete { get; set; }
+    
+    [Parameter]
+    public Func<int, Task>? OnEdit { get; set; }
+    
+    private NodeModel _model = default!;
+    
+    protected override void OnParametersSet()
+    {
+        RemapModel();
+    }
+
+    private void RemapModel()
+    {
+        _model = new NodeModel(Node);
+        StateHasChanged();
+    }
+
+    private async Task Edit()
+    {
+        if (OnEdit != null)
+            await OnEdit.Invoke(Node.Id);
+    }
+    
+    private async Task Delete()
+    {
+        if (OnDelete != null)
+            await OnDelete.Invoke(Node.Id);
+    }
+    
+    private IEnumerable<string> GetTagNames(IEnumerable<int> tagIds)
+    {
+        var tagIdList = tagIds.ToList();
+        return Node.Pack.Tags.Where(x => tagIdList.Contains(x.Id)).Select(x => x.Name!);
+    }
+
+    private string? GetLinkTypeName(int? id)
+    {
+        return Node.Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == id)?.Name;
+    }
+
+    private async Task ShowNodeMetaDialog()
+    {
+        if (_model.Meta == null) return;
+        await ShowMetaDialog.ShowDialog(Dialog, $"Item Metadata: {_model.Name}", _model.Meta);
+    }
+
+    private async Task ShowLinkMetaDialog(NodeLinkModel link)
+    {
+        if (link.Meta == null) return;
+        await ShowMetaDialog.ShowDialog(Dialog, $"Link Metadata: {_model.Name}", link.Meta);
+    }
+}

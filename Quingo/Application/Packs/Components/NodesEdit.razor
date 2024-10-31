@@ -1,9 +1,9 @@
 ﻿@inject PackRepo Repo
-@inject FileStoreService Files
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
+@inject PackNodeService NodeService
 
 <div id="nodes-edit"></div>
 <MudText Typo="Typo.h4" GutterBottom>
@@ -34,7 +34,7 @@
         @foreach (var node in _nodes.Data)
         {
             <MudItem xs="12">
-                <NodeEdit Node="node" OnSave="SaveNode" OnDelete="ConfirmDeleteNode" NodeInfos="_nodeInfos" />
+                <NodeView Node="node" OnDelete="ConfirmDeleteNode" OnEdit="EditNode"></NodeView>
             </MudItem>
             <MudFlexBreak />
         }
@@ -97,6 +97,7 @@
         var orderBy = OrderBy.HasValue && Enum.IsDefined(typeof(PackNodesOrderBy), OrderBy) ? (PackNodesOrderBy)OrderBy : PackNodesOrderBy.CreatedAt;
         var direction = Direction.HasValue && Enum.IsDefined(typeof(OrderDirection), Direction) ? (OrderDirection)Direction : OrderDirection.Descending;
         _nodes = await Repo.GetPackNodes(Pack, Page, NodesPerPage, Search, TagIds.ToList(), orderBy, direction);
+        Pack.Nodes = _nodes.Data;
         StateHasChanged();
     }
 
@@ -139,172 +140,12 @@
 
     private async Task SaveNode(int id, NodeModel model)
     {
-        await using var context = await Repo.CreateDbContext();
+        var res = await NodeService.SaveNode(_nodeInfos, Pack.Id, id, model);
+        if (res.IsFailed && res.Errors.Count > 0)
+        {
+            Snackbar.Add(res.Errors[0].Message, Severity.Error);
+        }
         
-        if (id == 0)
-        {
-            var node = new Node
-                {
-                    Name = model.Name ?? "New Item",
-                    Pack = Pack
-                };
-            context.Update(node);
-        }
-        else
-        {
-            var node = _nodes.Data.FirstOrDefault(x => x.Id == id);
-            if (node == null)
-            {
-                Snackbar.Add("Item not found", Severity.Error);
-                return;
-            }
-
-            node.Name = model.Name;
-
-            foreach (var tagId in model.TagIds)
-            {
-                var nodeTag = node.NodeTags.FirstOrDefault(x => x.TagId == tagId);
-                if (nodeTag == null)
-                {
-                    var tag = Pack.Tags.FirstOrDefault(x => x.Id == tagId);
-                    if (tag == null)
-                    {
-                        Snackbar.Add("Tag not found", Severity.Error);
-                        return;
-                    }
-
-                    nodeTag = new NodeTag
-                        {
-                            Node = node,
-                            Tag = tag
-                        };
-                    node.NodeTags.Add(nodeTag);
-                }
-                else if (nodeTag.DeletedAt != null)
-                {
-                    nodeTag.DeletedAt = null;
-                    nodeTag.DeletedByUserId = null;
-                }
-            }
-
-            foreach (var nodeTag in node.NodeTags.Where(x => !model.TagIds.Contains(x.Tag.Id)))
-            {
-                context.Remove(nodeTag);
-            }
-
-            foreach (var linkModel in model.NodeLinks)
-            {
-                if (linkModel.LinkDirection is NodeLinkDirection.To or NodeLinkDirection.Both)
-                {
-                    var link = node.NodeLinksFrom.FirstOrDefault(x => x.NodeToId == linkModel.LinkedNodeId);
-                    var linkType = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == linkModel.LinkTypeId);
-                    if (linkType == null)
-                    {
-                        Snackbar.Add("Link Type not found", Severity.Error);
-                        return;
-                    }
-
-                    var linkedNode = _nodeInfos.FirstOrDefault(x => x.Id == linkModel.LinkedNodeId);
-                    if (linkedNode == null)
-                    {
-                        Snackbar.Add("Linked Item not found", Severity.Error);
-                        return;
-                    }
-
-                    if (link == null)
-                    {
-                        link = new NodeLink
-                            {
-                                NodeFrom = node,
-                                NodeToId = linkedNode.Id,
-                                NodeLinkType = linkType
-                            };
-                        node.NodeLinksFrom.Add(link);
-                    }
-                    else
-                    {
-                        if (link.NodeLinkTypeId != linkModel.LinkTypeId)
-                        {
-                            link.NodeLinkType = linkType;
-                        }
-                        if (link.DeletedAt != null)
-                        {
-                            link.DeletedAt = null;
-                            link.DeletedByUserId = null;
-                        }
-                    }
-                }
-
-                if (linkModel.LinkDirection is NodeLinkDirection.From or NodeLinkDirection.Both)
-                {
-                    var link = node.NodeLinksTo.FirstOrDefault(x => x.NodeFromId == linkModel.LinkedNodeId);
-                    var linkType = Pack.NodeLinkTypes.FirstOrDefault(x => x.Id == linkModel.LinkTypeId);
-                    if (linkType == null)
-                    {
-                        Snackbar.Add("Link Type not found", Severity.Error);
-                        return;
-                    }
-
-                    var linkedNode = _nodeInfos.FirstOrDefault(x => x.Id == linkModel.LinkedNodeId);
-                    if (linkedNode == null)
-                    {
-                        Snackbar.Add("Linked Item not found", Severity.Error);
-                        return;
-                    }
-
-                    if (link == null)
-                    {
-                        link = new NodeLink
-                            {
-                                NodeFromId = linkedNode.Id,
-                                NodeTo = node,
-                                NodeLinkType = linkType
-                            };
-                        node.NodeLinksTo.Add(link);
-                    }
-                    else
-                    {
-                        if (link.NodeLinkTypeId != linkModel.LinkTypeId)
-                        {
-                            link.NodeLinkType = linkType;
-                        }
-                        if (link.DeletedAt != null)
-                        {
-                            link.DeletedAt = null;
-                            link.DeletedByUserId = null;
-                        }
-                    }
-                }
-            }
-
-            foreach (var nodeLink in node.NodeLinksFrom)
-            {
-                var linkModel = model.NodeLinks
-                    .FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeToId && (x.LinkDirection is NodeLinkDirection.Both or NodeLinkDirection.To));
-                if (linkModel == null)
-                {
-                    context.Remove(nodeLink);
-                }
-            }
-
-            foreach (var nodeLink in node.NodeLinksTo)
-            {
-                var linkModel = model.NodeLinks
-                    .FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeFromId && (x.LinkDirection is NodeLinkDirection.Both or NodeLinkDirection.From));
-                if (linkModel == null)
-                {
-                    context.Remove(nodeLink);
-                }
-            }
-
-            if (model.ImageFile != null)
-            {
-                var filename = await Files.UploadBrowserFile(model.ImageFile);
-                node.ImageUrl = filename;
-            }
-        }
-
-        await context.SaveChangesAsync();
         await LoadPackNodes();
     }
 
@@ -333,9 +174,19 @@
 
     private async Task DeleteNode(Node node)
     {
-        await using var context = await Repo.CreateDbContext();
-        context.Remove(node);
-        await context.SaveChangesAsync();
+        await NodeService.DeleteNode(node.Id);
+        await LoadPackNodes();
         StateHasChanged();
+    }
+
+    private async Task EditNode(int id)
+    {
+        var node = _nodes.Data.FirstOrDefault(x => x.Id == id);
+        if (node == null)
+        {
+            Snackbar.Add("Item not found", Severity.Error);
+            return;
+        }
+        await NodeEditDialog.ShowNodeEditDialog(DialogService, node, _nodeInfos, SaveNode);
     }
 }

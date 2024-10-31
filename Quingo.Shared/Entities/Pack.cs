@@ -8,7 +8,7 @@
 
         public string? ImageUrl { get; set; }
 
-        public List<Node> Nodes { get; } = [];
+        public List<Node> Nodes { get; set; } = [];
 
         public List<NodeLinkType> NodeLinkTypes { get; set; } = [];
 

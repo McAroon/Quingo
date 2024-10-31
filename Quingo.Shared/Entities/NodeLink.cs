@@ -1,6 +1,6 @@
 ﻿namespace Quingo.Shared.Entities
 {
-    public class NodeLink : EntityBase
+    public class NodeLink : EntityBase, IHasMeta
     {
         public int NodeFromId { get; set; }
 

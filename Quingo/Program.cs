@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using Quingo;
+using Quingo.Application.Packs.Services;
 using Quingo.Application.State;
 using Quingo.Components;
 using Quingo.Components.Account;
@@ -73,6 +74,7 @@ builder.Services.AddSingleton<GameStateService>();
 builder.Services.AddScoped<GenerateStandardBingo>();
 builder.Services.AddSingleton<TempUserStorage>();
 builder.Services.AddScoped<PackRepo>();
+builder.Services.AddScoped<PackNodeService>();
 
 // S3
 var s3Settings = builder.Configuration.GetSection(nameof(S3Settings)).Get<S3Settings>() ?? new();

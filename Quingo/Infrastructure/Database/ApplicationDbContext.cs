@@ -130,6 +130,17 @@ namespace Quingo.Infrastructure.Database
                         }
                         
                         entry.State = EntityState.Modified;
+                        
+                        if (entry.Entity is IHasMeta { Meta.Properties: not null } metaEntity)
+                        {
+                            var metaEntry = Entry(metaEntity.Meta);
+                            metaEntry.State = EntityState.Unchanged;
+                            var propsEntry = metaEntry.Collection(c => c.Properties);
+                            foreach (var prop in metaEntity.Meta.Properties)
+                            {
+                                propsEntry.FindEntry(prop)!.State = EntityState.Unchanged;
+                            }
+                        }
                     }
                 }
             }
