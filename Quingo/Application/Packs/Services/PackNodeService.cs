@@ -84,7 +84,7 @@ public class PackNodeService
                 context.Remove(nodeTag);
             }
 
-            foreach (var linkModel in model.NodeLinks)
+            foreach (var linkModel in model.NodeLinksChanged)
             {
                 if (linkModel.LinkDirection is NodeLinkDirection.To or NodeLinkDirection.Both)
                 {
@@ -165,21 +165,11 @@ public class PackNodeService
                 }
             }
 
-            foreach (var nodeLink in node.NodeLinksFrom)
+            foreach (var removedLink in model.NodeLinksRemoved)
             {
-                var linkModel = model.NodeLinks
-                    .FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeToId && (x.LinkDirection is NodeLinkDirection.Both or NodeLinkDirection.To));
-                if (linkModel == null)
-                {
-                    context.Remove(nodeLink);
-                }
-            }
-
-            foreach (var nodeLink in node.NodeLinksTo)
-            {
-                var linkModel = model.NodeLinks
-                    .FirstOrDefault(x => x.LinkedNodeId == nodeLink.NodeFromId && (x.LinkDirection is NodeLinkDirection.Both or NodeLinkDirection.From));
-                if (linkModel == null)
+                var nodeLink = node.NodeLinks
+                    .FirstOrDefault(x => x.NodeToId == removedLink.LinkedNodeId || x.NodeFromId == removedLink.LinkedNodeId);
+                if (nodeLink != null)
                 {
                     context.Remove(nodeLink);
                 }

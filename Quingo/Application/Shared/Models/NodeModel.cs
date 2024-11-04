@@ -112,6 +112,10 @@ public class NodeModel : NodeViewModel
     public IEnumerable<int> TagIds { get; set; } = [];
 
     public IBrowserFile? ImageFile { get; set; }
+    
+    public List<NodeLinkModel> NodeLinksChanged { get; set; } = [];
+    
+    public List<NodeLinkModel> NodeLinksRemoved { get; set; } = [];
 }
 
 public class NodeLinkModel
