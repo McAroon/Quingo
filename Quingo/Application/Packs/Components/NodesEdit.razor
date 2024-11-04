@@ -101,6 +101,8 @@
         ? Icons.Material.Filled.ArrowUpward
         : Icons.Material.Filled.ArrowDownward;
 
+    private bool _isLoadingOnQueryChange = false;
+
     private async Task LoadPackNodes()
     {
         if (Page < 1)
@@ -128,6 +130,10 @@
 
     private async Task OnQueryChange(bool resetPage = false)
     {
+        if (_isLoadingOnQueryChange) return;
+
+        _isLoadingOnQueryChange = true;
+        
         if (resetPage)
             Page = 1;
 
@@ -138,6 +144,8 @@
         await LoadPackNodes();
         await Js.InvokeAsync<string>("window.history.pushState", null, "", uri);
         await Js.InvokeAsync<bool>("window.scrollToElementId", "nodes-edit");
+
+        _isLoadingOnQueryChange = false;
     }
 
     private async Task OnOrderDirectionClick()

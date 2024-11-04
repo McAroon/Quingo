@@ -65,7 +65,7 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
             .Include(x => x.NodeTags)
             .Include(x => x.NodeLinksFrom)
             .Include(x => x.NodeLinksTo)
-            .AsSplitQuery();
+            .AsQueryable();
         
         nodesQ = OrderNodes(nodesQ, orderBy, direction);
 
