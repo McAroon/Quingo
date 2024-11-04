@@ -29,6 +29,10 @@
     private async Task Save(PackPresetData data)
     {
         await using var context = await Repo.CreateDbContext();
+        _preset = await context.PackPresets
+                      .Include(x => x.Pack).ThenInclude(x => x.Tags)
+                      .FirstOrDefaultAsync(x => x.Id == _preset.Id) 
+                  ?? new PackPreset { Pack = Pack };
         _preset.Data = data;
         context.Update(_preset);
         await context.SaveChangesAsync();

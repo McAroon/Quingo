@@ -12,6 +12,11 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
     public async Task<Pack?> GetPack(int packId)
     {
         await using var context = await CreateDbContext();
+        return await GetPack(context, packId);
+    }
+
+    public async Task<Pack?> GetPack(ApplicationDbContext context, int packId)
+    {
         var packQ = context.Packs
             .Include(x => x.Tags)
             .Include(x => x.NodeLinkTypes)
