@@ -28,16 +28,22 @@
     private async Task Save(int id, IndirectLinkModel model)
     {
         await using var context = await Repo.CreateDbContext();
+        context.Attach(Pack);
         
         IndirectLink link;
         if (id == 0)
         {
-            link = new();
+            link = new IndirectLink
+            {
+                Pack = Pack
+            };
             Pack.IndirectLinks.Add(link);
         }
         else
         {
-            link = Pack.IndirectLinks.First(x => x.Id == id);
+            link = await context.IndirectLinks
+                .Include(indirectLink => indirectLink.Steps)
+                .FirstAsync(x => x.Id == id);
         }
 
         link.Name = model.Name;
