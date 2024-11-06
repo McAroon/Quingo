@@ -24,6 +24,8 @@ public record PackPresetData
     public PackPresetPattern Pattern { get; set; }
 
     public PackPresetMatchRule MatchRule { get; set; }
+    
+    public bool SingleColumnConfig { get; set; }
 
     public List<PackPresetColumn> Columns { get; set; } = [];
 }

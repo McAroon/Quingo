@@ -19,6 +19,7 @@ public class PackPresetDataModel
         ShowTagBadges = data.ShowTagBadges;
         Pattern = data.Pattern;
         MatchRule = data.MatchRule;
+        SingleColumnConfig = data.SingleColumnConfig;
 
         Columns.MatchListSize(data.CardSize, () => new PackPresetColumnModel());
     }
@@ -34,6 +35,7 @@ public class PackPresetDataModel
             ShowTagBadges = ShowTagBadges,
             Pattern = Pattern,
             MatchRule = MatchRule,
+            SingleColumnConfig = SingleColumnConfig,
             Columns = Columns.Select(c => new PackPresetColumn
             {
                 Name = c.Name,
@@ -59,6 +61,8 @@ public class PackPresetDataModel
     public PackPresetPattern Pattern { get; set; } = PackPresetPattern.Lines;
 
     public PackPresetMatchRule MatchRule { get; set; } = PackPresetMatchRule.Default;
+
+    public bool SingleColumnConfig { get; set; }
 
     public List<PackPresetColumnModel> Columns { get; set; } =
     [

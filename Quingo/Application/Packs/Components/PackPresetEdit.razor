@@ -9,7 +9,7 @@
     }
 </MudText>
 
-<PresetEdit Preset="_preset" IsEdit="_isEdit" OnSave="Save" OnCancelEdit="CancelEdit" />
+<PresetEdit Preset="_preset" Pack="Pack" IsEdit="_isEdit" OnSave="Save" OnCancelEdit="CancelEdit" />
 
 
 @code {
@@ -23,16 +23,17 @@
     protected override void OnParametersSet()
     {
         _preset = Pack.Presets.OrderBy(x => x.CreatedAt).FirstOrDefault()
-            ?? new PackPreset { Pack = Pack };
+            ?? new PackPreset { PackId = Pack.Id };
     }
 
     private async Task Save(PackPresetData data)
     {
         await using var context = await Repo.CreateDbContext();
+        
         _preset = await context.PackPresets
                       .Include(x => x.Pack).ThenInclude(x => x.Tags)
                       .FirstOrDefaultAsync(x => x.Id == _preset.Id) 
-                  ?? new PackPreset { Pack = Pack };
+                  ?? new PackPreset { PackId = Pack.Id };
         _preset.Data = data;
         context.Update(_preset);
         await context.SaveChangesAsync();

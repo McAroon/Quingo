@@ -18,6 +18,7 @@
                             <MudSelectItem Value="PackPresetMatchRule.LastDrawn">Last Drawn Only</MudSelectItem>
                         </MudSelect>
                         <MudCheckBox @bind-Value="_model.ShowTagBadges" Label="Show Tag Badges" />
+                        <MudCheckBox @bind-Value="_model.SingleColumnConfig" Label="Same Column Config" />
 
                         <MudText Typo="Typo.h6" Class="pt-2">Columns</MudText>
                         @foreach (var col in _model.Columns)
@@ -26,19 +27,22 @@
                                 <MudGrid>
                                     <MudItem xs="12">
                                         <MudTextField Label="Column Name" @bind-Value="col.Name" />
-                                        <MudSelect T="int" MultiSelection Label="Question Tags" @bind-SelectedValues="col.QuestionTags" MultiSelectionTextFunc="GetTagsSelectText">
+                                        <MudSelect T="int" MultiSelection Label="Question Tags" @bind-SelectedValues="col.QuestionTags" MultiSelectionTextFunc="GetTagsSelectText" 
+                                                   Disabled="@(_model.SingleColumnConfig && _model.Columns.IndexOf(col) > 0)" @bind-SelectedValues:after="() => OnColumnConfigUpdated(col)">
                                             @foreach (var tag in Pack.Tags)
                                             {
                                                 <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
                                             }
                                         </MudSelect>
-                                        <MudSelect T="int" MultiSelection Label="Answer Tags" @bind-SelectedValues="col.AnswerTags" MultiSelectionTextFunc="GetTagsSelectText">
+                                        <MudSelect T="int" MultiSelection Label="Answer Tags" @bind-SelectedValues="col.AnswerTags" MultiSelectionTextFunc="GetTagsSelectText"
+                                                   Disabled="@(_model.SingleColumnConfig && _model.Columns.IndexOf(col) > 0)" @bind-SelectedValues:after="() => OnColumnConfigUpdated(col)">
                                             @foreach (var tag in Pack.Tags)
                                             {
                                                 <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
                                             }
                                         </MudSelect>
-                                        <MudSelect T="int" MultiSelection Label="Exclude Tags" @bind-SelectedValues="col.ExcludeTags" MultiSelectionTextFunc="GetTagsSelectText">
+                                        <MudSelect T="int" MultiSelection Label="Exclude Tags" @bind-SelectedValues="col.ExcludeTags" MultiSelectionTextFunc="GetTagsSelectText"
+                                                   Disabled="@(_model.SingleColumnConfig && _model.Columns.IndexOf(col) > 0)" @bind-SelectedValues:after="() => OnColumnConfigUpdated(col)">
                                             @foreach (var tag in Pack.Tags)
                                             {
                                                 <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
@@ -99,7 +103,7 @@
     [Parameter]
     public Action? OnCancelEdit { get; set; }
 
-    public Pack Pack => Preset.Pack;
+    [Parameter, EditorRequired] public Pack Pack { get; set; } = default!;
 
     private MudForm _form = default!;
 
@@ -130,6 +134,18 @@
         var selectedList = selected.ToList();
         var tags = Pack.Tags.Where(x => selectedList.Contains(x.Id)).Select(x => x.Name).ToList();
         return tags.Count > 0 ? string.Join(", ", tags) : "-";
+    }
+
+    private void OnColumnConfigUpdated(PackPresetColumnModel col)
+    {
+        if (!_model.SingleColumnConfig || _model.Columns.IndexOf(col) != 0) return;
+        foreach (var pCol in _model.Columns.Skip(1))
+        {
+            pCol.QuestionTags = [..col.QuestionTags];
+            pCol.AnswerTags = [..col.AnswerTags];
+            pCol.ExcludeTags = [..col.ExcludeTags];
+        }
+        StateHasChanged();
     }
 
     private async Task Save()
