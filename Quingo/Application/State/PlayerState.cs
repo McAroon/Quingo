@@ -104,25 +104,30 @@ public class PlayerState : IDisposable
             cell.MatchedQNode = cell.IsMarked ? GameState.DrawnNodes.Last() : null;
         }
 
+        if (cell is { IsMarked: false, ShowValidation: true })
+        {
+            cell.ShowValidation = false;
+        }
+
         ValidateCell(cell);
 
         NotifyStateChanged();
     }
 
-    public void Validate()
+    public void Validate(bool isCall = false)
     {
         for (var col = 0; col < Card.Cells.GetLength(0); col++)
         {
             for (var row = 0; row < Card.Cells.GetLength(1); row++)
             {
                 var cell = Card.Cells[col, row];
-                ValidateCell(cell);
+                ValidateCell(cell, isCall);
             }
         }
         NotifyStateChanged();
     }
 
-    private void ValidateCell(PlayerCardCellData cell)
+    private void ValidateCell(PlayerCardCellData cell, bool isCall = false)
     {
         if (cell.Node == null)
         {
@@ -136,6 +141,11 @@ public class PlayerState : IDisposable
                 : cell.MatchedQNode != null && search.FirstOrDefault(x => x.Id == cell.MatchedQNode.Id) != null;
 
             cell.IsValid = cell.IsMarked ? found : !found;
+            
+            if (isCall && cell is { IsMarked: true, MatchedQNode: not null })
+            {
+                cell.ShowValidation = true;
+            }
         }
     }
 
@@ -207,6 +217,8 @@ public class PlayerCardCellData(int col, int row, Node? node = null)
     public bool IsMarked { get; set; }
 
     public bool IsValid { get; set; } = true;
+
+    public bool ShowValidation { get; set; }
 
     public Node? MatchedQNode { get; set; }
 

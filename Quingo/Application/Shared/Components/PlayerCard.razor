@@ -20,34 +20,51 @@
         @for (int col = 0; col < State.Card.Cells.GetLength(0); col++)
         {
             var cell = State.Card.Cells[col, cRow];
-            <PlayerCardCell Cell="cell" ShowDetails="ShowDetails" OnClick="@(OnCellClick(cell)!)" />
+            <PlayerCardCell Cell="cell" ShowDetails="ShowDetails" OnClick="@(OnCellClick(cell)!)"/>
         }
     </MudStack>
 }
 
 @code {
-    [CascadingParameter]
-    public PlayerState State { get; set; } = default!;
+    [CascadingParameter] public PlayerState State { get; set; } = default!;
 
-    [Parameter]
-    public bool ReadOnly { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
 
-    [Parameter]
-    public bool ShowDetails { get; set; }
+    [Parameter] public bool ShowDetails { get; set; }
 
     private PackPresetData Preset => State.GameState.Preset;
 
-    private bool CanMark => !ReadOnly && State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown && (Preset.MatchRule is PackPresetMatchRule.Default || State.GameState.DrawnNodes.Count > 0); 
+    private bool CanMark => !ReadOnly && State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown && (Preset.MatchRule is PackPresetMatchRule.Default || State.GameState.DrawnNodes.Count > 0);
 
-    private bool CanUndoMark(PlayerCardCellData cell) => !cell.IsMarked || Preset.MatchRule is PackPresetMatchRule.Default || cell.MatchedQNode == State.GameState.DrawnNodes.LastOrDefault();
 
-    private bool CanMarkCell(PlayerCardCellData cell) => CanMark && CanUndoMark(cell);
+    private bool RequireUnmarkConfirmation(PlayerCardCellData cell) => Preset.MatchRule is PackPresetMatchRule.LastDrawn
+                                                                       && cell.IsMarked
+                                                                       && cell.MatchedQNode != null
+                                                                       && cell.MatchedQNode != State.GameState.DrawnNodes.LastOrDefault();
 
-    private Action<PlayerCardCellData>? OnCellClick(PlayerCardCellData cell) => CanMarkCell(cell) ? Mark : ShowDetails ? ShowCellDetails : null;
+    private Action<PlayerCardCellData>? OnCellClick(PlayerCardCellData cell)
+    {
+        if (CanMark)
+        {
+            if (RequireUnmarkConfirmation(cell))
+            {
+                return ShowUnmarkConfirmation;
+            }
+
+            return Mark;
+        }
+
+        if (ShowDetails)
+        {
+            return ShowCellDetails;
+        }
+
+        return null;
+    }
 
     private void Mark(PlayerCardCellData cell)
     {
-        if (CanMarkCell(cell))
+        if (CanMark)
         {
             State.Mark(cell.Col, cell.Row);
         }
@@ -58,4 +75,14 @@
         var model = cell.Node == null ? null : new NodeViewModel(cell.Node, State.GameState.Preset);
         await NodeDetailsDialog.ShowNodeDetails(Dialog, State.GameState, model);
     }
+
+    private async void ShowUnmarkConfirmation(PlayerCardCellData cell)
+    {
+        var result = await Dialog.ShowMessageBox("Confirmation", "The cell will be unmarked", "OK", null, "Cancel");
+        if (result == true)
+        {
+            State.Mark(cell.Col, cell.Row);
+        }
+    }
+
 }

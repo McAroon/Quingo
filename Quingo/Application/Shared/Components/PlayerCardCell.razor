@@ -31,11 +31,13 @@
         {
             if (ShowDetails)
                 return Cell.State;
-            else if (Cell.State is PlayerCardCellState.MatchingPattern)
+            if (Cell.State is PlayerCardCellState.MatchingPattern)
                 return PlayerCardCellState.MatchingPattern;
-            else if (IsPending)
+            if (IsPending)
                 return PlayerCardCellState.Missing;
-            else if (Cell.State is PlayerCardCellState.Marked or PlayerCardCellState.Invalid)
+            if (Cell.State is PlayerCardCellState.Invalid && Cell.ShowValidation)
+                return PlayerCardCellState.Invalid;
+            if (Cell.State is PlayerCardCellState.Marked or PlayerCardCellState.Invalid)
                 return PlayerCardCellState.Marked;
             return PlayerCardCellState.Default;
         }    

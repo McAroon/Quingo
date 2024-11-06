@@ -128,7 +128,7 @@ public class GameState : IDisposable
             || WinningPlayers.Contains(player) 
             || (State is not GameStateEnum.Active and not GameStateEnum.FinalCountdown)) return;
 
-        player.Validate();
+        player.Validate(true);
         var isValid = false;
         var validPattern = new bool[Preset.CardSize, Preset.CardSize];
 
