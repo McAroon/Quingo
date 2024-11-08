@@ -1,11 +1,11 @@
 ﻿<MudGrid>
-    <MudItem xs="12" md="6">
+    <MudItem xs="12" lg="6">
         <PlayerActionBar />
     </MudItem>
-    <MudItem xs="12" md="6">
+    <MudItem xs="12" lg="6">
         <PlayerStats />
     </MudItem>
-    <MudItem xs="12" md="8">
+    <MudItem xs="12" lg="8">
         <MudText Typo="Typo.h5" GutterBottom>Draw History (@Player.GameState.DrawnNodes.Count / @Player.GameState.QuestionCount)</MudText>
         <QuestionList Game="Player.GameState" ShowDetails="ShowDetails" />
     </MudItem>
@@ -13,7 +13,7 @@
         <MudText Typo="Typo.h5" GutterBottom>Player Card</MudText>
         <PlayerCard ShowDetails="ShowDetails" />
     </MudItem>
-    <MudItem xs="12" md="6">
+    <MudItem xs="12" lg="6">
         <MudText Typo="Typo.h5" GutterBottom>Players</MudText>
         <CascadingValue Value="Player.GameState">
             <PlayerList Player="Player" />

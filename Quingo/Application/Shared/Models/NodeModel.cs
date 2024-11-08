@@ -64,7 +64,7 @@ public class NodeViewModel
         var exclTags = preset?.Columns.SelectMany(x => x.ExcludeTags ?? []).Distinct().ToList();
 
         NodeLinksByTag = links.Concat(indirectLinks)
-            .GroupBy(x => (tag: x.Tag.Id, name: x.LinkType.Name, dir: x.LinkDirection, type: x.Type))
+            .GroupBy(x => (tag: x.Tag.Id, name: x.LinkType.Name, dir: x.LinkDirection))
             .Select(g => g.First())
             .Where(x => exclTags == null || !exclTags.Contains(x.Tag.Id))
             .Where(x => showLinks == ShowLinksByTagEnum.All || inclTags == null || inclTags.Contains(x.Tag.Id))

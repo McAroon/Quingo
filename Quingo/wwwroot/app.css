@@ -32,7 +32,6 @@
     width: 150px;
     aspect-ratio: 1;
     padding: 4px;
-    flex-shrink: 0;
 }
 
     .node-square .node-square-content {
@@ -57,6 +56,26 @@
         margin-bottom: 1px;
         line-height: 1.1;
     }
+
+@media (max-width: 768px) {
+    #q-list .node-square {
+        width: 22vw;
+    }
+    .node-square .node-text.mud-typography-h6 {
+        font-size: 2.6vw;
+    }
+
+    .node-square .node-matched .mud-avatar.mud-avatar-medium {
+        width: 5vw;
+        height: 5vw;
+    }
+
+    .node-square .node-badges .node-badge {
+        font-size: 2vw;
+        padding: 0 1vw;
+        height: 3vw;
+    }
+}
 
     .node-square.node-header {
         background-color: var(--mud-palette-info-hover);
@@ -152,4 +171,5 @@
     }
 #q-list .node-square {
     scroll-margin-top: 70px;
+    flex-shrink: 0;
 }    
