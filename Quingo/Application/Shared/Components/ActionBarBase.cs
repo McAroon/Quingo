@@ -34,15 +34,15 @@ public abstract class ActionBarBase : ComponentBase
 
         if (confirmed)
         {
-            EndGame();
+            await EndGame();
         }
     }
 
-    private void EndGame()
+    private async Task EndGame()
     {
         try
         {
-            StateService.EndGame(Game.GameSessionId, UserId);
+           await StateService.EndGame(Game.GameSessionId, UserId);
         }
         catch (Exception e)
         {

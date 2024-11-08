@@ -1,8 +1,9 @@
-﻿@inherits ActionBarBase
+﻿@using System.Security.Claims
+@inherits ActionBarBase
 
 <MudStack AlignItems="AlignItems.End" Spacing="0">
     <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ExitToApp" Href="/">Leave Game</MudButton>
-    @if (PlayerIsHost && State.GameState.State == GameStateEnum.Active)
+    @if (ShowHostControls && State.GameState.State == GameStateEnum.Active)
     {
     <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop"
                Disabled="State.GameState.State != GameStateEnum.Active" OnClick="ConfirmEndGame">End Game</MudButton>
@@ -12,7 +13,7 @@
     <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
                StartIcon="@Icons.Material.Outlined.BackHand" OnClick="Call"
                Disabled="!AllowCall">Call</MudButton>
-    @if (PlayerIsHost)
+    @if (ShowHostControls)
     {
         <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
                    StartIcon="@Icons.Material.Outlined.PlayCircle" OnClick="Draw"
@@ -26,13 +27,26 @@
     
     [CascadingParameter(Name = "UserId")]
     public override string UserId { get; set; } = default!;
+    
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
 
     public override GameState Game => State.GameState;
 
     private bool AllowCall => (State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown)
                               && State.LivesNumber > 0 && !State.GameState.WinningPlayers.Contains(State);
 
-    private bool PlayerIsHost => State.PlayerUserId == State.GameState.HostUserId;
+    private bool ShowHostControls => State.PlayerUserId == State.GameState.HostUserId || _user?.IsInRole("admin") == true;
+    
+    private ClaimsPrincipal? _user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationState != null)
+        {
+            _user = (await AuthenticationState)?.User;
+        }
+    }
 
     private void Call()
     {

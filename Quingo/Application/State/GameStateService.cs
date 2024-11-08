@@ -2,6 +2,7 @@
 using Quingo.Infrastructure.Database;
 using Quingo.Shared.Entities;
 using System.Collections.Concurrent;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Quingo.Infrastructure.Database.Repos;
 
 namespace Quingo.Application.State;
@@ -112,12 +113,14 @@ public class GameStateService
         return player;
     }
 
-    public void EndGame(Guid gameSessionId, string userId)
+    public async Task EndGame(Guid gameSessionId, string userId)
     {
         try
         {
             var game = GetGameState(gameSessionId);
-            if (game.HostUserId != userId)
+            
+            var hasAccess = await CheckUserAccess(game, userId);
+            if (!hasAccess)
             {
                 throw new GameStateException("User is not allowed to end the game");
             }
@@ -130,6 +133,19 @@ public class GameStateService
 
             throw new GameStateException("Error while trying to end the game", e);
         }
+    }
+
+    private async Task<bool> CheckUserAccess(GameState game, string userId)
+    {
+        if (game.HostUserId == userId) return true;
+        
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var userStore = new UserStore<ApplicationUser>(db);
+        var user = await userStore.FindByIdAsync(userId);
+        if (user == null) return false;
+        
+        var isAdmin = await userStore.IsInRoleAsync(user, "admin");
+        return isAdmin;
     }
 
     public void RemoveGame(GameState game)
