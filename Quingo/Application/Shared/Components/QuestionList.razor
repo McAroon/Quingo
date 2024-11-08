@@ -1,10 +1,9 @@
-﻿@using Quingo.Application.State
-
-@inject IDialogService Dialog
+﻿@inject IDialogService Dialog
+@inject IJSRuntime Js
 
 @implements IDisposable
 
-<MudStack Spacing="1" Row Wrap="Wrap.Wrap">
+<MudStack Spacing="1" Row Wrap="Wrap.NoWrap" Class="overflow-y-scroll pb-2" id="q-list">
     @foreach (var node in _nodes)
     {
         <NodeSquare Node="node" CellState="GetCellState(node)" ShowTagBadge
@@ -55,13 +54,16 @@
         InvokeAsync(async () =>
       {
           _nodes = GetNodes();
+          StateHasChanged();
+          await Task.Delay(100);
+          await Js.InvokeAsync<bool>("window.scrollToLastChild", "q-list");
           await Blink();
       });
     }
 
     private async Task Blink()
     {
-        _blinkCancelSrc.Cancel();
+        await _blinkCancelSrc.CancelAsync();
         _blinkCancelSrc = new();
         var token = _blinkCancelSrc.Token;
 

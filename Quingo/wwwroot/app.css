@@ -32,6 +32,7 @@
     width: 150px;
     aspect-ratio: 1;
     padding: 4px;
+    flex-shrink: 0;
 }
 
     .node-square .node-square-content {
@@ -149,3 +150,6 @@
         mask: url(media/box.svg) no-repeat 50% 50%;
         mask-size: 80%;
     }
+#q-list .node-square {
+    scroll-margin-top: 70px;
+}    

@@ -1,27 +1,38 @@
-﻿@inject ISnackbar Snackbar
-@inject ILogger<PlayerActionBar> Logger
+﻿@inherits ActionBarBase
 
-<MudGrid Justify="Justify.FlexEnd">
-    <MudItem xs="5" Class="d-flex">
-        <div class="ml-auto">
-            <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ExitToApp" Href="/">Leave Game</MudButton>
-        </div>
-    </MudItem>
-</MudGrid>
-<MudGrid Justify="Justify.Center">
-    <MudItem md="2" xs="4">
+<MudStack AlignItems="AlignItems.End" Spacing="0">
+    <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ExitToApp" Href="/">Leave Game</MudButton>
+    @if (PlayerIsHost && State.GameState.State == GameStateEnum.Active)
+    {
+    <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop"
+               Disabled="State.GameState.State != GameStateEnum.Active" OnClick="ConfirmEndGame">End Game</MudButton>
+    }
+</MudStack>
+<MudStack Justify="Justify.Center" Row>
+    <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
+               StartIcon="@Icons.Material.Outlined.BackHand" OnClick="Call"
+               Disabled="!AllowCall">Call</MudButton>
+    @if (PlayerIsHost)
+    {
         <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
-                   StartIcon="@Icons.Material.Outlined.BackHand" OnClick="Call"
-                   Disabled="!AllowCall">Call</MudButton>
-    </MudItem>
-</MudGrid>
+                   StartIcon="@Icons.Material.Outlined.PlayCircle" OnClick="Draw"
+                   Disabled="State.GameState.State != GameStateEnum.Active || !State.GameState.CanDraw">Draw</MudButton>
+    }
+</MudStack>
 
 @code {
     [CascadingParameter]
     public PlayerState State { get; set; } = default!;
+    
+    [CascadingParameter(Name = "UserId")]
+    public override string UserId { get; set; } = default!;
+
+    public override GameState Game => State.GameState;
 
     private bool AllowCall => (State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown)
-        && State.LivesNumber > 0 && !State.GameState.WinningPlayers.Contains(State);
+                              && State.LivesNumber > 0 && !State.GameState.WinningPlayers.Contains(State);
+
+    private bool PlayerIsHost => State.PlayerUserId == State.GameState.HostUserId;
 
     private void Call()
     {
