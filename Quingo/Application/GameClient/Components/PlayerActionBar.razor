@@ -1,7 +1,7 @@
 ﻿@using System.Security.Claims
 @inherits ActionBarBase
 
-<MudStack AlignItems="AlignItems.End" Spacing="0">
+<MudStack AlignItems="AlignItems.End" Spacing="0" Class="pb-2">
     <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ExitToApp" Href="/">Leave Game</MudButton>
     @if (ShowHostControls && State.GameState.State == GameStateEnum.Active)
     {

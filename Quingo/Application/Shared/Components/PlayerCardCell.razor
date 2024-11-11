@@ -33,10 +33,10 @@
                 return Cell.State;
             if (Cell.State is PlayerCardCellState.MatchingPattern)
                 return PlayerCardCellState.MatchingPattern;
-            if (IsPending)
-                return PlayerCardCellState.Missing;
             if (Cell.State is PlayerCardCellState.Invalid && Cell.ShowValidation)
                 return PlayerCardCellState.Invalid;
+            if (IsPending)
+                return PlayerCardCellState.Missing;
             if (Cell.State is PlayerCardCellState.Marked or PlayerCardCellState.Invalid)
                 return PlayerCardCellState.Marked;
             return PlayerCardCellState.Default;
