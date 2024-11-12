@@ -85,14 +85,17 @@ else
     {
         await _form.Validate();
         if (!_form.IsValid) return;
+        
+        await using var context = await Repo.CreateDbContext();
 
-        var pack = Pack ?? new Pack();
+        var pack = Pack = PackId != null 
+            ? await context.Packs.FirstAsync(x => x.Id == PackId) 
+            : new Pack();
         pack.Name = _model.Name;
         pack.Description = _model.Description;
 
         await UploadImage(pack);
         
-        await using var context = await Repo.CreateDbContext();
         context.Update(pack);
         await context.SaveChangesAsync();
 
