@@ -22,6 +22,7 @@
                 <MudSelectItem T="int?" Value="(int)PackNodesOrderBy.CreatedAt">Created Date</MudSelectItem>
                 <MudSelectItem T="int?" Value="(int)PackNodesOrderBy.Name">Name</MudSelectItem>
                 <MudSelectItem T="int?" Value="(int)PackNodesOrderBy.Image">Image</MudSelectItem>
+                <MudSelectItem T="int?" Value="(int)PackNodesOrderBy.Links">Number of Links</MudSelectItem>
             </MudSelect>
             <MudSelect T="int" MultiSelection Label="Tags" @bind-SelectedValues="@TagIdsEnumerable" @bind-SelectedValues:after="() => OnQueryChange(true)" MultiSelectionTextFunc="GetTagsSelectText" Clearable>
                 @foreach (var tag in Pack.Tags)

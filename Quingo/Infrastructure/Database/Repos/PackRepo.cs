@@ -136,6 +136,9 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
             PackNodesOrderBy.Image => direction == OrderDirection.Ascending
                 ? nodes.OrderBy(x => x.ImageUrl)
                 : nodes.OrderByDescending(x => x.ImageUrl),
+            PackNodesOrderBy.Links => direction == OrderDirection.Ascending 
+                ? nodes.OrderBy(x => x.NodeLinksFrom.Count + x.NodeLinksTo.Count)
+                : nodes.OrderByDescending(x => x.NodeLinksFrom.Count + x.NodeLinksTo.Count),
             _ => throw new ArgumentOutOfRangeException(nameof(orderBy), orderBy, null)
         };
     }
@@ -194,7 +197,8 @@ public enum PackNodesOrderBy
 {
     CreatedAt,
     Name,
-    Image
+    Image,
+    Links,
 }
 
 public enum OrderDirection
