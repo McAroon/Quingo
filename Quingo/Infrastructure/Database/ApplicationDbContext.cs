@@ -145,6 +145,28 @@ namespace Quingo.Infrastructure.Database
                 }
             }
         }
+
+        /*
+        CREATE EXTENSION IF NOT EXISTS pg_trgm;
+        CREATE EXTENSION IF NOT EXISTS unaccent;
+
+        CREATE OR REPLACE FUNCTION public.immutable_unaccent(regdictionary, text)
+          RETURNS text
+          LANGUAGE c IMMUTABLE PARALLEL SAFE STRICT AS
+        '$libdir/unaccent', 'unaccent_dict';
+
+        CREATE OR REPLACE FUNCTION public.f_unaccent(text)
+          RETURNS text
+          LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT
+        RETURN public.immutable_unaccent(regdictionary 'public.unaccent', $1);
+
+        create index "IX_Nodes_Name_Unaccent" on "Nodes" using gin (public.f_unaccent("Name") gin_trgm_ops);
+        */
+        [DbFunction("f_unaccent", "public")]
+        public static string FUnaccent(string? text)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class EntityBaseConfiguration<TEntity> : IEntityTypeConfiguration<TEntity> where TEntity : EntityBase

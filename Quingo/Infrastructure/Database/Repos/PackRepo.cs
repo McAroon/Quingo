@@ -71,7 +71,10 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
 
         if (!string.IsNullOrEmpty(search))
         {
-            nodesQ = nodesQ.Where(x => EF.Functions.ILike(x.Name ?? "", $"%{search}%"));
+            
+            nodesQ = nodesQ.Where(x => EF.Functions.ILike(
+                ApplicationDbContext.FUnaccent(x.Name), 
+                ApplicationDbContext.FUnaccent($"%{search}%")));
         }
 
         if (tagIds is { Count: > 0 })
