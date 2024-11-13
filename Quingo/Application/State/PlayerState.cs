@@ -28,10 +28,11 @@ public class PlayerState : IDisposable
     public PlayerCardData Card { get; private set; }
 
     private int _livesNumber;
-    public int LivesNumber 
-    { 
-        get => _livesNumber; 
-        private set 
+
+    public int LivesNumber
+    {
+        get => _livesNumber;
+        private set
         {
             var decreased = value < _livesNumber;
             _livesNumber = value;
@@ -39,7 +40,7 @@ public class PlayerState : IDisposable
             {
                 LifeLost?.Invoke(this);
             }
-        } 
+        }
     }
 
     public string PlayerUserId { get; private set; }
@@ -52,19 +53,21 @@ public class PlayerState : IDisposable
 
     private void Setup()
     {
-        if (Preset.Columns.Count != Preset.CardSize) 
+        if (Preset.Columns.Count != Preset.CardSize)
         {
             throw new GameStateException("Column number and card size don't match");
         }
 
         var aTagIds = Preset.Columns.SelectMany(x => x.AnswerTags).Distinct().ToList();
-        var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct().ToList();
+        var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct()
+            .ToList();
         var aNodes = Pack.Nodes.Where(x => aTagIds.Any(t => x.HasTag(t)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
 
         for (var col = 0; col < Card.Cells.GetLength(0); col++)
         {
             var colTagIds = Preset.Columns[col].AnswerTags;
-            var colNodes = aNodes.Where(x => colTagIds.Any(t => x.NodeTags.Select(nt => nt.TagId).Contains(t))).ToList();
+            var colNodes = aNodes.Where(x => colTagIds.Any(t => x.NodeTags.Select(nt => nt.TagId).Contains(t)))
+                .ToList();
 
             for (var row = 0; row < Card.Cells.GetLength(1); row++)
             {
@@ -90,7 +93,7 @@ public class PlayerState : IDisposable
         }
     }
 
-    public void Mark(int col, int row) 
+    public void Mark(int col, int row)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(col, nameof(col));
         ArgumentOutOfRangeException.ThrowIfNegative(row, nameof(row));
@@ -98,10 +101,30 @@ public class PlayerState : IDisposable
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(row, Preset.CardSize, nameof(row));
 
         var cell = Card.Cells[col, row];
-        cell.IsMarked = !cell.IsMarked;
+        Mark(cell);
+        NotifyStateChanged();
+    }
+
+    private void Mark(PlayerCardCellData cell, bool? mark = null)
+    {
+        cell.IsMarked = mark ?? !cell.IsMarked;
         if (GameState.Preset.MatchRule is PackPresetMatchRule.LastDrawn && GameState.DrawnNodes.Count > 0)
         {
-            cell.MatchedQNode = cell.IsMarked ? GameState.DrawnNodes.Last() : null;
+            if (cell.IsMarked)
+            {
+                cell.MatchedQNode = GameState.DrawnNodes.Last();
+                
+                var unmarkCells = Card.AllCells
+                    .Where(x => x != cell && x.IsMarked && x.MatchedQNode == cell.MatchedQNode);
+                foreach (var unmarkCell in unmarkCells)
+                {
+                    Mark(unmarkCell, false);
+                }
+            }
+            else
+            {
+                cell.MatchedQNode = null;
+            }
         }
 
         if (cell is { IsMarked: false, ShowValidation: true })
@@ -110,8 +133,6 @@ public class PlayerState : IDisposable
         }
 
         ValidateCell(cell);
-
-        NotifyStateChanged();
     }
 
     public void Validate(bool isCall = false)
@@ -124,6 +145,7 @@ public class PlayerState : IDisposable
                 ValidateCell(cell, isCall);
             }
         }
+
         NotifyStateChanged();
     }
 
@@ -136,12 +158,12 @@ public class PlayerState : IDisposable
         else
         {
             var search = new NodeLinkSearch(cell.Node, GameState.DrawnNodes).Search();
-            var found = GameState.Preset.MatchRule is PackPresetMatchRule.Default || !cell.IsMarked 
-                ? search.FirstOrDefault() != null 
+            var found = GameState.Preset.MatchRule is PackPresetMatchRule.Default || !cell.IsMarked
+                ? search.FirstOrDefault() != null
                 : cell.MatchedQNode != null && search.FirstOrDefault(x => x.Id == cell.MatchedQNode.Id) != null;
 
             cell.IsValid = cell.IsMarked ? found : !found;
-            
+
             if (isCall && cell is { IsMarked: true, MatchedQNode: not null })
             {
                 cell.ShowValidation = true;
@@ -177,6 +199,7 @@ public class PlayerState : IDisposable
     }
 
     #region dispose
+
     private bool disposedValue;
 
     protected virtual void Dispose(bool disposing)
@@ -194,12 +217,15 @@ public class PlayerState : IDisposable
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
+
     #endregion
 }
 
 public class PlayerCardData(PackPresetData preset)
 {
     public PlayerCardCellData[,] Cells { get; } = new PlayerCardCellData[preset.CardSize, preset.CardSize];
+    
+    public IEnumerable<PlayerCardCellData> AllCells => Cells.Cast<PlayerCardCellData>();
 }
 
 public class PlayerCardCellData(int col, int row, Node? node = null)
@@ -222,10 +248,10 @@ public class PlayerCardCellData(int col, int row, Node? node = null)
 
     public Node? MatchedQNode { get; set; }
 
-    public PlayerCardCellState State 
-    { 
-        get 
-        { 
+    public PlayerCardCellState State
+    {
+        get
+        {
             if (IsMatchingPattern)
             {
                 return PlayerCardCellState.MatchingPattern;
@@ -238,8 +264,9 @@ public class PlayerCardCellData(int col, int row, Node? node = null)
             {
                 return PlayerCardCellState.Missing;
             }
+
             return PlayerCardCellState.Default;
-        } 
+        }
     }
 }
 
