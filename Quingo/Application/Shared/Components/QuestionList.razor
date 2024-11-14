@@ -42,7 +42,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_nodes.Count > 0)
+        if (firstRender && _nodes.Count > 0)
         {
             await Task.Delay(100);
             await Js.InvokeAsync<bool>("window.scrollToLastChild", "q-list");
