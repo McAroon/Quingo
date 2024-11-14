@@ -3,7 +3,7 @@
 
 @implements IDisposable
 
-<MudStack Spacing="1" Row Wrap="Wrap.NoWrap" Class="overflow-y-scroll pb-2" id="q-list">
+<MudStack Spacing="1" Row="Row" Wrap="Wrap.NoWrap" Class="@StackClass" id="q-list" Reverse>
     @foreach (var node in _nodes)
     {
         <NodeSquare Node="node" CellState="GetCellState(node)" ShowTagBadge
@@ -21,6 +21,9 @@
     [Parameter]
     public bool ShowDetails { get; set; }
 
+    [Parameter]
+    public bool Row { get; set; }
+
     private bool _toggleHighlight = true;
 
     private List<NodeViewModel> _nodes = [];
@@ -28,11 +31,22 @@
     private Func<NodeViewModel, Action?> OnClick => (node) => ShowDetails ? () => ShowNodeDetails(node) : null;
 
     private CancellationTokenSource _blinkCancelSrc = new();
+    
+    private string StackClass => Row ? "overflow-y-scroll pb-2" : "overflow-x-scroll pr-2 d-inline-flex";
 
     protected override void OnInitialized()
     {
         _nodes = GetNodes();
         Game.NodeDrawn += OnNodeDrawn;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_nodes.Count > 0)
+        {
+            await Task.Delay(100);
+            await Js.InvokeAsync<bool>("window.scrollToLastChild", "q-list");
+        }
     }
 
     private PlayerCardCellState GetCellState(NodeViewModel node) =>

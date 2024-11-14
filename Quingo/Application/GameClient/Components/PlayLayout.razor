@@ -1,29 +1,41 @@
 ﻿<MudGrid>
-    <MudItem xs="12" lg="6">
-        <PlayerActionBar />
+    <MudItem xs="12" md="6">
+        <PlayerActionBar/>
     </MudItem>
-    <MudItem xs="12" lg="6">
-        <PlayerStats />
+    <MudItem xs="12" md="6">
+        <PlayerStats/>
     </MudItem>
-    <MudItem xs="12" lg="8">
-        <MudText Typo="Typo.h5" GutterBottom>Draw History (@Player.GameState.DrawnNodes.Count / @Player.GameState.QuestionCount)</MudText>
-        <QuestionList Game="Player.GameState" ShowDetails="ShowDetails" />
-    </MudItem>
-    <MudItem xs="12">
-        <MudText Typo="Typo.h5" GutterBottom>Player Card</MudText>
-        <PlayerCard ShowDetails="ShowDetails" />
-    </MudItem>
+    <MudBreakpointProvider @ref="_breakpoint">
+        <MudItem xs="12">
+            <MudGrid>
+                <MudItem xs="12" md="3" lg="2" Class="@QuestionsClass">
+                    <MudText Typo="Typo.h5" GutterBottom>Draw History (@Player.GameState.DrawnNodes.Count&nbsp;/&nbsp;@Player.GameState.QuestionCount)</MudText>
+                    <QuestionList Game="Player.GameState" ShowDetails="ShowDetails" Row="QuestionsRow" />
+                </MudItem>
+                <MudItem xs="12" md="9" lg="10">
+                    <MudText Typo="Typo.h5" GutterBottom>Player Card</MudText>
+                    <PlayerCard ShowDetails="ShowDetails"/>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+    </MudBreakpointProvider>
     <MudItem xs="12" lg="6">
         <MudText Typo="Typo.h5" GutterBottom>Players</MudText>
         <CascadingValue Value="Player.GameState">
-            <PlayerList Player="Player" />
+            <PlayerList Player="Player"/>
         </CascadingValue>
     </MudItem>
 </MudGrid>
 
 @code {
-    [CascadingParameter]
-    public PlayerState Player { get; set; } = default!;
+    [CascadingParameter] public PlayerState Player { get; set; } = default!;
 
     private bool ShowDetails => Player.GameState.State is GameStateEnum.Finished or GameStateEnum.Canceled;
+
+    private MudBreakpointProvider? _breakpoint;
+
+    private bool QuestionsRow => _breakpoint == null || _breakpoint.Breakpoint is Breakpoint.Always or Breakpoint.Sm or Breakpoint.Xs;
+
+    private string? QuestionsClass => !QuestionsRow ? "q-list-container-col" : null;
+
 }

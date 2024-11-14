@@ -169,7 +169,17 @@
         mask: url(media/box.svg) no-repeat 50% 50%;
         mask-size: 80%;
     }
-#q-list .node-square {
-    scroll-margin-top: 70px;
-    flex-shrink: 0;
-}    
+.q-list-container-col {
+    max-height: 640px;
+}
+.q-list-container-col #q-list {
+    height: 100%;
+}
+    #q-list {
+        width: fit-content;
+        max-width: 100%;
+    }
+    #q-list .node-square {
+        scroll-margin-top: 70px;
+        flex-shrink: 0;
+    }    
