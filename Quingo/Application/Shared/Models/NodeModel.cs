@@ -41,7 +41,6 @@ public class NodeViewModel
         Name = node.Name;
         NodeLinks = [.. linksFrom, .. linksTo, .. linksBoth];
         NodeLinks = NodeLinks.OrderBy(x => x.LinkDirection).ThenBy(x => x.LinkType.Name).ToList();
-        NodeTags = node.NodeTags.Where(x => x.DeletedAt == null).Select(x => new EntityInfoModel(x.Id, x.Tag.Name)).ToList();
         ImageUrl = node.ImageUrl;
 
         var links = NodeLinks.SelectMany(n => n.LinkedNode.Tags, (n, t) => (n, t))
@@ -50,24 +49,35 @@ public class NodeViewModel
         var indirectLinks = node.NodeTags
             .Select(x => x.Tag)
             .SelectMany(x => x.IndirectLinks, (tag, step) => (tag, step, link: step.IndirectLink))
-            .Where(x => (x.step.Order == 0 && x.step.TagFrom == x.tag) || (x.step.Order == x.link.Steps.Count - 1 && x.step.TagTo == x.tag && x.link.Direction != NodeLinkDirection.Both))
+            .Where(x => (x.step.Order == 0 && x.step.TagFrom == x.tag) || (x.step.Order == x.link.Steps.Count - 1 &&
+                                                                           x.step.TagTo == x.tag &&
+                                                                           x.link.Direction != NodeLinkDirection.Both))
             .Select(x =>
             {
-                var tag = x.link.Direction == NodeLinkDirection.Both ? x.tag : x.step.Order == 0 ? x.link.Steps.Last().TagTo : x.link.Steps.First().TagFrom;
-                var direction = x.link.Direction == NodeLinkDirection.Both ? NodeLinkDirection.Both : x.step.Order == 0 ? NodeLinkDirection.To : NodeLinkDirection.From;
-                return new NodeLinkByTagInfoModel(new EntityInfoModel(tag.Id, tag.Name), new EntityInfoModel(x.link.Id, x.link.Name), direction, NodeLinkByTagType.Indirect);
+                var tag = x.link.Direction == NodeLinkDirection.Both ? x.tag :
+                    x.step.Order == 0 ? x.link.Steps.Last().TagTo : x.link.Steps.First().TagFrom;
+                var direction = x.link.Direction == NodeLinkDirection.Both ? NodeLinkDirection.Both :
+                    x.step.Order == 0 ? NodeLinkDirection.To : NodeLinkDirection.From;
+                return new NodeLinkByTagInfoModel(new EntityInfoModel(tag.Id, tag.Name),
+                    new EntityInfoModel(x.link.Id, x.link.Name), direction, NodeLinkByTagType.Indirect);
             });
 
-        var inclTags = showLinks == ShowLinksByTagEnum.Question 
-            ? preset?.Columns.SelectMany(x => x.AnswerTags ?? []).Distinct().ToList() 
-            : preset?.Columns.SelectMany(x => x.QuestionTags ?? []).Distinct().ToList();
+        var aTags = preset?.Columns.SelectMany(x => x.AnswerTags ?? []).Distinct().ToList();
+        var qTags = preset?.Columns.SelectMany(x => x.QuestionTags ?? []).Distinct().ToList();
+        var inclTags = showLinks == ShowLinksByTagEnum.Question ? qTags : aTags;
+        var inclLinkTags = showLinks == ShowLinksByTagEnum.Question ? aTags : qTags;
         var exclTags = preset?.Columns.SelectMany(x => x.ExcludeTags ?? []).Distinct().ToList();
+
+        NodeTags = node.NodeTags.Where(x =>
+                x.DeletedAt == null && (showLinks == ShowLinksByTagEnum.All || inclTags == null ||
+                                        inclTags.Contains(x.Tag.Id)))
+            .Select(x => new EntityInfoModel(x.Id, x.Tag.Name)).ToList();
 
         NodeLinksByTag = links.Concat(indirectLinks)
             .GroupBy(x => (tag: x.Tag.Id, name: x.LinkType.Name, dir: x.LinkDirection))
             .Select(g => g.First())
             .Where(x => exclTags == null || !exclTags.Contains(x.Tag.Id))
-            .Where(x => showLinks == ShowLinksByTagEnum.All || inclTags == null || inclTags.Contains(x.Tag.Id))
+            .Where(x => showLinks == ShowLinksByTagEnum.All || inclLinkTags == null || inclLinkTags.Contains(x.Tag.Id))
             .ToList();
 
         if (node.Meta?.Properties?.Count > 0)
@@ -76,7 +86,9 @@ public class NodeViewModel
         }
     }
 
-    public NodeViewModel() { }
+    public NodeViewModel()
+    {
+    }
 
     public int Id { get; set; }
 
@@ -102,7 +114,9 @@ public enum ShowLinksByTagEnum
 
 public class NodeModel : NodeViewModel
 {
-    public NodeModel() { }
+    public NodeModel()
+    {
+    }
 
     public NodeModel(Node node) : base(node, node.Pack.Presets.FirstOrDefault()?.Data)
     {
@@ -112,9 +126,9 @@ public class NodeModel : NodeViewModel
     public IEnumerable<int> TagIds { get; set; } = [];
 
     public IBrowserFile? ImageFile { get; set; }
-    
+
     public List<NodeLinkModel> NodeLinksChanged { get; set; } = [];
-    
+
     public List<NodeLinkModel> NodeLinksRemoved { get; set; } = [];
 }
 
@@ -149,13 +163,16 @@ public class LinkedNodeInfoModel : EntityInfoModel
 
     public LinkedNodeInfoModel(int id, string? name) : base(id, name)
     {
-        
     }
 
     public IEnumerable<EntityInfoModel> Tags { get; set; } = [];
 }
 
-public class NodeLinkByTagInfoModel(EntityInfoModel tag, EntityInfoModel linkType, NodeLinkDirection linkDirection, NodeLinkByTagType type)
+public class NodeLinkByTagInfoModel(
+    EntityInfoModel tag,
+    EntityInfoModel linkType,
+    NodeLinkDirection linkDirection,
+    NodeLinkByTagType type)
 {
     public EntityInfoModel Tag { get; set; } = tag;
 
@@ -182,7 +199,6 @@ public class IndirectLinkModel
 
     public IndirectLinkModel()
     {
-        
     }
 
     public IndirectLinkModel(IndirectLink link)
@@ -201,7 +217,6 @@ public class IndirectLinkStepModel
 
     public IndirectLinkStepModel()
     {
-        
     }
 
     public IndirectLinkStepModel(IndirectLinkStep step)
