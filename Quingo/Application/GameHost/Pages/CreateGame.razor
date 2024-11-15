@@ -58,6 +58,10 @@
 <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow"
            OnClick="StartGame" Disabled="_pack == null || _isPresetEdit || _isLoading">Start Game</MudButton>
 
+<MudOverlay Visible="_isLoading" DarkBackground ZIndex="9999">
+    <MudProgressCircular Color="Color.Primary" Indeterminate />
+</MudOverlay>
+
 @code {
     [CascadingParameter(Name = "UserId")]
     public string UserId { get; set; } = default!;
