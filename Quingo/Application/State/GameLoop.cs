@@ -65,8 +65,11 @@ public class GameLoop : IDisposable
         {
             if (loop._game.GameTimer > 0)
             {
-                loop._game.DecrementGameTimer();
-
+                if (loop._game.IsGameTimerRunning)
+                {
+                    loop._game.DecrementGameTimer();
+                }
+                
                 if (loop._game.State is GameStateEnum.Active && loop._game.WinningPlayers.Count > 0)
                 {
                     if (loop._game.Preset.EndgameTimer > 0 && loop._game.GameTimer > loop._game.Preset.EndgameTimer)
@@ -78,7 +81,15 @@ public class GameLoop : IDisposable
             }
             else if (loop._game.Preset.GameTimer > 0 || loop._game.State is GameStateEnum.FinalCountdown)
             {
-                loop._game.SetState(GameStateEnum.Finished);
+                if (loop._game.State is GameStateEnum.Active)
+                {
+                    loop._game.SetState(GameStateEnum.FinalCountdown);
+                    loop._game.SetGameTimer(loop._game.Preset.EndgameTimer);
+                }
+                else
+                {
+                    loop._game.SetState(GameStateEnum.Finished);
+                }
             }
         }
 

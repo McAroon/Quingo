@@ -85,6 +85,8 @@ public class GameState : IDisposable
 
     public int GameTimer => _gameTimer;
 
+    public bool IsGameTimerRunning { get; set; }
+
     public void DecrementGameTimer()
     {
         Interlocked.Decrement(ref _gameTimer);
@@ -132,7 +134,7 @@ public class GameState : IDisposable
 
     public void Draw()
     {
-        if (!CanDraw || State != GameStateEnum.Active) return;
+        if (State != GameStateEnum.Active || !CanDraw) return;
 
         var idx = _random.Next(0, _qNodes.Count);
         var node = _qNodes[idx];
@@ -142,6 +144,11 @@ public class GameState : IDisposable
         foreach (var player in Players)
         {
             player.Validate();
+        }
+
+        if (!IsGameTimerRunning)
+        {
+            IsGameTimerRunning = true;
         }
 
         NotifyStateChanged();
