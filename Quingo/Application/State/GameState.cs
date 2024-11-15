@@ -5,7 +5,8 @@ namespace Quingo.Application.State;
 
 public class GameState : IDisposable
 {
-    public GameState(Guid gameSessionId, Pack pack, PackPresetData preset, string hostUserId, string? hostName)
+    public GameState(ILogger logger, Guid gameSessionId, Pack pack, PackPresetData preset, string hostUserId,
+        string? hostName)
     {
         GameSessionId = gameSessionId;
         PackId = pack.Id;
@@ -15,8 +16,9 @@ public class GameState : IDisposable
         HostName = hostName;
         StartedAt = UpdatedAt = DateTime.UtcNow;
         State = GameStateEnum.Init;
-        EndgameTimer = preset.EndgameTimer;
 
+        _gameTimer = preset.GameTimer;
+        _loop = new GameLoop(logger, this);
         _random = new Random(gameSessionId.GetHashCode());
 
         _drawnNodes.CollectionChanged += HandleDrawnNodesChanged;
@@ -44,6 +46,8 @@ public class GameState : IDisposable
 
     public int QuestionCount { get; private set; }
 
+    private readonly GameLoop _loop;
+
     private readonly Random _random;
     public Random Random => _random;
 
@@ -61,20 +65,37 @@ public class GameState : IDisposable
 
     public bool CanDraw => _qNodes.Count > 0;
 
+    public bool ShowTimer => Preset.GameTimer > 0 || (Preset.EndgameTimer > 0 && State == GameStateEnum.FinalCountdown);
+
     private List<bool[,]> _bingoPatterns = [];
 
     private GameStateEnum _state;
-    public GameStateEnum State 
-    { 
-        get { return _state; } 
-        private set 
+
+    public GameStateEnum State
+    {
+        get => _state;
+        private set
         {
             _state = value;
             GameStateChanged?.Invoke(value);
-        } 
+        }
     }
 
-    public int EndgameTimer { get; private set; }
+    private int _gameTimer;
+
+    public int GameTimer => _gameTimer;
+
+    public void DecrementGameTimer()
+    {
+        Interlocked.Decrement(ref _gameTimer);
+        NotifyStateChanged();
+    }
+
+    public void SetGameTimer(int value)
+    {
+        _gameTimer = value;
+        NotifyStateChanged();
+    }
 
     public string StateDisplayValue => State switch
     {
@@ -91,7 +112,8 @@ public class GameState : IDisposable
         if (State != GameStateEnum.Init) return;
 
         var qTagIds = Preset.Columns.SelectMany(x => x.QuestionTags).Distinct().ToList();
-        var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct().ToList();
+        var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct()
+            .ToList();
         _qNodes = Pack.Nodes.Where(x => qTagIds.Any(t => x.HasTag(t)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
         QuestionCount = _qNodes.Count;
         _bingoPatterns = PatternGenerator.GeneratePatterns(Preset.CardSize, Preset.Pattern);
@@ -119,13 +141,14 @@ public class GameState : IDisposable
         {
             player.Validate();
         }
+
         NotifyStateChanged();
     }
 
     public void Call(PlayerState player)
     {
-        if (player.LivesNumber <= 0 
-            || WinningPlayers.Contains(player) 
+        if (player.LivesNumber <= 0
+            || WinningPlayers.Contains(player)
             || (State is not GameStateEnum.Active and not GameStateEnum.FinalCountdown)) return;
 
         player.Validate(true);
@@ -146,6 +169,7 @@ public class GameState : IDisposable
                     patternValid = (patCell & plCell.IsMarked & plCell.IsValid) == patCell;
                     if (!patternValid) break;
                 }
+
                 if (!patternValid) break;
             }
 
@@ -174,7 +198,6 @@ public class GameState : IDisposable
             }
 
             _winningPlayers.Add(player);
-            StartCountdown();
         }
     }
 
@@ -186,29 +209,17 @@ public class GameState : IDisposable
         NotifyStateChanged();
     }
 
-    private void StartCountdown()
+    public void SetState(GameStateEnum state)
     {
-        if (State != GameStateEnum.Active) return;
+        if (State == state) return;
 
-        State = GameStateEnum.FinalCountdown;
+        State = state;
         NotifyStateChanged();
-
-        _ = Task.Run(async () =>
-        {
-            while (EndgameTimer > 0)
-            {
-                EndgameTimer--;
-                NotifyStateChanged();
-                await Task.Delay(1000);
-            }
-
-            State = GameStateEnum.Finished;
-            NotifyStateChanged();
-        });
     }
 
 
     #region events
+
     public event Action? StateChanged;
 
     public event Action? NodeDrawn;
@@ -223,7 +234,8 @@ public class GameState : IDisposable
         StateChanged?.Invoke();
     }
 
-    private void HandleDrawnNodesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    private void HandleDrawnNodesChanged(object? sender,
+        System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         NotifyStateChanged();
         NodeDrawn?.Invoke();
@@ -237,19 +249,23 @@ public class GameState : IDisposable
             PlayerJoined?.Invoke(player);
     }
 
-    private void HandleWinningPlayersChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    private void HandleWinningPlayersChanged(object? sender,
+        System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         NotifyStateChanged();
     }
+
     #endregion
 
     #region dispose
+
     private bool disposedValue;
 
     protected virtual void Dispose(bool disposing)
     {
         if (!disposedValue)
         {
+            _loop.Dispose();
             StateChanged = null;
             NodeDrawn = null;
             _drawnNodes.CollectionChanged -= HandleDrawnNodesChanged;
@@ -271,6 +287,7 @@ public class GameState : IDisposable
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
+
     #endregion
 }
 

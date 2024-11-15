@@ -26,4 +26,9 @@ public static class Extensions
 
         await roleManager.CreateAsync(new IdentityRole { Name = "admin" });
     }
+
+    public static string ToStringHoursOptional(this TimeSpan span)
+    {
+        return span.Hours > 0 ? span.ToString(@"hh\:mm\:ss") : span.ToString(@"mm\:ss");
+    }
 }

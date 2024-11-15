@@ -3,11 +3,11 @@
         <th>Game State</th>
         <td>@Game.StateDisplayValue</td>
     </tr>
-    @if (Game.State == GameStateEnum.FinalCountdown)
+    @if (Game.ShowTimer)
     {
         <tr>
-            <th>Countdown Timer</th>
-            <td>@Game.EndgameTimer</td>
+            <th>Game Timer</th>
+            <td>@TimeSpan.FromSeconds(Game.GameTimer).ToStringHoursOptional()</td>
         </tr>
     }
     @if (Game.WinningPlayers.Count > 0)

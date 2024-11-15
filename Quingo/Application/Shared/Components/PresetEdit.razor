@@ -8,6 +8,8 @@
                         <MudNumericField @bind-Value="_model.CardSize" @bind-Value:after="OnCardSizeUpdated" Label="Card Size" Min="1" Max="9" Required />
                         <MudCheckBox @bind-Value="_model.FreeCenter" Label="Free Center" Disabled="!_model.IsFreeCenterEnabled" />
                         <MudNumericField @bind-Value="_model.LivesNumber" Label="Number of Lives" Min="1" Required />
+                        <MudNumericField @bind-Value="_model.MaxPlayers" Label="Number of Players" Min="1" Required />
+                        <MudNumericField @bind-Value="_model.GameTimer" Label="Game Timer" Min="0" />
                         <MudNumericField @bind-Value="_model.EndgameTimer" Label="Endgame Timer" Min="0" />
                         <MudSelect T="PackPresetPattern" Label="Winning Pattern" @bind-Value="@_model.Pattern">
                             <MudSelectItem Value="PackPresetPattern.Lines">Line</MudSelectItem>
@@ -68,6 +70,8 @@
                 <MudListItem Text="Card Size" SecondaryText="@_model.CardSize.ToString()" />
                 <MudListItem Text="Free Center" SecondaryText="@(_model.FreeCenter ? "Yes" : "No")" />
                 <MudListItem Text="Number of Lives" SecondaryText="@_model.LivesNumber.ToString()" />
+                <MudListItem Text="Number of Players" SecondaryText="@_model.MaxPlayers.ToString()" />
+                <MudListItem Text="Game Timer" SecondaryText="@_model.GameTimer.ToString()" />
                 <MudListItem Text="Endgame Timer" SecondaryText="@_model.EndgameTimer.ToString()" />
                 <MudListItem Text="Winning Pattern" SecondaryText="@(_model.Pattern == PackPresetPattern.Lines ? "Line" : "Full Card")" />
                 <MudListItem Text="Match Rule" SecondaryText="@(_model.MatchRule == PackPresetMatchRule.Default ? "Default" : "Last Drawn Only")" />

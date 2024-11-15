@@ -17,8 +17,12 @@ public record PackPresetData
 
     public int LivesNumber { get; set; } = 3;
 
-    public int EndgameTimer { get; set; } = 20;
+    public int MaxPlayers { get; set; } = 0;
+    
+    public int GameTimer { get; set; } = 0;
 
+    public int EndgameTimer { get; set; } = 20;
+    
     public bool ShowTagBadges { get; set; } = true;
 
     public PackPresetPattern Pattern { get; set; }

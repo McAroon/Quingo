@@ -14,9 +14,12 @@ public class GameStateService
 
     private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
 
-    public GameStateService(IDbContextFactory<ApplicationDbContext> dbContextFactory)
+    private readonly ILogger<GameStateService> _logger;
+
+    public GameStateService(IDbContextFactory<ApplicationDbContext> dbContextFactory, ILogger<GameStateService> logger)
     {
         _dbContextFactory = dbContextFactory;
+        _logger = logger;
     }
 
     public async Task<GameState> StartGame(int packId, PackPresetData preset, string userId)
@@ -46,7 +49,7 @@ public class GameStateService
 
             var sessionId = Guid.NewGuid();
 
-            var game = new GameState(sessionId, pack, preset, userId, user.UserName);
+            var game = new GameState(_logger, sessionId, pack, preset, userId, user.UserName);
             if (!_state.TryAdd(sessionId, game))
             {
                 throw new GameStateException("Error creating game");

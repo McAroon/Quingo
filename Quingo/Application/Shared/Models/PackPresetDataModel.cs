@@ -15,6 +15,8 @@ public class PackPresetDataModel
         FreeCenter = data.FreeCenter;
         Columns = data.Columns.Count > 0 ? data.Columns.Select(c => new PackPresetColumnModel(c)).ToList() : Columns;
         LivesNumber = data.LivesNumber;
+        MaxPlayers = data.MaxPlayers;
+        GameTimer = data.GameTimer;
         EndgameTimer = data.EndgameTimer;
         ShowTagBadges = data.ShowTagBadges;
         Pattern = data.Pattern;
@@ -31,6 +33,8 @@ public class PackPresetDataModel
             CardSize = CardSize,
             FreeCenter = FreeCenter,
             LivesNumber = LivesNumber,
+            MaxPlayers = MaxPlayers,
+            GameTimer = GameTimer,
             EndgameTimer = EndgameTimer,
             ShowTagBadges = ShowTagBadges,
             Pattern = Pattern,
@@ -53,6 +57,10 @@ public class PackPresetDataModel
     public bool IsFreeCenterEnabled => CardSize % 2 != 0;
 
     public int LivesNumber { get; set; } = 3;
+    
+    public int MaxPlayers { get; set; } = 0;
+    
+    public int GameTimer { get; set; } = 0;
 
     public int EndgameTimer { get; set; } = 20;
 
