@@ -47,6 +47,8 @@ public class PlayerState : IDisposable
 
     public string PlayerName { get; private set; }
 
+    public int Score { get; private set; }
+
     public DateTime StartedAt { get; private set; }
 
     public DateTime UpdatedAt { get; private set; }
@@ -133,6 +135,7 @@ public class PlayerState : IDisposable
         }
 
         ValidateCell(cell);
+        RecalculateScore();
     }
 
     public void Validate(bool isCall = false)
@@ -146,6 +149,7 @@ public class PlayerState : IDisposable
             }
         }
 
+        RecalculateScore();
         NotifyStateChanged();
     }
 
@@ -169,6 +173,11 @@ public class PlayerState : IDisposable
                 cell.ShowValidation = true;
             }
         }
+    }
+
+    private void RecalculateScore()
+    {
+        Score = Card.AllCells.Count(x => x.IsMarked && x.IsValid);
     }
 
     public void RemoveLife()

@@ -21,6 +21,13 @@
             <td>@string.Join(", ", State.GameState.WinningPlayers.Select(x => x.PlayerName))</td>
         </tr>
     }
+    @if (State.GameState.State is GameStateEnum.Finished or GameStateEnum.Canceled)
+    {
+        <tr>
+            <th>Score</th>
+            <td>@State.Score</td>
+        </tr>
+    }
 </table>
 
 @code {

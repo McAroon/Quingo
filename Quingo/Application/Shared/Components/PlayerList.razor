@@ -5,6 +5,10 @@
     <HeaderContent>
         <MudTh>Name</MudTh>
         <MudTh>Lives</MudTh>
+        @if (ShowScore)
+        {
+            <MudTh>Score</MudTh>
+        }
         @if (ShowActions)
         {
             <MudTh>Actions</MudTh>
@@ -13,6 +17,10 @@
     <RowTemplate>
         <MudTd DataLabel="Name">@context.PlayerName</MudTd>
         <MudTd DataLabel="Lives">@context.LivesNumber</MudTd>
+        @if (ShowScore)
+        {
+            <MudTd DataLabel="Score">@context.Score</MudTd>
+        }
         @if (ShowActions)
         {
             <MudTd DataLabel="Actions">
@@ -41,6 +49,8 @@
     public PlayerState? Player { get; set; }
 
     private bool ShowActions => Player == null || Game.State is GameStateEnum.Finished or GameStateEnum.Canceled;
+    
+    private bool ShowScore => Player == null || Game.State is GameStateEnum.Finished or GameStateEnum.Canceled;
 
     private DialogOptions _dialogOptions = new DialogOptions
         {

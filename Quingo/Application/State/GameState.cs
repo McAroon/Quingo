@@ -219,6 +219,16 @@ public class GameState : IDisposable
         NotifyStateChanged();
     }
 
+    public void SetWinningPlayers(List<string> playerIds)
+    {
+        var playersToAdd = _players.Where(x => playerIds.Contains(x.PlayerUserId) && !_winningPlayers.Contains(x)).ToList();
+        foreach (var player in playersToAdd)
+        {
+            _winningPlayers.Add(player);
+        }
+        NotifyStateChanged();
+    }
+
 
     #region events
 

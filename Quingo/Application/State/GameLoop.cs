@@ -2,7 +2,6 @@
 
 public class GameLoop : IDisposable
 {
-
     private readonly ILogger _logger;
     private readonly GameState _game;
     private Timer? _timer;
@@ -19,7 +18,7 @@ public class GameLoop : IDisposable
     private void Start()
     {
         if (_timer != null) return;
-        _timer = new Timer(callback: LoopCallback, state: this, dueTime: 1000, period: 1000 );
+        _timer = new Timer(callback: LoopCallback, state: this, dueTime: 1000, period: 1000);
         State = GameLoopState.Running;
     }
 
@@ -30,14 +29,14 @@ public class GameLoop : IDisposable
         _timer = null;
         State = GameLoopState.Stopped;
     }
-    
+
     private void StopWithError(Exception e)
     {
         _logger.LogError(e, e.Message);
         _timer?.Dispose();
         _timer = null;
         State = GameLoopState.Error;
-    } 
+    }
 
     private static void LoopCallback(object? state)
     {
@@ -52,22 +51,22 @@ public class GameLoop : IDisposable
             loop.StopWithError(e);
         }
     }
-    
-    private static void RunLoop(GameLoop loop) 
+
+    private static void RunLoop(GameLoop loop)
     {
         loop._logger.LogDebug("Loop tick {id}", loop._game.GameSessionId);
-        
+
         if (loop.State != GameLoopState.Running)
         {
             loop._logger.LogWarning("Loop is running while not in valid state: {state}", loop.State);
         }
-        
+
         if (loop._game.State is GameStateEnum.Active or GameStateEnum.FinalCountdown)
         {
             if (loop._game.GameTimer > 0)
             {
                 loop._game.DecrementGameTimer();
-                
+
                 if (loop._game.State is GameStateEnum.Active && loop._game.WinningPlayers.Count > 0)
                 {
                     if (loop._game.Preset.EndgameTimer > 0 && loop._game.GameTimer > loop._game.Preset.EndgameTimer)
@@ -81,6 +80,16 @@ public class GameLoop : IDisposable
             {
                 loop._game.SetState(GameStateEnum.Finished);
             }
+        }
+
+        if (loop._game.State is GameStateEnum.Finished or GameStateEnum.Canceled &&
+            loop._game.WinningPlayers.Count == 0 && loop._game.Players.Count > 0)
+        {
+            var maxScore = loop._game.Players.Select(x => x.Score).Max();
+            var playerIds = loop._game.Players
+                .Where(x => x.Score == maxScore)
+                .Select(x => x.PlayerUserId).ToList();
+            loop._game.SetWinningPlayers(playerIds);
         }
     }
 
