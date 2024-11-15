@@ -58,12 +58,12 @@
                         }
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd><MudIcon Icon="@context.LinkDirection.MudIcon()" Class="icon-inline"/> <span>@context.LinkDirection</span></MudTd>
-                        <MudTd>@context.LinkedNode?.Name</MudTd>
-                        <MudTd>@GetLinkTypeName(context.LinkTypeId)</MudTd>
+                        <MudTd DataLabel="Direction"><MudIcon Icon="@context.LinkDirection.MudIcon()" Class="icon-inline"/> <span>@context.LinkDirection</span></MudTd>
+                        <MudTd DataLabel="Item">@context.LinkedNode?.Name</MudTd>
+                        <MudTd DataLabel="Type">@GetLinkTypeName(context.LinkTypeId)</MudTd>
                         @if (context.Meta != null)
                         {
-                        <MudTd>
+                        <MudTd DataLabel="Actions">
                             <MudTooltip Text="Show Metadata" ShowOnFocus="false">
                                 <MudIconButton OnClick="() => ShowLinkMetaDialog(context)" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
                             </MudTooltip>
