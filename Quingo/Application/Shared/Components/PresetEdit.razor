@@ -8,7 +8,7 @@
                         <MudNumericField @bind-Value="_model.CardSize" @bind-Value:after="OnCardSizeUpdated" Label="Card Size" Min="1" Max="9" Required />
                         <MudCheckBox @bind-Value="_model.FreeCenter" Label="Free Center" Disabled="!_model.IsFreeCenterEnabled" />
                         <MudNumericField @bind-Value="_model.LivesNumber" Label="Number of Lives" Min="1" Required />
-                        <MudNumericField @bind-Value="_model.MaxPlayers" Label="Number of Players" Min="1" Required />
+                        <MudNumericField @bind-Value="_model.MaxPlayers" Label="Number of Players" Min="0" />
                         <MudNumericField @bind-Value="_model.GameTimer" Label="Game Timer" Min="0" />
                         <MudNumericField @bind-Value="_model.EndgameTimer" Label="Endgame Timer" Min="0" />
                         <MudSelect T="PackPresetPattern" Label="Winning Pattern" @bind-Value="@_model.Pattern">

@@ -107,6 +107,8 @@ public class GameState : IDisposable
         _ => ""
     };
 
+    public bool CanJoin => Preset.MaxPlayers <= 0 || Players.Count < Preset.MaxPlayers;
+
     private void Setup()
     {
         if (State != GameStateEnum.Init) return;

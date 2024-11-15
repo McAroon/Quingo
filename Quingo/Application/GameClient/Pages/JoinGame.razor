@@ -30,9 +30,9 @@
         <MudTd DataLabel="Pack">@context.Pack.Name</MudTd>
         <MudTd DataLabel="Host">@context.HostName</MudTd>
         <MudTd DataLabel="Started">@context.StartedAt.ToShortDateString() @context.StartedAt.ToShortTimeString()</MudTd>
-        <MudTd DataLabel="Players">@context.Players.Count</MudTd>
+        <MudTd DataLabel="Players">@PlayersFormat(context)</MudTd>
         <MudTd DataLabel="Actions">
-            <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => Join(context)">Join</MudButton>
+            <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => Join(context)" Disabled="!context.CanJoin">Join</MudButton>
         </MudTd>
     </RowTemplate>
 </MudTable>
@@ -44,6 +44,8 @@
     private string? _userId;
 
     private string? _userName;
+
+    private string PlayersFormat(GameState state) => state.Preset.MaxPlayers <= 0 ? state.Players.Count.ToString() : $"{state.Players.Count}/{state.Preset.MaxPlayers}";
 
     protected override async Task OnInitializedAsync()
     {

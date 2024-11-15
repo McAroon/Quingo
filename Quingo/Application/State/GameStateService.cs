@@ -74,6 +74,11 @@ public class GameStateService
                 return exPlayer;
             }
 
+            if (!game.CanJoin)
+            {
+                throw new GameStateException("Unable to join, the room is full");
+            }
+
             var playerSessionId = Guid.NewGuid();
             var player = new PlayerState(playerSessionId, game, userId, userName);
             game.Join(player);
