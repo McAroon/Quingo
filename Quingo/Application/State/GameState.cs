@@ -6,7 +6,7 @@ namespace Quingo.Application.State;
 
 public class GameState : IDisposable
 {
-    public GameState(ILogger logger, Guid gameSessionId, Pack pack, PackPresetData preset, string hostUserId,
+    public GameState(Guid gameSessionId, Pack pack, PackPresetData preset, string hostUserId,
         string? hostName)
     {
         GameSessionId = gameSessionId;

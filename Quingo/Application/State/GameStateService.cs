@@ -2,6 +2,7 @@
 using Quingo.Infrastructure.Database;
 using Quingo.Shared.Entities;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Quingo.Infrastructure.Database.Repos;
 
@@ -29,6 +30,7 @@ public class GameStateService : IDisposable
     {
         try
         {
+            var startTime = Stopwatch.GetTimestamp();
             if (_state.Values.Any(x => (x.State is not GameStateEnum.Finished and not GameStateEnum.Canceled) && x.HostUserId == userId))
             {
                 throw new GameStateException("User is already hosting a game");
@@ -44,6 +46,9 @@ public class GameStateService : IDisposable
                 throw new GameStateException("Pack not found");
             }
 
+            var getPackTime = Stopwatch.GetElapsedTime(startTime);
+            var startTime2 = Stopwatch.GetTimestamp();
+
             var user = await db.Users.FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
             {
@@ -52,11 +57,17 @@ public class GameStateService : IDisposable
 
             var sessionId = Guid.NewGuid();
 
-            var game = new GameState(_logger, sessionId, pack, preset, userId, user.UserName);
+            var game = new GameState(sessionId, pack, preset, userId, user.UserName);
             if (!_state.TryAdd(sessionId, game))
             {
                 throw new GameStateException("Error creating game");
             }
+
+            var createGameTime = Stopwatch.GetElapsedTime(startTime2);
+            var totalTime = Stopwatch.GetElapsedTime(startTime);
+
+            _logger.LogInformation("Created game id:{id} getPackTime:{getPackTime}s createGameTime:{createGameTime}s total:{totalTime}s", sessionId, getPackTime.TotalSeconds, createGameTime.TotalSeconds, totalTime.TotalSeconds);
+            
             return game;
         }
         catch (Exception e) when (e is not GameStateException)

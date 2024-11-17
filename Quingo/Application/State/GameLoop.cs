@@ -81,7 +81,7 @@ public class GameLoop : IDisposable
             loop._logger.LogWarning("Loop is running while not in valid state: {state}", loop.State);
         }
 
-        Parallel.ForEach(loop._state, (gameKv) =>
+        Parallel.ForEach(loop._state, new ParallelOptions { MaxDegreeOfParallelism = 4 }, gameKv =>
         {
             var game = gameKv.Value;
             try

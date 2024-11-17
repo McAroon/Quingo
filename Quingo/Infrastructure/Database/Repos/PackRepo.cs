@@ -2,6 +2,7 @@
 using Quingo.Shared.Entities;
 
 namespace Quingo.Infrastructure.Database.Repos;
+
 public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
 {
     public async Task<ApplicationDbContext> CreateDbContext()
@@ -43,14 +44,14 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
             .Include(x => x.Presets)
             .Include(x => x.IndirectLinks).ThenInclude(x => x.Steps)
             .AsSplitQuery();
-        
+
         var pack = await packQ.FirstOrDefaultAsync(x => x.Id == packId);
         return pack;
     }
 
-    public async Task<PagedResult<Node>> GetPackNodes(Pack pack, 
-        int page = 1, int pageSize = 10, 
-        string search = "", List<int>? tagIds = null, 
+    public async Task<PagedResult<Node>> GetPackNodes(Pack pack,
+        int page = 1, int pageSize = 10,
+        string search = "", List<int>? tagIds = null,
         PackNodesOrderBy orderBy = PackNodesOrderBy.CreatedAt, OrderDirection direction = OrderDirection.Descending)
     {
         await using var context = await CreateDbContext();
@@ -59,21 +60,20 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
             Page = page,
             PageSize = pageSize,
         };
-        
+
         var nodesQ = context.Nodes
             .Where(x => x.PackId == pack.Id)
             .Include(x => x.NodeTags)
             .Include(x => x.NodeLinksFrom)
             .Include(x => x.NodeLinksTo)
             .AsQueryable();
-        
+
         nodesQ = OrderNodes(nodesQ, orderBy, direction);
 
         if (!string.IsNullOrEmpty(search))
         {
-            
             nodesQ = nodesQ.Where(x => EF.Functions.ILike(
-                ApplicationDbContext.FUnaccent(x.Name), 
+                ApplicationDbContext.FUnaccent(x.Name),
                 ApplicationDbContext.FUnaccent($"%{search}%")));
         }
 
@@ -81,11 +81,11 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
         {
             nodesQ = nodesQ.Where(x => x.NodeTags.Any(y => tagIds.Contains(y.TagId)));
         }
-        
+
         result.Count = await nodesQ.CountAsync();
-        
+
         nodesQ = nodesQ.Skip((page - 1) * pageSize).Take(pageSize);
-        
+
         var nodes = await nodesQ.ToListAsync();
 
         var nodeIds = nodes.Select(x => x.Id).ToList();
@@ -99,11 +99,11 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
             .Where(x => linkedNodeIds.Contains(x.Id))
             .AsSplitQuery()
             .ToListAsync();
-        
+
         PopulatePackNodes(pack, nodes, linkedNodes);
-        
+
         result.Data = nodes;
-        
+
         return result;
     }
 
@@ -119,7 +119,7 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
         {
             query = query.Where(x => EF.Functions.ILike(x.Name ?? "", $"%{search}%"));
         }
-        
+
         var result = await query.ToListAsync();
         var resTuples = result.Select(x => (id: x.Id, name: x.Name)).ToList();
         return resTuples;
@@ -139,19 +139,19 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
             PackNodesOrderBy.Image => direction == OrderDirection.Ascending
                 ? nodes.OrderBy(x => x.ImageUrl)
                 : nodes.OrderByDescending(x => x.ImageUrl),
-            PackNodesOrderBy.Links => direction == OrderDirection.Ascending 
+            PackNodesOrderBy.Links => direction == OrderDirection.Ascending
                 ? nodes.OrderBy(x => x.NodeLinksFrom.Count + x.NodeLinksTo.Count)
                 : nodes.OrderByDescending(x => x.NodeLinksFrom.Count + x.NodeLinksTo.Count),
             _ => throw new ArgumentOutOfRangeException(nameof(orderBy), orderBy, null)
         };
     }
-    
+
     private static void PopulatePackNodes(Pack pack, List<Node> nodes, List<Node>? linkedNodes = null)
     {
-        foreach (var node in nodes)
+        Parallel.ForEach(nodes, new ParallelOptions { MaxDegreeOfParallelism = 4 }, node =>
         {
             node.Pack ??= pack;
-            
+
             foreach (var tag in node.NodeTags)
             {
                 tag.Tag ??= pack.Tags.First(x => x.Id == tag.TagId);
@@ -160,7 +160,7 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
             foreach (var link in node.NodeLinksFrom)
             {
                 link.NodeLinkType ??= pack.NodeLinkTypes.First(x => x.Id == link.NodeLinkTypeId);
-                link.NodeTo ??= pack.Nodes.FirstOrDefault(x => x.Id == link.NodeToId) 
+                link.NodeTo ??= pack.Nodes.FirstOrDefault(x => x.Id == link.NodeToId)
                                 ?? nodes.FirstOrDefault(x => x.Id == link.NodeToId)
                                 ?? linkedNodes?.FirstOrDefault(x => x.Id == link.NodeToId)
                                 ?? throw new NullReferenceException("Could not find node");
@@ -174,7 +174,34 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
                                   ?? linkedNodes?.FirstOrDefault(x => x.Id == link.NodeFromId)
                                   ?? throw new NullReferenceException("Could not find node");
             }
-        }
+        });
+        // foreach (var node in nodes)
+        // {
+        //     node.Pack ??= pack;
+        //     
+        //     foreach (var tag in node.NodeTags)
+        //     {
+        //         tag.Tag ??= pack.Tags.First(x => x.Id == tag.TagId);
+        //     }
+        //
+        //     foreach (var link in node.NodeLinksFrom)
+        //     {
+        //         link.NodeLinkType ??= pack.NodeLinkTypes.First(x => x.Id == link.NodeLinkTypeId);
+        //         link.NodeTo ??= pack.Nodes.FirstOrDefault(x => x.Id == link.NodeToId) 
+        //                         ?? nodes.FirstOrDefault(x => x.Id == link.NodeToId)
+        //                         ?? linkedNodes?.FirstOrDefault(x => x.Id == link.NodeToId)
+        //                         ?? throw new NullReferenceException("Could not find node");
+        //     }
+        //
+        //     foreach (var link in node.NodeLinksTo)
+        //     {
+        //         link.NodeLinkType ??= pack.NodeLinkTypes.First(x => x.Id == link.NodeLinkTypeId);
+        //         link.NodeFrom ??= pack.Nodes.FirstOrDefault(x => x.Id == link.NodeFromId)
+        //                           ?? nodes.FirstOrDefault(x => x.Id == link.NodeFromId)
+        //                           ?? linkedNodes?.FirstOrDefault(x => x.Id == link.NodeFromId)
+        //                           ?? throw new NullReferenceException("Could not find node");
+        //     }
+        // }
 
         foreach (var link in pack.IndirectLinks)
         {
