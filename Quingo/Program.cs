@@ -50,7 +50,7 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+builder.Services.AddPooledDbContextFactory<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(connectionString);
     if (builder.Environment.IsDevelopment())
@@ -58,7 +58,7 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
         options.EnableSensitiveDataLogging();
     }
 });
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();

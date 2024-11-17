@@ -97,8 +97,7 @@
         _ => ""
     };
 
-    private string CardClass => string.Join(" ",
-        ["node-square", StateClass, OnClick != null ? "clickable mud-ripple" : ""]);
+    private string CardClass => string.Join(" ", new List<string> {"node-square", StateClass, OnClick != null ? "clickable mud-ripple" : ""});
 
     private string? _imageStyle;
 
