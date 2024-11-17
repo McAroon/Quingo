@@ -15,6 +15,7 @@ using Quingo.Infrastructure.Files;
 using Quingo.Scripts;
 using Quingo.Shared;
 using Quingo.Shared.Entities;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,8 +26,16 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 //.AddInteractiveWebAssemblyComponents();
 
-builder.Logging.AddConfiguration(
-    builder.Configuration.GetSection("Logging"));
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
+
+builder.Services.AddSerilog();
+
+// builder.Logging.AddConfiguration(
+//     builder.Configuration.GetSection("Logging"));
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
