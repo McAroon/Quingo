@@ -73,9 +73,5 @@ else
         if (_game == null) return;
 
         _game.StateChanged -= OnStateChanged;
-        if (_game.State is GameStateEnum.Finished or GameStateEnum.Canceled)
-        {
-            StateService.RemoveGame(_game);
-        }
     }
 }

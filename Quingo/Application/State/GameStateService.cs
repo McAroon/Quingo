@@ -7,19 +7,22 @@ using Quingo.Infrastructure.Database.Repos;
 
 namespace Quingo.Application.State;
 
-public class GameStateService
+public class GameStateService : IDisposable
 {
-    private static readonly ConcurrentDictionary<Guid, GameState> _state = new();
+    private readonly ConcurrentDictionary<Guid, GameState> _state = new();
     public IReadOnlyList<GameState> Games => new List<GameState>(_state.Values).AsReadOnly();
 
     private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
 
     private readonly ILogger<GameStateService> _logger;
 
+    private readonly GameLoop _loop;
+
     public GameStateService(IDbContextFactory<ApplicationDbContext> dbContextFactory, ILogger<GameStateService> logger)
     {
         _dbContextFactory = dbContextFactory;
         _logger = logger;
+        _loop = new GameLoop(logger, _state);
     }
 
     public async Task<GameState> StartGame(int packId, PackPresetData preset, string userId)
@@ -134,7 +137,6 @@ public class GameStateService
             }
 
             game.EndGame();
-            RemoveGame(game);
         }
         catch (Exception e) when (e is not GameStateException)
         {
@@ -156,18 +158,16 @@ public class GameStateService
         return isAdmin;
     }
 
-    public void RemoveGame(GameState game)
+    public void Dispose()
     {
-        if (game.State is not GameStateEnum.Finished and not GameStateEnum.Canceled)
+        _loop.Dispose();
+        foreach (var game in _state)
         {
-            return;
+            foreach (var player in game.Value.Players)
+            {
+                player.Dispose();
+            }
+            game.Value.Dispose();
         }
-
-        _ = Task.Run(async () => 
-        {
-            await Task.Delay(1000 * 10);
-            game.Dispose();
-            _state.TryRemove(game.GameSessionId, out _);
-        });
     }
 }

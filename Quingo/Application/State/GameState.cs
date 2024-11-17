@@ -1,5 +1,6 @@
 ﻿using Quingo.Shared.Entities;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace Quingo.Application.State;
 
@@ -17,8 +18,7 @@ public class GameState : IDisposable
         StartedAt = UpdatedAt = DateTime.UtcNow;
         State = GameStateEnum.Init;
 
-        _gameTimer = preset.GameTimer;
-        _loop = new GameLoop(logger, this);
+        GameTimer = GameTimerInitialValue = preset.GameTimer;
         _random = new Random(gameSessionId.GetHashCode());
 
         _drawnNodes.CollectionChanged += HandleDrawnNodesChanged;
@@ -45,8 +45,6 @@ public class GameState : IDisposable
     public DateTime UpdatedAt { get; private set; }
 
     public int QuestionCount { get; private set; }
-
-    private readonly GameLoop _loop;
 
     private readonly Random _random;
     public Random Random => _random;
@@ -81,21 +79,25 @@ public class GameState : IDisposable
         }
     }
 
-    private int _gameTimer;
+    public int GameTimer { get; private set; }
 
-    public int GameTimer => _gameTimer;
+    public int GameTimerInitialValue { get; private set; }
 
-    public bool IsGameTimerRunning { get; set; }
+    public long? GameTimerStartedAt { get; private set; }
 
-    public void DecrementGameTimer()
+    public void ResetGameTimer(int value)
     {
-        Interlocked.Decrement(ref _gameTimer);
+        GameTimer = GameTimerInitialValue = value;
+        GameTimerStartedAt = Stopwatch.GetTimestamp();
         NotifyStateChanged();
     }
 
-    public void SetGameTimer(int value)
+    public void RefreshGameTimer()
     {
-        _gameTimer = value;
+        if (GameTimerStartedAt == null) return;
+        var elapsed = Stopwatch.GetElapsedTime(GameTimerStartedAt.Value);
+        var value = GameTimerInitialValue - (int)Math.Abs(Math.Round(elapsed.TotalSeconds));
+        GameTimer = value > 0 ? value : 0;
         NotifyStateChanged();
     }
 
@@ -146,9 +148,9 @@ public class GameState : IDisposable
             player.Validate();
         }
 
-        if (!IsGameTimerRunning)
+        if (Preset.GameTimer > 0 && GameTimerStartedAt == null)
         {
-            IsGameTimerRunning = true;
+            GameTimerStartedAt = Stopwatch.GetTimestamp();
         }
 
         NotifyStateChanged();
@@ -278,13 +280,12 @@ public class GameState : IDisposable
 
     #region dispose
 
-    private bool disposedValue;
+    private bool _disposedValue;
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!disposedValue)
+        if (!_disposedValue)
         {
-            _loop.Dispose();
             StateChanged = null;
             NodeDrawn = null;
             _drawnNodes.CollectionChanged -= HandleDrawnNodesChanged;
@@ -296,7 +297,7 @@ public class GameState : IDisposable
                 player.Dispose();
             }
 
-            disposedValue = true;
+            _disposedValue = true;
         }
     }
 

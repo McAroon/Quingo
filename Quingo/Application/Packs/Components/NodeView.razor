@@ -10,9 +10,9 @@
         <CardHeaderActions>
             @if (_model.Meta != null)
             {
-            <MudTooltip Text="Show Metadata" ShowOnFocus="false">
-                <MudIconButton OnClick="ShowNodeMetaDialog" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
-            </MudTooltip>
+                <MudTooltip Text="Show Metadata" ShowOnFocus="false">
+                    <MudIconButton OnClick="ShowNodeMetaDialog" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
+                </MudTooltip>
             }
             <MudTooltip Text="Edit Item" ShowOnFocus="false">
                 <MudIconButton OnClick="Edit" Icon="@Icons.Material.Filled.Edit"></MudIconButton>
@@ -25,27 +25,27 @@
     <MudCardContent>
         <MudGrid>
             <MudItem xs="12">
-                <NodeSquare Node="_model" ShowTagBadge ShowTagBadgeTooltip />
+                <NodeSquare Node="_model" ShowTagBadge ShowTagBadgeTooltip/>
             </MudItem>
             <MudItem xs="12">
                 <MudText Typo="Typo.h6" GutterBottom>Tags</MudText>
                 @if (_model.TagIds.Any())
                 {
-                @foreach (var tag in GetTagNames(_model.TagIds))
-                {
-                <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@tag</MudChip>
-                }
+                    @foreach (var tag in GetTagNames(_model.TagIds))
+                    {
+                        <MudChip T="string" Variant="Variant.Filled" Color="Color.Info">@tag</MudChip>
+                    }
                 }
                 else
                 {
-                <i>none</i>
+                    <i>none</i>
                 }
             </MudItem>
             <MudItem xs="12">
                 <MudTable Items="_model.NodeLinks" Filter="FilterFunc" Dense>
                     <ToolBarContent>
                         <MudText Typo="Typo.h6" GutterBottom>Linked Items</MudText>
-                        <MudSpacer />
+                        <MudSpacer/>
                         <MudTextField @bind-Value="_searchFilter" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" DebounceInterval="200" Clearable></MudTextField>
                     </ToolBarContent>
                     <HeaderContent>
@@ -54,24 +54,26 @@
                         <MudTh>Type</MudTh>
                         @if (_model.NodeLinks.Any(x => x.Meta != null))
                         {
-                        <MudTh></MudTh>
+                            <MudTh></MudTh>
                         }
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Direction"><MudIcon Icon="@context.LinkDirection.MudIcon()" Class="icon-inline"/> <span>@context.LinkDirection</span></MudTd>
+                        <MudTd DataLabel="Direction">
+                            <MudIcon Icon="@context.LinkDirection.MudIcon()" Class="icon-inline"/> <span>@context.LinkDirection</span>
+                        </MudTd>
                         <MudTd DataLabel="Item">@context.LinkedNode?.Name</MudTd>
                         <MudTd DataLabel="Type">@GetLinkTypeName(context.LinkTypeId)</MudTd>
                         @if (context.Meta != null)
                         {
-                        <MudTd DataLabel="Actions">
-                            <MudTooltip Text="Show Metadata" ShowOnFocus="false">
-                                <MudIconButton OnClick="() => ShowLinkMetaDialog(context)" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
-                            </MudTooltip>
-                        </MudTd>
+                            <MudTd DataLabel="Actions">
+                                <MudTooltip Text="Show Metadata" ShowOnFocus="false">
+                                    <MudIconButton OnClick="() => ShowLinkMetaDialog(context)" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
+                                </MudTooltip>
+                            </MudTd>
                         }
                         else if (_model.NodeLinks.Any(x => x.Meta != null))
                         {
-                        <MudTd></MudTd>
+                            <MudTd></MudTd>
                         }
                     </RowTemplate>
                     <PagerContent>
@@ -82,20 +84,18 @@
         </MudGrid>
     </MudCardContent>
 </MudCard>
+
 @code {
-    [Parameter]
-    public Node Node { get; set; } = default!;
-    
-    [Parameter]
-    public Func<int, Task>? OnDelete { get; set; }
-    
-    [Parameter]
-    public Func<int, Task>? OnEdit { get; set; }
-    
+    [Parameter] public Node Node { get; set; } = default!;
+
+    [Parameter] public Func<int, Task>? OnDelete { get; set; }
+
+    [Parameter] public Func<int, Task>? OnEdit { get; set; }
+
     private NodeModel _model = default!;
 
     private string _searchFilter = string.Empty;
-    
+
     protected override void OnParametersSet()
     {
         RemapModel();
@@ -113,20 +113,20 @@
             return true;
         return item.LinkedNode?.Name?.Contains(_searchFilter, StringComparison.InvariantCultureIgnoreCase) == true;
     }
-    
+
 
     private async Task Edit()
     {
         if (OnEdit != null)
             await OnEdit.Invoke(Node.Id);
     }
-    
+
     private async Task Delete()
     {
         if (OnDelete != null)
             await OnDelete.Invoke(Node.Id);
     }
-    
+
     private IEnumerable<string> GetTagNames(IEnumerable<int> tagIds)
     {
         var tagIdList = tagIds.ToList();
@@ -149,4 +149,5 @@
         if (link.Meta == null) return;
         await ShowMetaDialog.ShowDialog(Dialog, $"Link Metadata: {_model.Name}", link.Meta);
     }
+
 }

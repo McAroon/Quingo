@@ -29,7 +29,7 @@
                                         <MudSelectItem Value="NodeLinkDirection.From"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.From.MudIcon()" Class="icon-inline-select"/> From</MudSelectItem>
                                         <MudSelectItem Value="NodeLinkDirection.Both"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.Both.MudIcon()" Class="icon-inline-select"/> Both</MudSelectItem>
                                     </MudSelect>
-                                    <MudAutocomplete T="LinkedNodeInfoModel" Label="Link Item" @bind-Value="@link.LinkedNode" @bind-Value:after="() => OnLinkChange(link)" 
+                                    <MudAutocomplete T="LinkedNodeInfoModel" Label="Link Item" @bind-Value="@link.LinkedNode" @bind-Value:after="() => OnLinkChange(link)"
                                                      SearchFunc="SearchNode" ToStringFunc="x => x?.Name ?? string.Empty" ResetValueOnEmptyText Clearable Required/>
                                     <MudSelect T="int?" Label="Link Type" @bind-Value="@link.LinkTypeId" @bind-Value:after="() => OnLinkChange(link)" Required>
                                         @foreach (var linkType in Node.Pack.NodeLinkTypes)
@@ -103,10 +103,10 @@
     {
         if (_model.NodeLinks.Contains(linkModel))
             _model.NodeLinks.Remove(linkModel);
-        
+
         if (_model.NodeLinksChanged.Contains(linkModel))
             _model.NodeLinksChanged.Remove(linkModel);
-        
+
         if (!_model.NodeLinksRemoved.Contains(linkModel))
             _model.NodeLinksRemoved.Add(linkModel);
     }

@@ -1,24 +1,39 @@
-﻿namespace Quingo.Application.State;
+﻿using System.Collections.Concurrent;
+
+namespace Quingo.Application.State;
 
 public class GameLoop : IDisposable
 {
-    private readonly ILogger _logger;
-    private readonly GameState _game;
-    private Timer? _timer;
+    private const int RemoveAfterMin = 3;
+    private const int LoopPeriodMs = 1000;
 
-    public GameLoop(ILogger logger, GameState game)
+    private readonly ILogger _logger;
+    private readonly ConcurrentDictionary<Guid, GameState> _state;
+    private Timer? _timer;
+    private Guid _id;
+
+    public GameLoop(ILogger logger, ConcurrentDictionary<Guid, GameState> state)
     {
         _logger = logger;
-        _game = game;
+        _state = state;
         Start();
     }
 
     public GameLoopState State { get; private set; }
 
-    private void Start()
+    public DateTime Heartbeat { get; private set; }
+
+    public DateTime LastHeartbeat { get; private set; }
+
+    public TimeSpan HeartbeatPeriod { get; private set; }
+
+    private void Start(bool onError = false)
     {
         if (_timer != null) return;
-        _timer = new Timer(callback: LoopCallback, state: this, dueTime: 1000, period: 1000);
+
+        var startDelay = onError ? LoopPeriodMs * 5 : LoopPeriodMs;
+        _timer = new Timer(callback: LoopCallback, state: this, dueTime: startDelay, period: LoopPeriodMs);
+        _id = Guid.NewGuid();
         State = GameLoopState.Running;
     }
 
@@ -49,59 +64,97 @@ public class GameLoop : IDisposable
         catch (Exception e)
         {
             loop.StopWithError(e);
+            loop.Start(true);
         }
     }
 
     private static void RunLoop(GameLoop loop)
     {
-        loop._logger.LogDebug("Loop tick {id}", loop._game.GameSessionId);
+        loop.LastHeartbeat = loop.Heartbeat;
+        loop.Heartbeat = DateTime.UtcNow;
+        loop.HeartbeatPeriod = loop.Heartbeat - loop.LastHeartbeat;
+
+        loop._logger.LogDebug("Game loop tick id:{id} games:{count}", loop._id, loop._state.Count);
 
         if (loop.State != GameLoopState.Running)
         {
             loop._logger.LogWarning("Loop is running while not in valid state: {state}", loop.State);
         }
 
-        if (loop._game.State is GameStateEnum.Active or GameStateEnum.FinalCountdown)
+        Parallel.ForEach(loop._state, (gameKv) =>
         {
-            if (loop._game.GameTimer > 0)
+            var game = gameKv.Value;
+            try
             {
-                if (loop._game.IsGameTimerRunning)
+                if (CanRemove(game))
                 {
-                    loop._game.DecrementGameTimer();
-                }
-                
-                if (loop._game.State is GameStateEnum.Active && loop._game.WinningPlayers.Count > 0)
-                {
-                    if (loop._game.Preset.EndgameTimer > 0 && loop._game.GameTimer > loop._game.Preset.EndgameTimer)
+                    game.Dispose();
+                    var removed = loop._state.TryRemove(gameKv);
+                    if (removed)
                     {
-                        loop._game.SetState(GameStateEnum.FinalCountdown);
-                        loop._game.SetGameTimer(loop._game.Preset.EndgameTimer);
+                        loop._logger.LogDebug("Game loop removed gameId:{gameId}", game.GameSessionId);
                     }
-                }
-            }
-            else if (loop._game.Preset.GameTimer > 0 || loop._game.State is GameStateEnum.FinalCountdown)
-            {
-                if (loop._game.State is GameStateEnum.Active)
-                {
-                    loop._game.SetState(GameStateEnum.FinalCountdown);
-                    loop._game.SetGameTimer(loop._game.Preset.EndgameTimer);
+                    else
+                    {
+                        loop._logger.LogWarning("Game loop couldn't remove gameId:{gameId}", game.GameSessionId);
+                    }
                 }
                 else
                 {
-                    loop._game.SetState(GameStateEnum.Finished);
+                    RunGame(game);
                 }
+            }
+            catch (Exception e)
+            {
+                loop._logger.LogError(e, e.Message);
+            }
+        });
+    }
+
+    private static void RunGame(GameState game)
+    {
+        if (game is
+            {
+                State: GameStateEnum.Active or GameStateEnum.FinalCountdown,
+                GameTimerStartedAt: not null, GameTimer: > 0
+            })
+        {
+            game.RefreshGameTimer();
+        }
+        if (game is { State: GameStateEnum.Active } and 
+            ({ WinningPlayers.Count: > 0 } or { Preset.GameTimer: > 0, GameTimerStartedAt: not null, GameTimer: <= 0 }))
+        {
+            if (game.Preset.EndgameTimer > 0)
+            {
+                game.SetState(GameStateEnum.FinalCountdown);
+                game.ResetGameTimer(game.Preset.EndgameTimer);
+            }
+            else
+            {
+                game.SetState(GameStateEnum.Finished);
             }
         }
 
-        if (loop._game.State is GameStateEnum.Finished or GameStateEnum.Canceled &&
-            loop._game.WinningPlayers.Count == 0 && loop._game.Players.Count > 0)
+        if (game is { State: GameStateEnum.FinalCountdown, GameTimerStartedAt: not null, GameTimer: <= 0 })
         {
-            var maxScore = loop._game.Players.Select(x => x.Score).Max();
-            var playerIds = loop._game.Players
+            game.SetState(GameStateEnum.Finished);
+        }
+
+        if (game is { State: GameStateEnum.Finished or GameStateEnum.Canceled, WinningPlayers.Count: 0, Players.Count: > 0 })
+        {
+            var maxScore = game.Players.Select(x => x.Score).Max();
+            var playerIds = game.Players
                 .Where(x => x.Score == maxScore)
                 .Select(x => x.PlayerUserId).ToList();
-            loop._game.SetWinningPlayers(playerIds);
+            game.SetWinningPlayers(playerIds);
         }
+    }
+
+    private static bool CanRemove(GameState game)
+    {
+        var maxUpdated = game.Players.Select(x => x.UpdatedAt).Concat([game.UpdatedAt]).Max();
+        return game.State is GameStateEnum.Finished or GameStateEnum.Canceled &&
+               DateTime.UtcNow - maxUpdated > TimeSpan.FromMinutes(RemoveAfterMin);
     }
 
     public void Dispose()
