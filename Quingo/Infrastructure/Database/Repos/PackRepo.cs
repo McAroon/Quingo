@@ -148,7 +148,37 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
 
     private static void PopulatePackNodes(Pack pack, List<Node> nodes, List<Node>? linkedNodes = null)
     {
-        Parallel.ForEach(nodes, new ParallelOptions { MaxDegreeOfParallelism = 4 }, node =>
+        if (nodes.Count < 50)
+        {
+            foreach (var node in nodes)
+            {
+                PopulateNode(node);
+            }
+        }
+        else
+        {
+            Parallel.ForEach(nodes, PopulateNode);
+        }
+
+        foreach (var link in pack.IndirectLinks)
+        {
+            link.Steps = [.. link.Steps.OrderBy(x => x.Order)];
+            foreach (var step in link.Steps)
+            {
+                step.TagFrom ??= pack.Tags.First(x => x.Id == step.TagFromId);
+                step.TagTo ??= pack.Tags.First(x => x.Id == step.TagToId);
+            }
+        }
+
+        if (linkedNodes != null)
+        {
+            foreach (var tag in linkedNodes.SelectMany(node => node.NodeTags))
+            {
+                tag.Tag ??= pack.Tags.First(x => x.Id == tag.TagId);
+            }
+        }
+
+        void PopulateNode(Node node)
         {
             node.Pack ??= pack;
 
@@ -173,51 +203,6 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
                                   ?? nodes.FirstOrDefault(x => x.Id == link.NodeFromId)
                                   ?? linkedNodes?.FirstOrDefault(x => x.Id == link.NodeFromId)
                                   ?? throw new NullReferenceException("Could not find node");
-            }
-        });
-        // foreach (var node in nodes)
-        // {
-        //     node.Pack ??= pack;
-        //     
-        //     foreach (var tag in node.NodeTags)
-        //     {
-        //         tag.Tag ??= pack.Tags.First(x => x.Id == tag.TagId);
-        //     }
-        //
-        //     foreach (var link in node.NodeLinksFrom)
-        //     {
-        //         link.NodeLinkType ??= pack.NodeLinkTypes.First(x => x.Id == link.NodeLinkTypeId);
-        //         link.NodeTo ??= pack.Nodes.FirstOrDefault(x => x.Id == link.NodeToId) 
-        //                         ?? nodes.FirstOrDefault(x => x.Id == link.NodeToId)
-        //                         ?? linkedNodes?.FirstOrDefault(x => x.Id == link.NodeToId)
-        //                         ?? throw new NullReferenceException("Could not find node");
-        //     }
-        //
-        //     foreach (var link in node.NodeLinksTo)
-        //     {
-        //         link.NodeLinkType ??= pack.NodeLinkTypes.First(x => x.Id == link.NodeLinkTypeId);
-        //         link.NodeFrom ??= pack.Nodes.FirstOrDefault(x => x.Id == link.NodeFromId)
-        //                           ?? nodes.FirstOrDefault(x => x.Id == link.NodeFromId)
-        //                           ?? linkedNodes?.FirstOrDefault(x => x.Id == link.NodeFromId)
-        //                           ?? throw new NullReferenceException("Could not find node");
-        //     }
-        // }
-
-        foreach (var link in pack.IndirectLinks)
-        {
-            link.Steps = [.. link.Steps.OrderBy(x => x.Order)];
-            foreach (var step in link.Steps)
-            {
-                step.TagFrom ??= pack.Tags.First(x => x.Id == step.TagFromId);
-                step.TagTo ??= pack.Tags.First(x => x.Id == step.TagToId);
-            }
-        }
-
-        if (linkedNodes != null)
-        {
-            foreach (var tag in linkedNodes.SelectMany(node => node.NodeTags))
-            {
-                tag.Tag ??= pack.Tags.First(x => x.Id == tag.TagId);
             }
         }
     }

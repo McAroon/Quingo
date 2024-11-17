@@ -6,7 +6,7 @@ public class GameLoop : IDisposable
 {
     private const int RemoveAfterMin = 3;
     private const int LoopPeriodMs = 1000;
-    private const int ParallelEntries = 5;
+    private const int ParallelEntries = 10;
 
     private readonly ILogger _logger;
     private readonly ConcurrentDictionary<Guid, GameState> _state;
@@ -91,7 +91,7 @@ public class GameLoop : IDisposable
         }
         else
         {
-            Parallel.ForEach(loop._state, new ParallelOptions { MaxDegreeOfParallelism = 4 }, gameKv =>
+            Parallel.ForEach(loop._state, gameKv =>
             {
                 RunLoopTick(loop, gameKv.Value);
             });
