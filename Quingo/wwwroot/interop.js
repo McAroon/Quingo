@@ -16,3 +16,8 @@ window.scrollToLastChild = (elementId) => {
   element.lastElementChild.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'});
   return true;
 };
+
+window.getBrowserTimeZone = () => {
+    const options = Intl.DateTimeFormat().resolvedOptions(); 
+    return options.timeZone;
+}

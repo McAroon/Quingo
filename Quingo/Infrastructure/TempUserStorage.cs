@@ -4,7 +4,8 @@ namespace Quingo.Shared;
 
 public class TempUserStorage
 {
-    public const string DARK_MODE = "darkMode";
+    public const string DarkMode = "darkMode";
+    public const string TimeZone = "timeZone";
 
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _data = [];
 

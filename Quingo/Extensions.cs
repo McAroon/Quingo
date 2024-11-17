@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using TimeZoneConverter;
 
 namespace Quingo;
 
@@ -30,5 +31,15 @@ public static class Extensions
     public static string ToStringHoursOptional(this TimeSpan span)
     {
         return span.Hours > 0 ? span.ToString(@"hh\:mm\:ss") : span.ToString(@"mm\:ss");
+    }
+    
+    public static string FormatWithTimeZone(this DateTime date, string? timeZone)
+    {
+
+        var result = !string.IsNullOrEmpty(timeZone) 
+                  && TZConvert.TryGetTimeZoneInfo(timeZone, out var tzInfo)
+            ? TimeZoneInfo.ConvertTimeFromUtc(date, tzInfo) 
+            : date;
+        return $"{result:d} {result:t}";
     }
 }

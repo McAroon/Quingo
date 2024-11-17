@@ -2,21 +2,24 @@
 
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
+@using Quingo.Shared
 
 @inject GameStateService StateService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 @inject ILogger<JoinGame> Logger
+@inject TempUserStorage Store
 
 @attribute [Authorize]
 
 <PageTitle>Join Game</PageTitle>
 
 <MudText Typo="Typo.h3" GutterBottom>
-    Join Game <MudTooltip Text="Refresh">
+    Join Game
+    <MudTooltip Text="Refresh">
         <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="StateHasChanged"></MudIconButton>
     </MudTooltip>
-    </MudText>
+</MudText>
 
 <MudTable Items="StateService.Games.Where(x => x.State == GameStateEnum.Active)">
     <HeaderContent>
@@ -29,23 +32,26 @@
     <RowTemplate>
         <MudTd DataLabel="Pack">@context.Pack.Name</MudTd>
         <MudTd DataLabel="Host">@context.HostName</MudTd>
-        <MudTd DataLabel="Started">@context.StartedAt.ToShortDateString() @context.StartedAt.ToShortTimeString()</MudTd>
+        <MudTd DataLabel="Started">@context.StartedAt.FormatWithTimeZone(_timeZone)</MudTd>
         <MudTd DataLabel="Players">@PlayersFormat(context)</MudTd>
         <MudTd DataLabel="Actions">
-            <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => Join(context)" Disabled="!context.CanJoin">Join</MudButton>
+            <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => Join(context)"
+                       Disabled="!context.CanJoin">Join
+            </MudButton>
         </MudTd>
     </RowTemplate>
 </MudTable>
 
 @code {
-    [CascadingParameter]
-    private Task<AuthenticationState>? AuthenticationState { get; set; }
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
     private string? _userId;
 
     private string? _userName;
 
     private string PlayersFormat(GameState state) => state.Preset.MaxPlayers <= 0 ? state.Players.Count.ToString() : $"{state.Players.Count}/{state.Preset.MaxPlayers}";
+
+    private string? _timeZone;
 
     protected override async Task OnInitializedAsync()
     {
@@ -54,6 +60,11 @@
             var auth = await AuthenticationState;
             _userId = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
             _userName = auth.User.FindFirstValue(ClaimTypes.Name);
+
+            if (_userId != null)
+            {
+                _timeZone = Store.TryGet(_userId, TempUserStorage.TimeZone, out var tz) ? tz : null;
+            }
         }
     }
 
@@ -73,4 +84,5 @@
             Snackbar.Add(e.Message, Severity.Error);
         }
     }
+
 }

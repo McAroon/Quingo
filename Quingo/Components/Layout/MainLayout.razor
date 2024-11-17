@@ -4,6 +4,7 @@
 @inherits LayoutComponentBase
 
 @inject TempUserStorage Store
+@inject IJSRuntime Js
 
 <MudThemeProvider @ref="@_mudThemeProvider" @bind-IsDarkMode="@_isDarkMode" />
 <MudPopoverProvider />
@@ -82,6 +83,7 @@
             _isDarkMode = await _mudThemeProvider.GetSystemPreference();
             StateHasChanged();
             StoreSetDarkMode();
+            await StoreSetTimeZone();
         }
     }
 
@@ -94,15 +96,25 @@
     {
         if (_userId != null)
         {
-            Store.Set(_userId, TempUserStorage.DARK_MODE, _isDarkMode.ToString());
+            Store.Set(_userId, TempUserStorage.DarkMode, _isDarkMode.ToString());
         }
     }
 
     private bool? StoreGetDarkMode()
     {
         return _userId != null 
-        && Store.TryGet(_userId, TempUserStorage.DARK_MODE, out var strValue)
+        && Store.TryGet(_userId, TempUserStorage.DarkMode, out var strValue)
         && bool.TryParse(strValue, out var value) ? value : null;
+    }
+
+    private async Task StoreSetTimeZone()
+    {
+        if (_userId == null) return;
+        var timeZone = await Js.InvokeAsync<string>("window.getBrowserTimeZone");
+        if (!string.IsNullOrEmpty(timeZone))
+        {
+            Store.Set(_userId, TempUserStorage.TimeZone, timeZone);
+        }
     }
 
 }
