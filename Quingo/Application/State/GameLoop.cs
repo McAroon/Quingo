@@ -6,6 +6,7 @@ public class GameLoop : IDisposable
 {
     private const int RemoveAfterMin = 3;
     private const int LoopPeriodMs = 1000;
+    private const int ParallelEntries = 5;
 
     private readonly ILogger _logger;
     private readonly ConcurrentDictionary<Guid, GameState> _state;
@@ -81,34 +82,48 @@ public class GameLoop : IDisposable
             loop._logger.LogWarning("Loop is running while not in valid state: {state}", loop.State);
         }
 
-        Parallel.ForEach(loop._state, new ParallelOptions { MaxDegreeOfParallelism = 4 }, gameKv =>
+        if (loop._state.Count < ParallelEntries)
         {
-            var game = gameKv.Value;
-            try
+            foreach (var gameKv in loop._state)
             {
-                if (CanRemove(game))
+                RunLoopTick(loop, gameKv.Value);
+            }
+        }
+        else
+        {
+            Parallel.ForEach(loop._state, new ParallelOptions { MaxDegreeOfParallelism = 4 }, gameKv =>
+            {
+                RunLoopTick(loop, gameKv.Value);
+            });
+        }
+    }
+
+    private static void RunLoopTick(GameLoop loop, GameState game)
+    {
+        try
+        {
+            if (CanRemove(game))
+            {
+                game.Dispose();
+                var removed = loop._state.TryRemove(game.GameSessionId, out _);
+                if (removed)
                 {
-                    game.Dispose();
-                    var removed = loop._state.TryRemove(gameKv);
-                    if (removed)
-                    {
-                        loop._logger.LogDebug("Game loop removed gameId:{gameId}", game.GameSessionId);
-                    }
-                    else
-                    {
-                        loop._logger.LogWarning("Game loop couldn't remove gameId:{gameId}", game.GameSessionId);
-                    }
+                    loop._logger.LogDebug("Game loop removed gameId:{gameId}", game.GameSessionId);
                 }
                 else
                 {
-                    RunGame(game);
+                    loop._logger.LogWarning("Game loop couldn't remove gameId:{gameId}", game.GameSessionId);
                 }
             }
-            catch (Exception e)
+            else
             {
-                loop._logger.LogError(e, e.Message);
+                RunGame(game);
             }
-        });
+        }
+        catch (Exception e)
+        {
+            loop._logger.LogError(e, e.Message);
+        }
     }
 
     private static void RunGame(GameState game)
