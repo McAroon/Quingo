@@ -35,11 +35,11 @@ else
 
     private GameState _game = default!;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         try
         {
-            _game = StateService.GetGameState(GameSessionId, UserId);
+            _game = await StateService.GetGameState(GameSessionId, UserId);
             var player = _game.Players.FirstOrDefault(x => x.PlayerUserId == UserId);
             if (player != null)
             {

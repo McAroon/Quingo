@@ -133,12 +133,13 @@ public class GameStateService : IDisposable
         }
     }
 
-    public GameState GetGameState(Guid gameSessionId, string userId)
+    public async Task<GameState> GetGameState(Guid gameSessionId, string userId)
     {
         var game = GetGameState(gameSessionId);
-        if (game.HostUserId != userId)
+        var hasAccess = await CheckUserAccess(game, userId);
+        if (!hasAccess && game.Spectators.FirstOrDefault(x => x.UserId == userId) == null)
         {
-            throw new GameStateException("User is not the host");
+            throw new GameStateException("User is not allowed to access the game");
         }
 
         return game;
