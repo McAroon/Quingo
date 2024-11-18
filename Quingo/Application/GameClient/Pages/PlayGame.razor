@@ -18,7 +18,7 @@
 {
     <MudAlert Severity="Severity.Error">@_initError</MudAlert>
 }
-else
+else if (_isInitialized)
 {
     <CascadingValue Value="_state">
         <PlayerLayout />
@@ -40,6 +40,8 @@ else
     private string? _userId;
 
     private PlayerState _state = default!;
+    
+    private bool _isInitialized;
 
     protected override async Task OnInitializedAsync()
     {
@@ -61,6 +63,7 @@ else
             _state.StateChanged += OnStateChanged;
             _state.GameState.StateChanged += OnStateChanged;
             _state.GameState.GameStateChanged += OnGameStateChanged;
+            _isInitialized = true;
         }
         catch (Exception e)
         {

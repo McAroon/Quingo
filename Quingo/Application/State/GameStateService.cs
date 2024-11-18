@@ -94,7 +94,7 @@ public class GameStateService : IDisposable
                 return exPlayer;
             }
 
-            if (!game.CanJoin)
+            if (!game.CanJoin(userId))
             {
                 throw new GameStateException("Unable to join, the room is full");
             }

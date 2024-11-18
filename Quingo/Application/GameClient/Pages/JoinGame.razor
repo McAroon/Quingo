@@ -36,7 +36,7 @@
         <MudTd DataLabel="Players">@PlayersFormat(context)</MudTd>
         <MudTd DataLabel="Actions">
             <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => Join(context)"
-                       Disabled="!context.CanJoin">Join
+                       Disabled="!context.CanJoin(_userId)">Join
             </MudButton>
             <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => Spectate(context)"
                        Disabled="!context.CanSpectate(_userId)">Spectate

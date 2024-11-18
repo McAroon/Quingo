@@ -19,7 +19,7 @@
 {
     <MudAlert Severity="Severity.Error">@_initError</MudAlert>
 }
-else
+else if (_isInitialized)
 {
     <CascadingValue Value="_game">
         <HostLayout/>
@@ -35,6 +35,8 @@ else
 
     private GameState _game = default!;
 
+    private bool _isInitialized;
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -46,6 +48,7 @@ else
                 NavigationManager.NavigateTo($"/game/play/{_game.GameSessionId}/{player.PlayerSessionId}");
             }
             _game.StateChanged += OnStateChanged;
+            _isInitialized = true;
         }
         catch (Exception e)
         {

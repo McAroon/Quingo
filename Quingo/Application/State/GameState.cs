@@ -116,7 +116,9 @@ public class GameState : IDisposable
         _ => ""
     };
 
-    public bool CanJoin => Preset.MaxPlayers <= 0 || Players.Count < Preset.MaxPlayers;
+    public bool CanJoin(string? playerId) => Preset.MaxPlayers <= 0 
+                                             || Players.Count < Preset.MaxPlayers 
+                                             || (!string.IsNullOrEmpty(playerId) && Players.FirstOrDefault(x => x.PlayerUserId == playerId) != null);
 
     private void Setup()
     {
