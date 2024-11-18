@@ -4,7 +4,8 @@ namespace Quingo.Application.State;
 
 public class GameLoop : IDisposable
 {
-    private const int RemoveAfterMin = 3;
+    private const int RemoveFinishedAfterMin = 5;
+    private const int RemoveInactiveAfterMin = 60;
     private const int LoopPeriodMs = 1000;
     private const int ParallelEntries = 10;
 
@@ -91,10 +92,7 @@ public class GameLoop : IDisposable
         }
         else
         {
-            Parallel.ForEach(loop._state, gameKv =>
-            {
-                RunLoopTick(loop, gameKv.Value);
-            });
+            Parallel.ForEach(loop._state, gameKv => { RunLoopTick(loop, gameKv.Value); });
         }
     }
 
@@ -104,6 +102,11 @@ public class GameLoop : IDisposable
         {
             if (CanRemove(game))
             {
+                if (game.State is GameStateEnum.Active)
+                {
+                    game.SetState(GameStateEnum.Canceled);
+                }
+
                 game.Dispose();
                 var removed = loop._state.TryRemove(game.GameSessionId, out _);
                 if (removed)
@@ -136,7 +139,8 @@ public class GameLoop : IDisposable
         {
             game.RefreshGameTimer();
         }
-        if (game is { State: GameStateEnum.Active } and 
+
+        if (game is { State: GameStateEnum.Active } and
             ({ WinningPlayers.Count: > 0 } or { Preset.GameTimer: > 0, GameTimerStartedAt: not null, GameTimer: <= 0 }))
         {
             if (game.Preset.EndgameTimer > 0)
@@ -155,7 +159,10 @@ public class GameLoop : IDisposable
             game.SetState(GameStateEnum.Finished);
         }
 
-        if (game is { State: GameStateEnum.Finished or GameStateEnum.Canceled, WinningPlayers.Count: 0, Players.Count: > 0 })
+        if (game is
+            {
+                State: GameStateEnum.Finished or GameStateEnum.Canceled, WinningPlayers.Count: 0, Players.Count: > 0
+            })
         {
             var maxScore = game.Players.Select(x => x.Score).Max();
             var playerIds = game.Players
@@ -168,8 +175,11 @@ public class GameLoop : IDisposable
     private static bool CanRemove(GameState game)
     {
         var maxUpdated = game.Players.Select(x => x.UpdatedAt).Concat([game.UpdatedAt]).Max();
-        return game.State is GameStateEnum.Finished or GameStateEnum.Canceled &&
-               DateTime.UtcNow - maxUpdated > TimeSpan.FromMinutes(RemoveAfterMin);
+        var elapsed = DateTime.UtcNow - maxUpdated;
+        return (game.State is GameStateEnum.Finished or GameStateEnum.Canceled
+                && elapsed > TimeSpan.FromMinutes(RemoveFinishedAfterMin))
+               || game.State is GameStateEnum.Active or GameStateEnum.Init
+               && elapsed > TimeSpan.FromMinutes(RemoveInactiveAfterMin);
     }
 
     public void Dispose()
