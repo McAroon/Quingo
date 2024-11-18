@@ -159,8 +159,9 @@ public class GameState : IDisposable
     public void Call(PlayerState player)
     {
         if (player.LivesNumber <= 0
+            || !Preset.EnableCall
             || WinningPlayers.Contains(player)
-            || (State is not GameStateEnum.Active and not GameStateEnum.FinalCountdown)) return;
+            || State is not GameStateEnum.Active and not GameStateEnum.FinalCountdown) return;
 
         player.Validate(true);
         var isValid = false;

@@ -6,7 +6,7 @@ public class PackPreset : EntityBase
 
     public Pack Pack { get; set; } = default!;
 
-    public PackPresetData Data { get; set; } = new PackPresetData();
+    public PackPresetData Data { get; set; } = new();
 }
 
 public record PackPresetData
@@ -24,6 +24,10 @@ public record PackPresetData
     public int EndgameTimer { get; set; } = 20;
     
     public bool ShowTagBadges { get; set; } = true;
+
+    public bool EnableCall { get; set; } = true;
+
+    public bool JoinOnCreate { get; set; } = true;
 
     public PackPresetPattern Pattern { get; set; }
 

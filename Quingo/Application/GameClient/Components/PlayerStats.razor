@@ -3,10 +3,13 @@
         <th>Game State</th>
         <td>@State.GameState.StateDisplayValue</td>
     </tr>
-    <tr>
-        <th>Lives</th>
-        <td>@State.LivesNumber</td>
-    </tr>
+    @if (State.GameState.Preset.LivesNumber > 0 && State.GameState.Preset.EnableCall)
+    {
+        <tr>
+            <th>Lives</th>
+            <td>@State.LivesNumber</td>
+        </tr>
+    }
     @if (State.GameState.ShowTimer)
     {
         <tr>

@@ -19,6 +19,8 @@ public class PackPresetDataModel
         GameTimer = data.GameTimer;
         EndgameTimer = data.EndgameTimer;
         ShowTagBadges = data.ShowTagBadges;
+        EnableCall = data.EnableCall;
+        JoinOnCreate = data.JoinOnCreate;
         Pattern = data.Pattern;
         MatchRule = data.MatchRule;
         SingleColumnConfig = data.SingleColumnConfig;
@@ -37,6 +39,8 @@ public class PackPresetDataModel
             GameTimer = GameTimer,
             EndgameTimer = EndgameTimer,
             ShowTagBadges = ShowTagBadges,
+            EnableCall = EnableCall,
+            JoinOnCreate = JoinOnCreate,
             Pattern = Pattern,
             MatchRule = MatchRule,
             SingleColumnConfig = SingleColumnConfig,
@@ -65,6 +69,10 @@ public class PackPresetDataModel
     public int EndgameTimer { get; set; } = 20;
 
     public bool ShowTagBadges { get; set; } = true;
+    
+    public bool EnableCall { get; set; } = true;
+
+    public bool JoinOnCreate { get; set; } = true;
 
     public PackPresetPattern Pattern { get; set; } = PackPresetPattern.Lines;
 

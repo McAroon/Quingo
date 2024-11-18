@@ -4,7 +4,10 @@
 <MudTable Items="Game.Players">
     <HeaderContent>
         <MudTh>Name</MudTh>
-        <MudTh>Lives</MudTh>
+        @if (ShowLives)
+        {
+            <MudTh>Lives</MudTh>
+        }
         @if (ShowScore)
         {
             <MudTh>Score</MudTh>
@@ -16,7 +19,10 @@
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Name">@context.PlayerName</MudTd>
-        <MudTd DataLabel="Lives">@context.LivesNumber</MudTd>
+        @if (ShowLives)
+        {
+            <MudTd DataLabel="Lives">@context.LivesNumber</MudTd>
+        }
         @if (ShowScore)
         {
             <MudTd DataLabel="Score">@context.Score</MudTd>
@@ -36,28 +42,28 @@
     </TitleContent>
     <DialogContent>
         <CascadingValue Value="_selectedPlayer">
-            <PlayerCard ReadOnly ShowDetails />
+            <PlayerCard ReadOnly ShowDetails/>
         </CascadingValue>
     </DialogContent>
 </MudDialog>
 
 @code {
-    [CascadingParameter]
-    public GameState Game { get; set; } = default!;
+    [CascadingParameter] public GameState Game { get; set; } = default!;
 
-    [Parameter]
-    public PlayerState? Player { get; set; }
+    [Parameter] public PlayerState? Player { get; set; }
 
     private bool ShowActions => Player == null || Game.State is GameStateEnum.Finished or GameStateEnum.Canceled;
-    
+
     private bool ShowScore => Player == null || Game.State is GameStateEnum.Finished or GameStateEnum.Canceled;
 
-    private DialogOptions _dialogOptions = new DialogOptions
-        {
-            MaxWidth = MaxWidth.Large,
-            FullWidth = false,
-            CloseButton = true
-        };
+    private bool ShowLives => Game.Preset.LivesNumber > 0 && Game.Preset.EnableCall;
+
+    private DialogOptions _dialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Large,
+        FullWidth = false,
+        CloseButton = true
+    };
 
     private PlayerState? _selectedPlayer;
 
@@ -117,4 +123,5 @@
             player.LifeLost -= OnLifeLost;
         }
     }
+
 }

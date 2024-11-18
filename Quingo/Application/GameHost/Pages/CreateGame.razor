@@ -1,5 +1,6 @@
 ﻿@page "/game/host"
 
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
 @using Quingo.Infrastructure.Database.Repos
 
@@ -23,11 +24,11 @@
         <MudCard Class="pack-card clickable mud-ripple" @onclick="() => SelectPack(pack)" Outlined="pack == _pack">
             @if (!string.IsNullOrEmpty(pack.ImageUrl))
             {
-                <MudCardMedia Image="@Files.GetFileUrl(pack.ImageUrl)" />
+                <MudCardMedia Image="@Files.GetFileUrl(pack.ImageUrl)"/>
             }
             else
             {
-                <div class="pack-default-image" />
+                <div class="pack-default-image"/>
             }
             <MudCardHeader>
                 <CardHeaderContent>
@@ -43,7 +44,8 @@
 @if (_pack != null && _preset != null)
 {
     <MudText Typo="Typo.h6" GutterBottom>
-        Pack Preset @if (!_isPresetEdit)
+        Pack Preset
+        @if (!_isPresetEdit)
         {
             <MudTooltip Text="Edit Preset">
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => _isPresetEdit = true"></MudIconButton>
@@ -51,20 +53,23 @@
         }
     </MudText>
     <MudContainer MaxWidth="MaxWidth.Small" Gutters="false" Class="ml-0 pb-2">
-        <PresetEdit Preset="_preset" Pack="_pack" IsEdit="_isPresetEdit" OnSave="SetPresetData" OnCancelEdit="CancelPresetEdit" />
+        <PresetEdit Preset="_preset" Pack="_pack" IsEdit="_isPresetEdit" OnSave="SetPresetData"
+                    OnCancelEdit="CancelPresetEdit"/>
     </MudContainer>
 }
 
 <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow"
-           OnClick="StartGame" Disabled="_pack == null || _isPresetEdit || _isLoading">Start Game</MudButton>
+           OnClick="StartGame" Disabled="_pack == null || _isPresetEdit || _isLoading">Start Game
+</MudButton>
 
 <MudOverlay Visible="_isLoading" DarkBackground ZIndex="9999">
-    <MudProgressCircular Size="Size.Large" Color="Color.Primary" Indeterminate />
+    <MudProgressCircular Size="Size.Large" Color="Color.Primary" Indeterminate/>
 </MudOverlay>
 
 @code {
-    [CascadingParameter(Name = "UserId")]
-    public string UserId { get; set; } = default!;
+    [CascadingParameter(Name = "UserId")] private string UserId { get; set; } = default!;
+
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
     private List<Pack> _packs = [];
 
@@ -76,20 +81,27 @@
 
     private bool _isLoading;
 
+    private string? _userName;
+
     protected override async Task OnInitializedAsync()
     {
         var exGame = StateService.Games
-            .FirstOrDefault(x => x.HostUserId == UserId 
+            .FirstOrDefault(x => x.HostUserId == UserId
                                  && (x.State is not GameStateEnum.Finished and not GameStateEnum.Canceled));
         if (exGame != null)
         {
             NavigationManager.NavigateTo($"/game/host/{exGame.GameSessionId}");
             return;
         }
-        
+
         await using var context = await Repo.CreateDbContext();
         _packs = await context.Packs.Include(x => x.Tags)
             .Include(x => x.Presets).AsNoTracking().ToListAsync();
+        if (AuthenticationState != null)
+        {
+            var auth = await AuthenticationState;
+            _userName = auth.User.FindFirstValue(ClaimTypes.Name);
+        }
     }
 
     private void SelectPack(Pack pack)
@@ -109,7 +121,15 @@
 
             _isLoading = true;
             var game = await StateService.StartGame(_pack.Id, _preset.Data, UserId);
-            NavigationManager.NavigateTo($"/game/host/{game.GameSessionId}");
+            if (_preset.Data.JoinOnCreate)
+            {
+                var player = StateService.JoinGame(game.GameSessionId, UserId, _userName ?? string.Empty);
+                NavigationManager.NavigateTo($"/game/play/{game.GameSessionId}/{player.PlayerSessionId}");
+            }
+            else
+            {
+                NavigationManager.NavigateTo($"/game/host/{game.GameSessionId}");
+            }
         }
         catch (Exception e)
         {
@@ -136,4 +156,5 @@
         _isPresetEdit = false;
         StateHasChanged();
     }
+
 }

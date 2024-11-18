@@ -7,9 +7,8 @@
                     <MudForm @ref="@_form">
                         <MudNumericField @bind-Value="_model.CardSize" @bind-Value:after="OnCardSizeUpdated" Label="Card Size" Min="1" Max="9" Required />
                         <MudCheckBox @bind-Value="_model.FreeCenter" Label="Free Center" Disabled="!_model.IsFreeCenterEnabled" />
-                        <MudNumericField @bind-Value="_model.LivesNumber" Label="Number of Lives" Min="1" Required />
-                        <MudNumericField @bind-Value="_model.MaxPlayers" Label="Number of Players" Min="0" />
-                        <MudNumericField @bind-Value="_model.GameTimer" Label="Game Timer" Min="0" />
+                        <MudNumericField @bind-Value="_model.MaxPlayers" Label="Number of Players" HelperText="Max number of players, 0 for unlimited" Min="0" />
+                        <MudNumericField @bind-Value="_model.GameTimer" Label="Game Timer" HelperText="Game timer in seconds, 0 for no timer" Min="0" />
                         <MudNumericField @bind-Value="_model.EndgameTimer" Label="Endgame Timer" Min="0" />
                         <MudSelect T="PackPresetPattern" Label="Winning Pattern" @bind-Value="@_model.Pattern">
                             <MudSelectItem Value="PackPresetPattern.Lines">Line</MudSelectItem>
@@ -19,6 +18,9 @@
                             <MudSelectItem Value="PackPresetMatchRule.Default">Default</MudSelectItem>
                             <MudSelectItem Value="PackPresetMatchRule.LastDrawn">Last Drawn Only</MudSelectItem>
                         </MudSelect>
+                        <MudCheckBox @bind-Value="_model.EnableCall" Label="Enable Call" />
+                        <MudNumericField @bind-Value="_model.LivesNumber" Label="Number of Lives" Min="0" Disabled="!_model.EnableCall" />
+                        <MudCheckBox @bind-Value="_model.JoinOnCreate" Label="Host Joins Game" />
                         <MudCheckBox @bind-Value="_model.ShowTagBadges" Label="Show Tag Badges" />
                         <MudCheckBox @bind-Value="_model.SingleColumnConfig" Label="Same Column Config" />
 
@@ -69,12 +71,14 @@
             <MudList T="string" ReadOnly>
                 <MudListItem Text="Card Size" SecondaryText="@_model.CardSize.ToString()" />
                 <MudListItem Text="Free Center" SecondaryText="@(_model.FreeCenter ? "Yes" : "No")" />
-                <MudListItem Text="Number of Lives" SecondaryText="@_model.LivesNumber.ToString()" />
                 <MudListItem Text="Number of Players" SecondaryText="@_model.MaxPlayers.ToString()" />
                 <MudListItem Text="Game Timer" SecondaryText="@_model.GameTimer.ToString()" />
                 <MudListItem Text="Endgame Timer" SecondaryText="@_model.EndgameTimer.ToString()" />
                 <MudListItem Text="Winning Pattern" SecondaryText="@(_model.Pattern == PackPresetPattern.Lines ? "Line" : "Full Card")" />
                 <MudListItem Text="Match Rule" SecondaryText="@(_model.MatchRule == PackPresetMatchRule.Default ? "Default" : "Last Drawn Only")" />
+                <MudListItem Text="Enable Call" SecondaryText="@(_model.EnableCall ? "Yes" : "No")" />
+                <MudListItem Text="Number of Lives" SecondaryText="@(_model.EnableCall ? _model.LivesNumber.ToString() : "-")" />
+                <MudListItem Text="Host Joins Game" SecondaryText="@(_model.JoinOnCreate ? "Yes" : "No")" />
                 <MudListItem Text="Show Tag Badges" SecondaryText="@(_model.ShowTagBadges ? "Yes" : "No")" />
                 @for (int i = 0; i < _model.Columns.Count; i++)
                 {
