@@ -68,7 +68,7 @@ else
 
     private ClaimsPrincipal? _user;
 
-    private bool UserCanEdit(Pack pack) => pack.CreatedByUserId == UserId || _user?.IsInRole("admin") == true;
+    private bool UserCanEdit(Pack pack) => pack.CreatedByUserId == UserId || _user?.IsInRole("admin") == true || _user?.IsInRole("editor") == true;
 
     protected override async Task OnInitializedAsync()
     {

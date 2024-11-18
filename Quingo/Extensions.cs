@@ -22,10 +22,17 @@ public static class Extensions
         using var scope = app.Services.CreateScope();
 
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        var exRole = await roleManager.FindByNameAsync("admin");
-        if (exRole != null) return;
+        await EnsureRoleCreated("admin");
+        await EnsureRoleCreated("editor");
+        return;
 
-        await roleManager.CreateAsync(new IdentityRole { Name = "admin" });
+        async Task EnsureRoleCreated(string role)
+        {
+            var exRole = await roleManager.FindByNameAsync(role);
+            if (exRole != null) return;
+
+            await roleManager.CreateAsync(new IdentityRole { Name = role });
+        }
     }
 
     public static string ToStringHoursOptional(this TimeSpan span)

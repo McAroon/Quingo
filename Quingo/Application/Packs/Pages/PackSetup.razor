@@ -58,7 +58,7 @@
 
         var user = (await (AuthenticationState ?? Task.FromResult<AuthenticationState>(null!)))?.User;
 
-        if (PackId != null && (_pack == null || !(UserId == _pack.CreatedByUserId || user?.IsInRole("admin") == true)))
+        if (PackId != null && (_pack == null || !(UserId == _pack.CreatedByUserId || user?.IsInRole("admin") == true || user?.IsInRole("editor") == true)))
         {
             NavigationManager.NavigateTo("game/setup/pack");
         }
