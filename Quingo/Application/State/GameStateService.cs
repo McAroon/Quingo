@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Quingo.Infrastructure.Database.Repos;
+using Quingo.Shared.Models;
 
 namespace Quingo.Application.State;
 
@@ -31,13 +32,14 @@ public class GameStateService : IDisposable
         try
         {
             var startTime = Stopwatch.GetTimestamp();
-            if (_state.Values.Any(x => (x.State is not GameStateEnum.Finished and not GameStateEnum.Canceled) && x.HostUserId == userId))
+            if (_state.Values.Any(x =>
+                    (x.State is not GameStateEnum.Finished and not GameStateEnum.Canceled) && x.HostUserId == userId))
             {
                 throw new GameStateException("User is already hosting a game");
             }
-            
+
             var repo = new PackRepo(_dbContextFactory);
-            
+
             await using var db = await repo.CreateDbContext();
 
             var pack = await repo.GetPack(packId);
@@ -66,19 +68,23 @@ public class GameStateService : IDisposable
             var createGameTime = Stopwatch.GetElapsedTime(startTime2);
             var totalTime = Stopwatch.GetElapsedTime(startTime);
 
-            _logger.LogInformation("Created game id:{id} getPackTime:{getPackTime}s createGameTime:{createGameTime}s total:{totalTime}s", sessionId, getPackTime.TotalSeconds, createGameTime.TotalSeconds, totalTime.TotalSeconds);
-            
+            _logger.LogInformation(
+                "Created game id:{id} getPackTime:{getPackTime}s createGameTime:{createGameTime}s total:{totalTime}s",
+                sessionId, getPackTime.TotalSeconds, createGameTime.TotalSeconds, totalTime.TotalSeconds);
+
             return game;
         }
         catch (Exception e) when (e is not GameStateException)
         {
-
             throw new GameStateException("Error creating game", e);
         }
     }
 
     public PlayerState JoinGame(Guid gameSessionId, string userId, string userName)
     {
+        ArgumentNullException.ThrowIfNull(userId, nameof(userId));
+        ArgumentNullException.ThrowIfNull(userName, nameof(userName));
+
         try
         {
             var game = GetGameState(gameSessionId);
@@ -100,8 +106,30 @@ public class GameStateService : IDisposable
         }
         catch (Exception e) when (e is not GameStateException)
         {
-
             throw new GameStateException("Error joining the game", e);
+        }
+    }
+
+    public void SpectateGame(Guid gameSessionId, string userId, string userName)
+    {
+        ArgumentNullException.ThrowIfNull(userId, nameof(userId));
+        ArgumentNullException.ThrowIfNull(userName, nameof(userName));
+
+        try
+        {
+            var game = GetGameState(gameSessionId);
+            var player = game.Players.FirstOrDefault(x => x.PlayerUserId == userId);
+            if (player != null)
+            {
+                throw new GameStateException("Unable to spectate, the user already joined as player");
+            }
+
+            var userInfo = new ApplicationUserInfo(userId, userName);
+            game.Spectate(userInfo);
+        }
+        catch (Exception e) when (e is not GameStateException)
+        {
+            throw new GameStateException("Error trying to spectate the game", e);
         }
     }
 
@@ -112,6 +140,7 @@ public class GameStateService : IDisposable
         {
             throw new GameStateException("User is not the host");
         }
+
         return game;
     }
 
@@ -121,6 +150,7 @@ public class GameStateService : IDisposable
         {
             throw new GameStateException("Game not found");
         }
+
         return game;
     }
 
@@ -132,6 +162,7 @@ public class GameStateService : IDisposable
         {
             throw new GameStateException("Player not found");
         }
+
         return player;
     }
 
@@ -140,7 +171,7 @@ public class GameStateService : IDisposable
         try
         {
             var game = GetGameState(gameSessionId);
-            
+
             var hasAccess = await CheckUserAccess(game, userId);
             if (!hasAccess)
             {
@@ -151,7 +182,6 @@ public class GameStateService : IDisposable
         }
         catch (Exception e) when (e is not GameStateException)
         {
-
             throw new GameStateException("Error while trying to end the game", e);
         }
     }
@@ -159,12 +189,12 @@ public class GameStateService : IDisposable
     private async Task<bool> CheckUserAccess(GameState game, string userId)
     {
         if (game.HostUserId == userId) return true;
-        
+
         await using var db = await _dbContextFactory.CreateDbContextAsync();
         var userStore = new UserStore<ApplicationUser>(db);
         var user = await userStore.FindByIdAsync(userId);
         if (user == null) return false;
-        
+
         var isAdmin = await userStore.IsInRoleAsync(user, "admin");
         return isAdmin;
     }
@@ -178,6 +208,7 @@ public class GameStateService : IDisposable
             {
                 player.Dispose();
             }
+
             game.Value.Dispose();
         }
     }

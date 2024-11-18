@@ -38,6 +38,9 @@
             <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => Join(context)"
                        Disabled="!context.CanJoin">Join
             </MudButton>
+            <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => Spectate(context)"
+                       Disabled="!context.CanSpectate(_userId)">Spectate
+            </MudButton>
         </MudTd>
     </RowTemplate>
 </MudTable>
@@ -80,7 +83,29 @@
         }
         catch (Exception e)
         {
-            Logger.LogError(e, e.Message);
+            if (e is not GameStateException)
+            {
+                Logger.LogError(e, e.Message);
+            }
+            Snackbar.Add(e.Message, Severity.Error);
+        }
+    }
+
+    private void Spectate(GameState game)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(_userId, nameof(_userId));
+            ArgumentNullException.ThrowIfNull(_userName, nameof(_userName));
+            StateService.SpectateGame(game.GameSessionId, _userId, _userName);
+            NavigationManager.NavigateTo($"/game/spectate/{game.GameSessionId}");
+        }
+        catch (Exception e)
+        {
+            if (e is not GameStateException)
+            {
+                Logger.LogError(e, e.Message);
+            }
             Snackbar.Add(e.Message, Severity.Error);
         }
     }

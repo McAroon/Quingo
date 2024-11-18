@@ -1,4 +1,5 @@
 ﻿@page "/game/host/{GameSessionId:guid}"
+@page "/game/spectate/{GameSessionId:guid}"
 
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
@@ -21,39 +22,29 @@
 else
 {
     <CascadingValue Value="_game">
-        <HostLayout />
+        <HostLayout/>
     </CascadingValue>
 }
 
 @code {
-    [CascadingParameter]
-    private Task<AuthenticationState>? AuthenticationState { get; set; }
+    [CascadingParameter(Name = "UserId")] private string UserId { get; set; } = default!;
 
-    [Parameter]
-    public Guid GameSessionId { get; set; }
+    [Parameter] public Guid GameSessionId { get; set; }
 
     private string? _initError;
 
-    private string? _userId;
-
     private GameState _game = default!;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         try
         {
-            if (AuthenticationState != null)
+            _game = StateService.GetGameState(GameSessionId, UserId);
+            var player = _game.Players.FirstOrDefault(x => x.PlayerUserId == UserId);
+            if (player != null)
             {
-                _userId = (await AuthenticationState).User.FindFirstValue(ClaimTypes.NameIdentifier);
+                NavigationManager.NavigateTo($"/game/play/{_game.GameSessionId}/{player.PlayerSessionId}");
             }
-
-            if (_userId == null)
-            {
-                _initError = "Initialization error";
-                return;
-            }
-
-            _game = StateService.GetGameState(GameSessionId, _userId);
             _game.StateChanged += OnStateChanged;
         }
         catch (Exception e)
@@ -74,4 +65,5 @@ else
 
         _game.StateChanged -= OnStateChanged;
     }
+
 }

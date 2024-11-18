@@ -1,6 +1,7 @@
 ﻿using Quingo.Shared.Entities;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using Quingo.Shared.Models;
 
 namespace Quingo.Application.State;
 
@@ -24,6 +25,7 @@ public class GameState : IDisposable
         _drawnNodes.CollectionChanged += HandleDrawnNodesChanged;
         _players.CollectionChanged += HandlePlayersChanged;
         _winningPlayers.CollectionChanged += HandleWinningPlayersChanged;
+        _spectators.CollectionChanged += HandleSpectatorsChanged;
 
         Setup();
     }
@@ -60,6 +62,9 @@ public class GameState : IDisposable
 
     private readonly ObservableCollection<PlayerState> _winningPlayers = [];
     public ReadOnlyCollection<PlayerState> WinningPlayers => _winningPlayers.AsReadOnly();
+
+    private readonly ObservableCollection<ApplicationUserInfo> _spectators = [];
+    public ReadOnlyCollection<ApplicationUserInfo> Spectators => _spectators.AsReadOnly();
 
     public bool CanDraw => _qNodes.Count > 0;
 
@@ -132,6 +137,19 @@ public class GameState : IDisposable
 
         _players.Add(player);
         player.Validate();
+    }
+
+    public bool CanSpectate(string? userId)
+    {
+        return !string.IsNullOrEmpty(userId) && Players.FirstOrDefault(x => x.PlayerUserId == userId) == null;
+    }
+
+    public void Spectate(ApplicationUserInfo user)
+    {
+        if (_spectators.FirstOrDefault(x => x.UserId == user.UserId) == null)
+        {
+            _spectators.Add(user);
+        }
     }
 
     public void Draw()
@@ -231,11 +249,13 @@ public class GameState : IDisposable
 
     public void SetWinningPlayers(List<string> playerIds)
     {
-        var playersToAdd = _players.Where(x => playerIds.Contains(x.PlayerUserId) && !_winningPlayers.Contains(x)).ToList();
+        var playersToAdd = _players.Where(x => playerIds.Contains(x.PlayerUserId) && !_winningPlayers.Contains(x))
+            .ToList();
         foreach (var player in playersToAdd)
         {
             _winningPlayers.Add(player);
         }
+
         NotifyStateChanged();
     }
 
@@ -277,6 +297,12 @@ public class GameState : IDisposable
         NotifyStateChanged();
     }
 
+    private void HandleSpectatorsChanged(object? sender,
+        System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        NotifyStateChanged();
+    }
+
     #endregion
 
     #region dispose
@@ -292,6 +318,7 @@ public class GameState : IDisposable
             _drawnNodes.CollectionChanged -= HandleDrawnNodesChanged;
             _players.CollectionChanged -= HandlePlayersChanged;
             _winningPlayers.CollectionChanged -= HandleWinningPlayersChanged;
+            _spectators.CollectionChanged -= HandleSpectatorsChanged;
 
             foreach (var player in _players)
             {
