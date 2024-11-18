@@ -195,8 +195,8 @@ public class GameStateService : IDisposable
         var userStore = new UserStore<ApplicationUser>(db);
         var user = await userStore.FindByIdAsync(userId);
         if (user == null) return false;
-
-        var isAdmin = await userStore.IsInRoleAsync(user, "admin");
+        
+        var isAdmin = await userStore.IsInRoleAsync(user, "ADMIN");
         return isAdmin;
     }
 
