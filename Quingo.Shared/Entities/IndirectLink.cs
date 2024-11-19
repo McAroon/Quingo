@@ -1,6 +1,6 @@
 ﻿namespace Quingo.Shared.Entities;
 
-public class IndirectLink : EntityBase
+public class IndirectLink : EntityBase, IPackOwned
 {
     public int PackId { get; set; }
 

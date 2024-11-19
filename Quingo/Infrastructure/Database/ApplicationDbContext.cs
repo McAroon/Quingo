@@ -10,10 +10,13 @@ namespace Quingo.Infrastructure.Database
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IDataProtectionKeyContext
     {
         private readonly IHttpContextAccessor? _httpContextAccessor;
+        private readonly ICacheService _cache;
 
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IHttpContextAccessor contextAccessor) : base(options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
+            IHttpContextAccessor contextAccessor, ICacheService cache) : base(options)
         {
             _httpContextAccessor = contextAccessor;
+            _cache = cache;
         }
 
         public DbSet<Node> Nodes { get; set; }
@@ -56,8 +59,10 @@ namespace Quingo.Infrastructure.Database
 
             builder.Entity<Tag>().Ignore(e => e.IndirectLinks);
 
-            builder.Entity<NodeLink>().HasOne(e => e.NodeFrom).WithMany(e => e.NodeLinksFrom).HasForeignKey(e => e.NodeFromId).IsRequired();
-            builder.Entity<NodeLink>().HasOne(e => e.NodeTo).WithMany(e => e.NodeLinksTo).HasForeignKey(e => e.NodeToId).IsRequired();
+            builder.Entity<NodeLink>().HasOne(e => e.NodeFrom).WithMany(e => e.NodeLinksFrom)
+                .HasForeignKey(e => e.NodeFromId).IsRequired();
+            builder.Entity<NodeLink>().HasOne(e => e.NodeTo).WithMany(e => e.NodeLinksTo).HasForeignKey(e => e.NodeToId)
+                .IsRequired();
             builder.Entity<NodeLink>().OwnsOne(e => e.Meta, d =>
             {
                 d.ToJson();
@@ -65,14 +70,19 @@ namespace Quingo.Infrastructure.Database
                 d.OwnsMany(x => x.Properties);
             });
 
-            builder.Entity<NodeTag>().HasOne(e => e.Node).WithMany(e => e.NodeTags).HasForeignKey(e => e.NodeId).IsRequired();
-            builder.Entity<NodeTag>().HasOne(e => e.Tag).WithMany(e => e.NodeTags).HasForeignKey(e => e.TagId).IsRequired();
+            builder.Entity<NodeTag>().HasOne(e => e.Node).WithMany(e => e.NodeTags).HasForeignKey(e => e.NodeId)
+                .IsRequired();
+            builder.Entity<NodeTag>().HasOne(e => e.Tag).WithMany(e => e.NodeTags).HasForeignKey(e => e.TagId)
+                .IsRequired();
 
             builder.Entity<Pack>().HasMany(e => e.Nodes).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
-            builder.Entity<Pack>().HasMany(e => e.NodeLinkTypes).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
+            builder.Entity<Pack>().HasMany(e => e.NodeLinkTypes).WithOne(e => e.Pack).HasForeignKey(e => e.PackId)
+                .IsRequired();
             builder.Entity<Pack>().HasMany(e => e.Tags).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
-            builder.Entity<Pack>().HasMany(e => e.Presets).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
-            builder.Entity<Pack>().HasMany(e => e.IndirectLinks).WithOne(e => e.Pack).HasForeignKey(e => e.PackId).IsRequired();
+            builder.Entity<Pack>().HasMany(e => e.Presets).WithOne(e => e.Pack).HasForeignKey(e => e.PackId)
+                .IsRequired();
+            builder.Entity<Pack>().HasMany(e => e.IndirectLinks).WithOne(e => e.Pack).HasForeignKey(e => e.PackId)
+                .IsRequired();
 
             builder.Entity<PackPreset>().OwnsOne(e => e.Data, d =>
             {
@@ -81,17 +91,21 @@ namespace Quingo.Infrastructure.Database
             });
 
             builder.Entity<IndirectLink>().Property(e => e.Direction).HasConversion<string>();
-            builder.Entity<IndirectLink>().HasMany(e => e.Steps).WithOne(e => e.IndirectLink).HasForeignKey(e => e.IndirectLinkId).IsRequired();
+            builder.Entity<IndirectLink>().HasMany(e => e.Steps).WithOne(e => e.IndirectLink)
+                .HasForeignKey(e => e.IndirectLinkId).IsRequired();
             builder.Entity<IndirectLink>().Ignore(e => e.TagFrom);
             builder.Entity<IndirectLink>().Ignore(e => e.TagTo);
 
-            builder.Entity<IndirectLinkStep>().HasOne(e => e.TagTo).WithMany(e => e.IndirectLinksTo).HasForeignKey(e => e.TagToId).IsRequired();
-            builder.Entity<IndirectLinkStep>().HasOne(e => e.TagFrom).WithMany(e => e.IndirectLinksFrom).HasForeignKey(e => e.TagFromId).IsRequired();
+            builder.Entity<IndirectLinkStep>().HasOne(e => e.TagTo).WithMany(e => e.IndirectLinksTo)
+                .HasForeignKey(e => e.TagToId).IsRequired();
+            builder.Entity<IndirectLinkStep>().HasOne(e => e.TagFrom).WithMany(e => e.IndirectLinksFrom)
+                .HasForeignKey(e => e.TagFromId).IsRequired();
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             SetFieldsOnSave();
+            ClearCacheOnSave();
             return base.SaveChangesAsync(cancellationToken);
         }
 
@@ -128,9 +142,9 @@ namespace Quingo.Infrastructure.Database
                         {
                             entity.DeletedByUserId = userId;
                         }
-                        
+
                         entry.State = EntityState.Modified;
-                        
+
                         if (entry.Entity is IHasMeta { Meta.Properties: not null } metaEntity)
                         {
                             var metaEntry = Entry(metaEntity.Meta);
@@ -143,6 +157,25 @@ namespace Quingo.Infrastructure.Database
                         }
                     }
                 }
+            }
+        }
+
+        private void ClearCacheOnSave()
+        {
+            var entries = ChangeTracker.Entries().Where(x => x.Entity is Pack or IPackOwned);
+            var packIds = entries.Select(x => x.Entity switch
+                {
+                    Pack p => p.Id,
+                    IPackOwned po => po.PackId,
+                    _ => (int?)null
+                })
+                .Where(x => x != null)
+                .Select(x => x!.Value)
+                .Distinct();
+            foreach (var packId in packIds)
+            {
+                var key = $"pack:{packId}";
+                _cache.Remove(key);
             }
         }
 

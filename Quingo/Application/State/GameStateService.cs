@@ -4,6 +4,7 @@ using Quingo.Shared.Entities;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Quingo.Infrastructure;
 using Quingo.Infrastructure.Database.Repos;
 using Quingo.Shared.Models;
 
@@ -20,10 +21,13 @@ public class GameStateService : IDisposable
 
     private readonly GameLoop _loop;
 
-    public GameStateService(IDbContextFactory<ApplicationDbContext> dbContextFactory, ILogger<GameStateService> logger)
+    private readonly ICacheService _cache;
+
+    public GameStateService(IDbContextFactory<ApplicationDbContext> dbContextFactory, ILogger<GameStateService> logger, ICacheService cache)
     {
         _dbContextFactory = dbContextFactory;
         _logger = logger;
+        _cache = cache;
         _loop = new GameLoop(logger, _state);
     }
 
@@ -38,7 +42,7 @@ public class GameStateService : IDisposable
                 throw new GameStateException("User is already hosting a game");
             }
 
-            var repo = new PackRepo(_dbContextFactory);
+            var repo = new PackRepo(_dbContextFactory, _cache);
 
             await using var db = await repo.CreateDbContext();
 

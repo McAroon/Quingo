@@ -1,6 +1,6 @@
 ﻿namespace Quingo.Shared.Entities
 {
-    public class Node : EntityBase, IHasMeta
+    public class Node : EntityBase, IHasMeta, IPackOwned
     {
         public int PackId { get; set; }
 

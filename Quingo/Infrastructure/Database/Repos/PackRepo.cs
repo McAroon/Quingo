@@ -3,7 +3,7 @@ using Quingo.Shared.Entities;
 
 namespace Quingo.Infrastructure.Database.Repos;
 
-public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
+public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory, ICacheService cache)
 {
     public async Task<ApplicationDbContext> CreateDbContext()
     {
@@ -12,8 +12,15 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory)
 
     public async Task<Pack?> GetPack(int packId)
     {
+        var key = $"pack:{packId}";
+        var cached = cache.Get<Pack>(key);
+        if (cached != null) return cached;
+        
         await using var context = await CreateDbContext();
-        return await GetPack(context, packId);
+        var pack = await GetPack(context, packId);
+        cache.Set(key, pack);
+        
+        return pack;
     }
 
     public async Task<Pack?> GetPack(ApplicationDbContext context, int packId)

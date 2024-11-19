@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using MudBlazor.Services;
 using Quingo;
 using Quingo.Application.Packs.Services;
 using Quingo.Application.State;
 using Quingo.Components;
 using Quingo.Components.Account;
+using Quingo.Infrastructure;
 using Quingo.Infrastructure.Database;
 using Quingo.Infrastructure.Database.Repos;
 using Quingo.Infrastructure.Files;
@@ -84,6 +86,8 @@ builder.Services.AddScoped<GenerateStandardBingo>();
 builder.Services.AddSingleton<TempUserStorage>();
 builder.Services.AddScoped<PackRepo>();
 builder.Services.AddScoped<PackNodeService>();
+builder.Services.AddSingleton<IMemoryCache, MemoryCache>();
+builder.Services.AddSingleton<ICacheService, MemoryCacheService>();
 
 // S3
 var s3Settings = builder.Configuration.GetSection(nameof(S3Settings)).Get<S3Settings>() ?? new();

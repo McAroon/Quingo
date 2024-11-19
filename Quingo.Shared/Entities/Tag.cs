@@ -1,6 +1,6 @@
 ﻿namespace Quingo.Shared.Entities
 {
-    public class Tag : EntityBase
+    public class Tag : EntityBase, IPackOwned
     {
         public Tag()
         {

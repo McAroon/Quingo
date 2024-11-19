@@ -1,6 +1,6 @@
 ﻿namespace Quingo.Shared.Entities;
 
-public class PackPreset : EntityBase
+public class PackPreset : EntityBase, IPackOwned
 {
     public int PackId { get; set; }
 

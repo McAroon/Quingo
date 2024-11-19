@@ -1,6 +1,6 @@
 ﻿namespace Quingo.Shared.Entities
 {
-    public class NodeLinkType : EntityBase
+    public class NodeLinkType : EntityBase, IPackOwned
     {
         public string? Name { get; set; }
 
