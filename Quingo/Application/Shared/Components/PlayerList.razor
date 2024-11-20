@@ -1,40 +1,82 @@
 ﻿@implements IDisposable
 @inject ISnackbar Snackbar
 
-<MudTable Items="Game.Players">
-    <HeaderContent>
-        <MudTh>Name</MudTh>
-        @if (ShowLives)
+@if (ShowPlayers)
+{
+    <div class="pb-2">
+        <MudButton OnClick="() => { _expandPlayers = !_expandPlayers; }"
+                   EndIcon="@(_expandPlayers ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)">
+            @(_expandPlayers ? "Hide Players" : "Expand Players")
+        </MudButton>
+    </div>
+}
+
+@if (ShowPlayers && _expandPlayers)
+{
+    <MudStack Row Wrap="Wrap.Wrap">
+        @foreach (var player in Game.Players.Where(x => Player != x))
         {
-            <MudTh>Lives</MudTh>
+            <div class="mw-100">
+                <MudText Typo="Typo.h6" GutterBottom>@player.PlayerName</MudText>
+                <table class="dl-table">
+                    @if (ShowLives)
+                    {
+                        <tr>
+                            <th>Lives</th>
+                            <td>@player.LivesNumber</td>
+                        </tr>
+                    }
+                    <tr>
+                        <th>Score</th>
+                        <td>@player.Score</td>
+                    </tr>
+                </table>
+                <CascadingValue Value="player">
+                    <PlayerCard ReadOnly ShowDetails="ShowDetails"/>
+                </CascadingValue>
+            </div>
         }
-        @if (ShowScore)
-        {
-            <MudTh>Score</MudTh>
-        }
-        @if (ShowActions)
-        {
-            <MudTh>Actions</MudTh>
-        }
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Name">@context.PlayerName</MudTd>
-        @if (ShowLives)
-        {
-            <MudTd DataLabel="Lives">@context.LivesNumber</MudTd>
-        }
-        @if (ShowScore)
-        {
-            <MudTd DataLabel="Score">@context.Score</MudTd>
-        }
-        @if (ShowActions)
-        {
-            <MudTd DataLabel="Actions">
-                <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => ViewPlayer(context)">View</MudButton>
-            </MudTd>
-        }
-    </RowTemplate>
-</MudTable>
+    </MudStack>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" lg="8">
+            <MudTable Items="Game.Players">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    @if (ShowLives)
+                    {
+                        <MudTh>Lives</MudTh>
+                    }
+                    @if (ShowPlayers)
+                    {
+                        <MudTh>Score</MudTh>
+                        <MudTh>Actions</MudTh>
+                    }
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">@context.PlayerName</MudTd>
+                    @if (ShowLives)
+                    {
+                        <MudTd DataLabel="Lives">@context.LivesNumber</MudTd>
+                    }
+                    @if (ShowPlayers)
+                    {
+                        <MudTd DataLabel="Score">@context.Score</MudTd>
+                        @if (Player != context)
+                        {
+                            <MudTd DataLabel="Actions">
+                                <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => ViewPlayer(context)">View
+                                </MudButton>
+                            </MudTd>
+                        }
+                    }
+                </RowTemplate>
+            </MudTable>
+        </MudItem>
+    </MudGrid>
+}
 
 <MudDialog @bind-Visible="_dialogVisible" Options="_dialogOptions">
     <TitleContent>
@@ -54,11 +96,9 @@
 
     [Parameter] public bool ShowDetails { get; set; }
 
-    private bool ShowActions => Player == null || Game.State is GameStateEnum.Finished or GameStateEnum.Canceled;
-
-    private bool ShowScore => Player == null || Game.State is GameStateEnum.Finished or GameStateEnum.Canceled;
-
     private bool ShowLives => Game.Preset.LivesNumber > 0 && Game.Preset.EnableCall;
+
+    private bool ShowPlayers => Player == null || ShowDetails;
 
     private DialogOptions _dialogOptions = new()
     {
@@ -70,6 +110,8 @@
     private PlayerState? _selectedPlayer;
 
     private bool _dialogVisible;
+
+    private bool _expandPlayers;
 
     private void ViewPlayer(PlayerState player)
     {
