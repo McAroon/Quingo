@@ -1,5 +1,4 @@
-﻿@using System.Security.Claims
-@inherits ActionBarBase
+﻿@inherits ActionBarBase
 
 <MudStack AlignItems="AlignItems.End" Spacing="0" Class="pb-2">
     @if (IsHost && Game.State == GameStateEnum.Active)
@@ -25,20 +24,6 @@
 
     [CascadingParameter(Name = "UserId")] public override string UserId { get; set; } = default!;
 
-    [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
-
-    private ClaimsPrincipal? _user;
-
-    private bool IsHost => Game.HostUserId == UserId || _user?.IsInRole("admin") == true;
-
-    private bool IsSpectator => Game.Spectators.FirstOrDefault(x => x.UserId == UserId) != null;
-
-    protected override async Task OnInitializedAsync()
-    {
-        if (AuthenticationState != null)
-        {
-            _user = (await AuthenticationState)?.User;
-        }
-    }
-
+    [Parameter]
+    public bool IsHost { get; set; }
 }

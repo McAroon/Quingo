@@ -1,21 +1,41 @@
-﻿<MudGrid>
+﻿@using System.Security.Claims
+
+<MudGrid>
     <MudItem xs="12" lg="6">
-       <HostActionBar />
+        <HostActionBar IsHost="IsHost"/>
     </MudItem>
     <MudItem xs="12" lg="6">
-        <HostStats />
+        <HostStats/>
     </MudItem>
     <MudItem xs="12" lg="8">
         <MudText Typo="Typo.h5" GutterBottom>Draw History (@Game.DrawnNodes.Count / @Game.QuestionCount)</MudText>
-        <QuestionList Game="Game" ShowDetails Row/>
+        <QuestionList Game="Game" ShowDetails="ShowDetails" Row/>
     </MudItem>
     <MudItem lg="6" xs="12">
         <MudText Typo="Typo.h5" GutterBottom>Player List</MudText>
-        <PlayerList />
+        <PlayerList ShowDetails="ShowDetails"/>
     </MudItem>
 </MudGrid>
 
 @code {
-    [CascadingParameter]
-    public GameState Game { get; set; } = default!;
+    [CascadingParameter] public GameState Game { get; set; } = default!;
+
+    [CascadingParameter(Name = "UserId")] public string UserId { get; set; } = default!;
+
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+    private bool IsHost => Game.HostUserId == UserId || _user?.IsInRole("admin") == true;
+
+    private bool ShowDetails => IsHost || Game.State is GameStateEnum.Finished or GameStateEnum.Canceled;
+
+    private ClaimsPrincipal? _user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationState != null)
+        {
+            _user = (await AuthenticationState)?.User;
+        }
+    }
+
 }

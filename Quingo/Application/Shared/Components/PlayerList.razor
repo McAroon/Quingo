@@ -42,7 +42,7 @@
     </TitleContent>
     <DialogContent>
         <CascadingValue Value="_selectedPlayer">
-            <PlayerCard ReadOnly ShowDetails/>
+            <PlayerCard ReadOnly ShowDetails="ShowDetails"/>
         </CascadingValue>
     </DialogContent>
 </MudDialog>
@@ -51,6 +51,8 @@
     [CascadingParameter] public GameState Game { get; set; } = default!;
 
     [Parameter] public PlayerState? Player { get; set; }
+
+    [Parameter] public bool ShowDetails { get; set; }
 
     private bool ShowActions => Player == null || Game.State is GameStateEnum.Finished or GameStateEnum.Canceled;
 
