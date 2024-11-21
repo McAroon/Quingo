@@ -32,9 +32,9 @@
                         <MudText Typo="Typo.h6" Class="pt-2">Columns</MudText>
 
                         <MudExpansionPanels MultiExpansion>
-                            @foreach (var col in _model.Columns)
+                            @foreach (var (col, i) in _model.Columns.Select((col, i) => (col, i)))
                             {
-                                <MudExpansionPanel Text="@col.Name">
+                                <MudExpansionPanel Text="@($"Column {(!string.IsNullOrEmpty(col.Name) ? col.Name : (i + 1).ToString())}")">
                                     <MudPaper Class="pa-4 mb-2">
                                         <MudGrid>
                                             <MudItem xs="12">
@@ -95,12 +95,14 @@
                                                             <td>
                                                                 <MudNumericField T="int?"
                                                                                  @bind-Value="@tag.ItemsMin"
-                                                                                 Min="0"/>
+                                                                                 Min="0"
+                                                                                 Disabled="@(_model.SingleColumnConfig && _model.Columns.IndexOf(col) > 0)"/>
                                                             </td>
                                                             <td>
                                                                 <MudNumericField T="int?"
                                                                                  @bind-Value="@tag.ItemsMax"
-                                                                                 Min="0"/>
+                                                                                 Min="0"
+                                                                                 Disabled="@(_model.SingleColumnConfig && _model.Columns.IndexOf(col) > 0)"/>
                                                             </td>
                                                         </tr>
                                                     }
@@ -145,13 +147,22 @@
                 @for (var i = 0; i < _model.Columns.Count; i++)
                 {
                     var col = _model.Columns[i];
-                    <MudListItem Text="@($"Column {i + 1}")" Expanded="false">
+                    <MudListItem Text="@($"Column {(!string.IsNullOrEmpty(col.Name) ? col.Name : (i + 1).ToString())}")" Expanded="false">
                         <NestedList>
+                            <MudListItem Text="Exclude Tags" SecondaryText="@GetTagsSelectText(col.ExcludeTags)"/>
                             <MudListItem Text="Name" SecondaryText="@col.Name"/>
                             <MudListItem Text="Question Tags" SecondaryText="@GetTagsSelectText(col.QuestionTags)"/>
                             <MudListItem Text="Answer Tags"
                                          SecondaryText="@GetTagsSelectText(col.AnswerTags.Select(x => x.TagId))"/>
-                            <MudListItem Text="Exclude Tags" SecondaryText="@GetTagsSelectText(col.ExcludeTags)"/>
+                            <MudListItem Text="Player Card Generation" class="mud-nested-list-lvl2">
+                                <NestedList>
+                                    @foreach (var tagConfig in col.AnswerTags)
+                                    {
+                                        <MudListItem Text="@GetTagName(tagConfig.TagId)" 
+                                                     SecondaryText="@($"Min: {tagConfig.ItemsMin?.ToString() ?? "-"}, Max: {tagConfig.ItemsMax?.ToString() ?? "-"}")"/>
+                                    }
+                                </NestedList>
+                            </MudListItem>
                         </NestedList>
                     </MudListItem>
                 }

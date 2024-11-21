@@ -60,18 +60,19 @@ public class PlayerState : IDisposable
             throw new GameStateException("Column number and card size don't match");
         }
 
-        var aTagIds = Preset.Columns.SelectMany(x => x.ColAnswerTags).Distinct().ToList();
+        var allPresetTags = Preset.Columns.SelectMany(x => x.ColAnswerTags).Distinct().ToList();
         var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct()
             .ToList();
-        var aNodes = Pack.Nodes.Where(x => aTagIds.Any(t => x.HasTag(t.TagId)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
-        var aTagsCounter = aTagIds.ToDictionary(x => x.TagId, _ => 0);
+        var nodes = Pack.Nodes.Where(x => allPresetTags.Any(t => x.HasTag(t.TagId)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
+        var tagsCounter = allPresetTags.ToDictionary(x => x.TagId, _ => 0);
 
         for (var col = 0; col < Card.Cells.GetLength(0); col++)
         {
-            var colTags = Preset.Columns[col].ColAnswerTags;
-            var colTagIds = colTags.Select(x => x.TagId).ToList();
-            var colNodes = aNodes.Where(x => colTagIds.Any(t => x.NodeTags.Select(nt => nt.TagId).Contains(t)))
+            var colPresetTags = Preset.Columns[col].ColAnswerTags;
+            var colTagIds = colPresetTags.Select(x => x.TagId).ToList();
+            var colNodes = nodes.Where(x => colTagIds.Any(t => x.NodeTags.Select(nt => nt.TagId).Contains(t)))
                 .ToList();
+            var colTagsCounter = Preset.SingleColumnConfig ? tagsCounter : colPresetTags.ToDictionary(x => x.TagId, _ => 0);
 
             for (var row = 0; row < Card.Cells.GetLength(1); row++)
             {
@@ -81,18 +82,36 @@ public class PlayerState : IDisposable
                 }
                 else
                 {
-                    var tagIds = colNodes.SelectMany(x => x.Tags).Select(x => x.Id)
+                    var nodeTagIds = colNodes.SelectMany(x => x.Tags).Select(x => x.Id)
                         .Where(x => colTagIds.Contains(x))
                         .Distinct().ToList();
-                    var tagIdx = GameState.Random.Next(0, tagIds.Count);
-                    var tagId = tagIds[tagIdx];
-                    aTagsCounter[tagId]++;
-                    var tagNodes = colNodes.Where(x => x.HasTag(tagId)).ToList();
+                    var nodePresetTags = colPresetTags.Where(x => nodeTagIds.Contains(x.TagId)).ToList();
+                    var belowMinTags = nodePresetTags
+                        .Where(x => x.ItemsMin != null && colTagsCounter[x.TagId] < x.ItemsMin).ToList();
+                    var aboveMaxTags = nodePresetTags
+                        .Where(x => x.ItemsMax != null && colTagsCounter[x.TagId] >= x.ItemsMax).ToList();
 
+                    int tagId;
+                    if (belowMinTags.Count > 0)
+                    {
+                        var tagIdx = GameState.Random.Next(0, belowMinTags.Count);
+                        tagId = belowMinTags[tagIdx].TagId;
+                    }
+                    else
+                    {
+                        var nodePresetTagsExclMax = nodePresetTags.Except(aboveMaxTags).ToList();
+                        var presetTags = nodePresetTagsExclMax.Count > 0 ? nodePresetTagsExclMax : nodePresetTags;
+                        var tagIdx = GameState.Random.Next(0, presetTags.Count);
+                        tagId = presetTags[tagIdx].TagId;
+                    }
+                   
+                    var tagNodes = colNodes.Where(x => x.HasTag(tagId)).ToList();
+                    colTagsCounter[tagId]++;
+                    
                     var idx = GameState.Random.Next(0, tagNodes.Count);
                     var node = tagNodes[idx];
                     colNodes.Remove(node);
-                    aNodes.Remove(node);
+                    nodes.Remove(node);
 
                     Card.Cells[col, row] = new PlayerCardCellData(col, row, node);
                 }

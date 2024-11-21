@@ -186,3 +186,11 @@
     color: var(--mud-palette-text-primary);
     border-radius: var(--mud-default-borderradius);
 }
+
+.mud-nested-list > .mud-list-item.mud-nested-list-lvl2 {
+    padding-right: 16px;
+}
+
+.mud-nested-list > .mud-list-item.mud-nested-list-lvl2 + .mud-collapse-container {
+    padding-left: 16px;
+}
