@@ -183,13 +183,25 @@ public class GameState : IDisposable
             || WinningPlayers.Contains(player)
             || State is not GameStateEnum.Active and not GameStateEnum.FinalCountdown) return;
 
-        player.Validate(true);
+        var isValid = ValidatePatterns(player, true);
+        if (isValid)
+        {
+            _winningPlayers.Add(player);
+        }
+        else
+        {
+            player.RemoveLife();
+        }
+    }
+
+    private bool ValidatePatterns(PlayerState player, bool isCall = false)
+    {
+        player.Validate(isCall);
         var isValid = false;
         var validPattern = new bool[Preset.CardSize, Preset.CardSize];
 
         foreach (var pattern in _bingoPatterns)
         {
-            var res = new bool[Preset.CardSize, Preset.CardSize];
             var patternValid = true;
 
             for (var col = 0; col < Preset.CardSize; col++)
@@ -215,30 +227,27 @@ public class GameState : IDisposable
 
         if (!isValid)
         {
-            player.RemoveLife();
+            return false;
         }
-        else
-        {
-            for (var col = 0; col < Preset.CardSize; col++)
-            {
-                for (var row = 0; row < Preset.CardSize; row++)
-                {
-                    var patCell = validPattern[col, row];
-                    var plCell = player.Card.Cells[col, row];
-                    plCell.IsMatchingPattern = patCell;
-                }
-            }
 
-            _winningPlayers.Add(player);
+        for (var col = 0; col < Preset.CardSize; col++)
+        {
+            for (var row = 0; row < Preset.CardSize; row++)
+            {
+                var patCell = validPattern[col, row];
+                var plCell = player.Card.Cells[col, row];
+                plCell.IsMatchingPattern = patCell;
+            }
         }
+
+        return true;
     }
 
     public void EndGame()
     {
         if (State != GameStateEnum.Active) return;
-
-        State = GameStateEnum.Canceled;
-        NotifyStateChanged();
+        
+        SetState(GameStateEnum.Canceled);
     }
 
     public void SetState(GameStateEnum state)
@@ -246,10 +255,33 @@ public class GameState : IDisposable
         if (State == state) return;
 
         State = state;
+        OnGameFinished();
         NotifyStateChanged();
     }
 
-    public void SetWinningPlayers(List<string> playerIds)
+    private void OnGameFinished()
+    {
+        if (State is not GameStateEnum.Finished and not GameStateEnum.Canceled) return;
+
+        if (WinningPlayers.Count == 0 && Players.Count > 0)
+        {
+            var validPatternPlayerIds = Players.Where(x => ValidatePatterns(x)).Select(x => x.PlayerUserId).ToList();
+            if (validPatternPlayerIds.Count > 0)
+            {
+                SetWinningPlayers(validPatternPlayerIds);
+            }
+            else
+            {
+                var maxScore = Players.Select(x => x.Score).Max();
+                var maxScorePlayerIds = Players
+                    .Where(x => x.Score == maxScore)
+                    .Select(x => x.PlayerUserId).ToList();
+                SetWinningPlayers(maxScorePlayerIds);
+            }
+        }
+    }
+
+    private void SetWinningPlayers(List<string> playerIds)
     {
         var playersToAdd = _players.Where(x => playerIds.Contains(x.PlayerUserId) && !_winningPlayers.Contains(x))
             .ToList();
@@ -257,10 +289,7 @@ public class GameState : IDisposable
         {
             _winningPlayers.Add(player);
         }
-
-        NotifyStateChanged();
     }
-
 
     #region events
 

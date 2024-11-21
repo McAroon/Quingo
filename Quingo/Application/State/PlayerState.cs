@@ -170,6 +170,11 @@ public class PlayerState : IDisposable
 
             cell.IsValid = cell.IsMarked ? found : !found;
 
+            if (Preset.Pattern == PackPresetPattern.FullCard)
+            {
+                cell.IsMatchingPattern = cell is { IsMarked: true, IsValid: true };
+            }
+
             if (isCall && cell is { IsMarked: true, MatchedQNode: not null })
             {
                 cell.ShowValidation = true;

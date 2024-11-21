@@ -158,18 +158,6 @@ public class GameLoop : IDisposable
         {
             game.SetState(GameStateEnum.Finished);
         }
-
-        if (game is
-            {
-                State: GameStateEnum.Finished or GameStateEnum.Canceled, WinningPlayers.Count: 0, Players.Count: > 0
-            })
-        {
-            var maxScore = game.Players.Select(x => x.Score).Max();
-            var playerIds = game.Players
-                .Where(x => x.Score == maxScore)
-                .Select(x => x.PlayerUserId).ToList();
-            game.SetWinningPlayers(playerIds);
-        }
     }
 
     private static bool CanRemove(GameState game)
