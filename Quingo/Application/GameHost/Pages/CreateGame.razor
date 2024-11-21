@@ -86,8 +86,7 @@
     protected override async Task OnInitializedAsync()
     {
         var exGame = StateService.Games
-            .FirstOrDefault(x => x.HostUserId == UserId
-                                 && (x.State is not GameStateEnum.Finished and not GameStateEnum.Canceled));
+            .FirstOrDefault(x => x.HostUserId == UserId && x.IsStateActive);
         if (exGame != null)
         {
             NavigationManager.NavigateTo($"/game/host/{exGame.GameSessionId}");

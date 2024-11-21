@@ -18,7 +18,7 @@
                    Disabled="!AllowCall">Call
         </MudButton>
     }
-    @if (ShowHostControls)
+    @if (ShowHostControls && Game.IsStateActive)
     {
         <MudBreakpointProvider>
             <MudHidden Invert Breakpoint="Breakpoint.MdAndUp">
@@ -34,6 +34,13 @@
                 </div>
             </MudHidden>
         </MudBreakpointProvider>
+    }
+    @if (ShowHostControls && !Game.IsStateActive)
+    {
+        <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Outlined.Refresh" OnClick="PlayAgain"
+                   Disabled="IsLoading">Play Again
+        </MudButton>
     }
 </MudStack>
 

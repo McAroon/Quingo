@@ -207,11 +207,18 @@ public class PlayerState : IDisposable
     public event Action? StateChanged;
 
     public event Action<PlayerState>? LifeLost;
+    
+    public event Action<GameState, PlayerState>? NewGameCreated;
 
     private void NotifyStateChanged()
     {
         UpdatedAt = DateTime.UtcNow;
         StateChanged?.Invoke();
+    }
+    
+    public void NotifyNewGameCreated(GameState game, PlayerState player)
+    {
+        NewGameCreated?.Invoke(game, player);
     }
 
     #region dispose
@@ -223,6 +230,8 @@ public class PlayerState : IDisposable
         if (!disposedValue)
         {
             StateChanged = null;
+            LifeLost = null;
+            NewGameCreated = null;
             disposedValue = true;
         }
     }

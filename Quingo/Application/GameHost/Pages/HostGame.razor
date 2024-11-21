@@ -22,7 +22,7 @@
 else if (_isInitialized)
 {
     <CascadingValue Value="_game">
-        <HostLayout/>
+        <HostLayout IsHost="IsHost"/>
     </CascadingValue>
 }
 
@@ -31,23 +31,36 @@ else if (_isInitialized)
 
     [Parameter] public Guid GameSessionId { get; set; }
 
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+    private bool IsHost => _game.HostUserId == UserId || _user?.IsInRole("admin") == true;
+
     private string? _initError;
 
     private GameState _game = default!;
 
     private bool _isInitialized;
 
+    private ClaimsPrincipal? _user;
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            if (AuthenticationState != null)
+            {
+                _user = (await AuthenticationState)?.User;
+            }
+
             _game = await StateService.GetGameState(GameSessionId, UserId);
             var player = _game.Players.FirstOrDefault(x => x.PlayerUserId == UserId);
             if (player != null)
             {
                 NavigationManager.NavigateTo($"/game/play/{_game.GameSessionId}/{player.PlayerSessionId}");
             }
+
             _game.StateChanged += OnStateChanged;
+            _game.NewGameCreated += OnNewGameCreated;
             _isInitialized = true;
         }
         catch (Exception e)
@@ -62,11 +75,21 @@ else if (_isInitialized)
         InvokeAsync(StateHasChanged);
     }
 
+    private void OnNewGameCreated(GameState game)
+    {
+        InvokeAsync(() =>
+        {
+            var url = IsHost ? $"/game/host/{game.GameSessionId}" : $"/game/spectate/{game.GameSessionId}";
+            NavigationManager.NavigateTo(url, true);
+        });
+    }
+
     public void Dispose()
     {
         if (_game == null) return;
 
         _game.StateChanged -= OnStateChanged;
+        _game.NewGameCreated -= OnNewGameCreated;
     }
 
 }

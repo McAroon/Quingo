@@ -84,6 +84,8 @@ public class GameState : IDisposable
         }
     }
 
+    public bool IsStateActive => State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.FinalCountdown;
+
     public int GameTimer { get; private set; }
 
     public int GameTimerInitialValue { get; private set; }
@@ -181,7 +183,7 @@ public class GameState : IDisposable
         if (player.LivesNumber <= 0
             || !Preset.EnableCall
             || WinningPlayers.Contains(player)
-            || State is not GameStateEnum.Active and not GameStateEnum.FinalCountdown) return;
+            || !IsStateActive) return;
 
         var isValid = ValidatePatterns(player, true);
         if (isValid)
@@ -261,7 +263,7 @@ public class GameState : IDisposable
 
     private void OnGameFinished()
     {
-        if (State is not GameStateEnum.Finished and not GameStateEnum.Canceled) return;
+        if (IsStateActive) return;
 
         if (WinningPlayers.Count == 0 && Players.Count > 0)
         {
@@ -301,6 +303,13 @@ public class GameState : IDisposable
 
     public event Action<GameStateEnum>? GameStateChanged;
 
+    public event Action<GameState>? NewGameCreated;
+
+    public void NotifyNewGameCreated(GameState game)
+    {
+        NewGameCreated?.Invoke(game);
+    }
+    
     private void NotifyStateChanged()
     {
         UpdatedAt = DateTime.UtcNow;
@@ -346,6 +355,9 @@ public class GameState : IDisposable
         {
             StateChanged = null;
             NodeDrawn = null;
+            PlayerJoined = null;
+            GameStateChanged = null;
+            NewGameCreated = null;
             _drawnNodes.CollectionChanged -= HandleDrawnNodesChanged;
             _players.CollectionChanged -= HandlePlayersChanged;
             _winningPlayers.CollectionChanged -= HandleWinningPlayersChanged;

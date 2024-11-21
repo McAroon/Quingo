@@ -23,7 +23,8 @@ public class GameStateService : IDisposable
 
     private readonly ICacheService _cache;
 
-    public GameStateService(IDbContextFactory<ApplicationDbContext> dbContextFactory, ILogger<GameStateService> logger, ICacheService cache)
+    public GameStateService(IDbContextFactory<ApplicationDbContext> dbContextFactory, ILogger<GameStateService> logger,
+        ICacheService cache)
     {
         _dbContextFactory = dbContextFactory;
         _logger = logger;
@@ -36,8 +37,7 @@ public class GameStateService : IDisposable
         try
         {
             var startTime = Stopwatch.GetTimestamp();
-            if (_state.Values.Any(x =>
-                    (x.State is not GameStateEnum.Finished and not GameStateEnum.Canceled) && x.HostUserId == userId))
+            if (_state.Values.Any(x => x.IsStateActive && x.HostUserId == userId))
             {
                 throw new GameStateException("User is already hosting a game");
             }
@@ -77,6 +77,45 @@ public class GameStateService : IDisposable
                 sessionId, getPackTime.TotalSeconds, createGameTime.TotalSeconds, totalTime.TotalSeconds);
 
             return game;
+        }
+        catch (Exception e) when (e is not GameStateException)
+        {
+            throw new GameStateException("Error creating game", e);
+        }
+    }
+
+    public void PlayAgain(Guid gameSessionId)
+    {
+        try
+        {
+            var game = GetGameState(gameSessionId);
+            if (game.IsStateActive)
+            {
+                throw new GameStateException("The current game is still active");
+            }
+
+            var sessionId = Guid.NewGuid();
+            var newGame = new GameState(sessionId, game.Pack, game.Preset, game.HostUserId, game.HostName);
+            if (!_state.TryAdd(sessionId, newGame))
+            {
+                throw new GameStateException("Error creating game");
+            }
+
+            game.NotifyNewGameCreated(newGame);
+
+            foreach (var player in game.Players)
+            {
+                var playerSessionId = Guid.NewGuid();
+                var newPlayer = new PlayerState(playerSessionId, newGame, player.PlayerUserId, player.PlayerName);
+                newGame.Join(newPlayer);
+
+                player.NotifyNewGameCreated(newGame, newPlayer);
+            }
+
+            foreach (var spectator in game.Spectators)
+            {
+                newGame.Spectate(spectator);
+            }
         }
         catch (Exception e) when (e is not GameStateException)
         {
@@ -199,7 +238,7 @@ public class GameStateService : IDisposable
         var userStore = new UserStore<ApplicationUser>(db);
         var user = await userStore.FindByIdAsync(userId);
         if (user == null) return false;
-        
+
         var isAdmin = await userStore.IsInRoleAsync(user, "ADMIN");
         return isAdmin;
     }
