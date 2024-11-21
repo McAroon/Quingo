@@ -62,7 +62,7 @@ public class NodeViewModel
                     new EntityInfoModel(x.link.Id, x.link.Name), direction, NodeLinkByTagType.Indirect);
             });
 
-        var aTags = preset?.Columns.SelectMany(x => x.AnswerTags ?? []).Distinct().ToList();
+        var aTags = preset?.Columns.SelectMany(x => x.ColAnswerTags?.Select(t => t.TagId) ?? []).Distinct().ToList();
         var qTags = preset?.Columns.SelectMany(x => x.QuestionTags ?? []).Distinct().ToList();
         var inclTags = showLinks == ShowLinksByTagEnum.Question ? qTags : aTags;
         var inclLinkTags = showLinks == ShowLinksByTagEnum.Question ? aTags : qTags;

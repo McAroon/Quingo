@@ -6,7 +6,6 @@ public class PackPresetDataModel
 {
     public PackPresetDataModel()
     {
-
     }
 
     public PackPresetDataModel(PackPresetData data)
@@ -48,7 +47,12 @@ public class PackPresetDataModel
             {
                 Name = c.Name,
                 QuestionTags = c.QuestionTags.ToList(),
-                AnswerTags = c.AnswerTags.ToList(),
+                ColAnswerTags = c.AnswerTags.Select(x => new PackPresetTag
+                {
+                    TagId = x.TagId,
+                    ItemsMin = x.ItemsMin,
+                    ItemsMax = x.ItemsMax,
+                }).ToList(),
                 ExcludeTags = c.ExcludeTags.ToList(),
             }).ToList()
         };
@@ -61,15 +65,15 @@ public class PackPresetDataModel
     public bool IsFreeCenterEnabled => CardSize % 2 != 0;
 
     public int LivesNumber { get; set; } = 3;
-    
+
     public int MaxPlayers { get; set; } = 0;
-    
+
     public int GameTimer { get; set; } = 0;
 
     public int EndgameTimer { get; set; } = 20;
 
     public bool ShowTagBadges { get; set; } = true;
-    
+
     public bool EnableCall { get; set; } = true;
 
     public bool JoinOnCreate { get; set; } = true;
@@ -94,7 +98,6 @@ public class PackPresetColumnModel
 {
     public PackPresetColumnModel()
     {
-
     }
 
     public PackPresetColumnModel(string name)
@@ -106,7 +109,7 @@ public class PackPresetColumnModel
     {
         Name = col.Name;
         QuestionTags = new List<int>(col.QuestionTags ?? []);
-        AnswerTags = new List<int>(col.AnswerTags ?? []);
+        AnswerTags = col.ColAnswerTags?.Select(x => new PackPresetTagModel(x)) ?? [];
         ExcludeTags = new List<int>(col.ExcludeTags ?? []);
     }
 
@@ -114,7 +117,54 @@ public class PackPresetColumnModel
 
     public IEnumerable<int> QuestionTags { get; set; } = [];
 
-    public IEnumerable<int> AnswerTags { get; set; } = [];
+    public IEnumerable<PackPresetTagModel> AnswerTags { get; set; } = [];
 
     public IEnumerable<int> ExcludeTags { get; set; } = [];
+}
+
+public class PackPresetTagModel
+{
+    public PackPresetTagModel()
+    {
+    }
+
+    public PackPresetTagModel(int tagId)
+    {
+        TagId = tagId;
+    }
+
+    public PackPresetTagModel(PackPresetTag tag)
+    {
+        TagId = tag.TagId;
+        ItemsMin = tag.ItemsMin;
+        ItemsMax = tag.ItemsMax;
+    }
+
+    public int TagId { get; set; }
+
+    public int? ItemsMin { get; set; }
+
+    public int? ItemsMax { get; set; }
+
+    public override string ToString()
+    {
+        return TagId.ToString();
+    }
+
+    public class PackPresetTagModelComparer : IEqualityComparer<PackPresetTagModel>
+    {
+        public bool Equals(PackPresetTagModel? x, PackPresetTagModel? y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (x is null) return false;
+            if (y is null) return false;
+            if (x.GetType() != y.GetType()) return false;
+            return x.TagId == y.TagId;
+        }
+
+        public int GetHashCode(PackPresetTagModel obj)
+        {
+            return obj.TagId;
+        }
+    }
 }

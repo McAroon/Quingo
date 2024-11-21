@@ -44,9 +44,18 @@ public record PackPresetColumn
 
     public IList<int> QuestionTags { get; set; } = [];
 
-    public IList<int> AnswerTags { get; set; } = [];
+    public IList<PackPresetTag> ColAnswerTags { get; set; } = [];
 
     public IList<int> ExcludeTags { get; set; } = [];
+}
+
+public record PackPresetTag
+{
+    public int TagId { get; set; }
+
+    public int? ItemsMin { get; set; }
+
+    public int? ItemsMax { get; set; }
 }
 
 public enum PackPresetPattern

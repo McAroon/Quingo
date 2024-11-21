@@ -60,14 +60,16 @@ public class PlayerState : IDisposable
             throw new GameStateException("Column number and card size don't match");
         }
 
-        var aTagIds = Preset.Columns.SelectMany(x => x.AnswerTags).Distinct().ToList();
+        var aTagIds = Preset.Columns.SelectMany(x => x.ColAnswerTags).Distinct().ToList();
         var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct()
             .ToList();
-        var aNodes = Pack.Nodes.Where(x => aTagIds.Any(t => x.HasTag(t)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
+        var aNodes = Pack.Nodes.Where(x => aTagIds.Any(t => x.HasTag(t.TagId)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
+        var aTagsCounter = aTagIds.ToDictionary(x => x.TagId, _ => 0);
 
         for (var col = 0; col < Card.Cells.GetLength(0); col++)
         {
-            var colTagIds = Preset.Columns[col].AnswerTags;
+            var colTags = Preset.Columns[col].ColAnswerTags;
+            var colTagIds = colTags.Select(x => x.TagId).ToList();
             var colNodes = aNodes.Where(x => colTagIds.Any(t => x.NodeTags.Select(nt => nt.TagId).Contains(t)))
                 .ToList();
 
@@ -84,6 +86,7 @@ public class PlayerState : IDisposable
                         .Distinct().ToList();
                     var tagIdx = GameState.Random.Next(0, tagIds.Count);
                     var tagId = tagIds[tagIdx];
+                    aTagsCounter[tagId]++;
                     var tagNodes = colNodes.Where(x => x.HasTag(tagId)).ToList();
 
                     var idx = GameState.Random.Next(0, tagNodes.Count);

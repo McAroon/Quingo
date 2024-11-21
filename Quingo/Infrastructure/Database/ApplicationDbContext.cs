@@ -87,7 +87,10 @@ namespace Quingo.Infrastructure.Database
             builder.Entity<PackPreset>().OwnsOne(e => e.Data, d =>
             {
                 d.ToJson();
-                d.OwnsMany(x => x.Columns);
+                d.OwnsMany(x => x.Columns, c =>
+                {
+                    c.OwnsMany(x => x.ColAnswerTags);
+                });
             });
 
             builder.Entity<IndirectLink>().Property(e => e.Direction).HasConversion<string>();
