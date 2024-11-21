@@ -22,49 +22,28 @@
 else if (_isInitialized)
 {
     <CascadingValue Value="_state">
-        <PlayerLayout />
+        <PlayerLayout/>
     </CascadingValue>
 }
 
 @code {
-    [CascadingParameter]
-    private Task<AuthenticationState>? AuthenticationState { get; set; }
+    [CascadingParameter(Name = "UserId")] private string UserId { get; set; } = default!;
 
-    [Parameter]
-    public Guid GameSessionId { get; set; }
+    [Parameter] public Guid GameSessionId { get; set; }
 
-    [Parameter]
-    public Guid PlayerSessionId { get; set; }
+    [Parameter] public Guid PlayerSessionId { get; set; }
 
     private string? _initError;
 
-    private string? _userId;
-
     private PlayerState _state = default!;
-    
+
     private bool _isInitialized;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         try
         {
-            if (AuthenticationState != null)
-            {
-                var auth = await AuthenticationState;
-                _userId = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            }
-
-            if (_userId == null)
-            {
-                _initError = "Initialization error";
-                return;
-            }
-
-            _state = StateService.GetPlayerState(GameSessionId, PlayerSessionId, _userId);
-            _state.StateChanged += OnStateChanged;
-            _state.GameState.StateChanged += OnStateChanged;
-            _state.GameState.GameStateChanged += OnGameStateChanged;
-            _state.NewGameCreated += OnNewGameCreated;
+            InitializeGame();
             _isInitialized = true;
         }
         catch (Exception e)
@@ -72,6 +51,33 @@ else if (_isInitialized)
             Logger.LogError(e, e.Message);
             _initError = e.Message;
         }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_state == null
+            || (_state.PlayerSessionId == PlayerSessionId && _state.GameState.GameSessionId == GameSessionId)) return;
+
+        try
+        {
+            _isInitialized = false;
+            InitializeGame();
+            _isInitialized = true;
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, e.Message);
+            _initError = e.Message;
+        }
+    }
+
+    private void InitializeGame()
+    {
+        _state = StateService.GetPlayerState(GameSessionId, PlayerSessionId, UserId);
+        _state.StateChanged += OnStateChanged;
+        _state.GameState.StateChanged += OnStateChanged;
+        _state.GameState.GameStateChanged += OnGameStateChanged;
+        _state.NewGameCreated += OnNewGameCreated;
     }
 
     private void OnStateChanged()
@@ -97,12 +103,12 @@ else if (_isInitialized)
             }
         });
     }
-    
+
     private void OnNewGameCreated(GameState game, PlayerState player)
     {
         InvokeAsync(() =>
         {
-            NavigationManager.NavigateTo($"/game/play/{game.GameSessionId}/{player.PlayerSessionId}", true);
+            NavigationManager.NavigateTo($"/game/play/{game.GameSessionId}/{player.PlayerSessionId}");
         });
     }
 
@@ -114,4 +120,5 @@ else if (_isInitialized)
         _state.GameState.GameStateChanged -= OnGameStateChanged;
         _state.NewGameCreated -= OnNewGameCreated;
     }
+
 }

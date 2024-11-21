@@ -52,15 +52,7 @@ else if (_isInitialized)
                 _user = (await AuthenticationState)?.User;
             }
 
-            _game = await StateService.GetGameState(GameSessionId, UserId);
-            var player = _game.Players.FirstOrDefault(x => x.PlayerUserId == UserId);
-            if (player != null)
-            {
-                NavigationManager.NavigateTo($"/game/play/{_game.GameSessionId}/{player.PlayerSessionId}");
-            }
-
-            _game.StateChanged += OnStateChanged;
-            _game.NewGameCreated += OnNewGameCreated;
+            await InitializeGame();
             _isInitialized = true;
         }
         catch (Exception e)
@@ -68,6 +60,36 @@ else if (_isInitialized)
             Logger.LogError(e, e.Message);
             _initError = e.Message;
         }
+    }
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_game == null || _game.GameSessionId == GameSessionId) return;
+        
+        try
+        {
+            _isInitialized = false;
+            await InitializeGame();
+            _isInitialized = true;
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, e.Message);
+            _initError = e.Message;
+        }
+    }
+
+    private async Task InitializeGame()
+    {
+        _game = await StateService.GetGameState(GameSessionId, UserId);
+        var player = _game.Players.FirstOrDefault(x => x.PlayerUserId == UserId);
+        if (player != null)
+        {
+            NavigationManager.NavigateTo($"/game/play/{_game.GameSessionId}/{player.PlayerSessionId}");
+        }
+
+        _game.StateChanged += OnStateChanged;
+        _game.NewGameCreated += OnNewGameCreated;
     }
 
     private void OnStateChanged()
@@ -80,7 +102,7 @@ else if (_isInitialized)
         InvokeAsync(() =>
         {
             var url = IsHost ? $"/game/host/{game.GameSessionId}" : $"/game/spectate/{game.GameSessionId}";
-            NavigationManager.NavigateTo(url, true);
+            NavigationManager.NavigateTo(url);
         });
     }
 

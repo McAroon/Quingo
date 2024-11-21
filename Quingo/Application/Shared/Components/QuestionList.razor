@@ -3,13 +3,16 @@
 
 @implements IDisposable
 
-<MudStack Spacing="1" Row="Row" Wrap="Wrap.NoWrap" Class="@StackClass" id="q-list" Reverse>
-    @foreach (var node in _nodes)
-    {
-        <NodeSquare Node="node" CellState="GetCellState(node)" ShowTagBadge
-                    ShowTagBadgeTooltip="Game.Preset.ShowTagBadges" OnClick="OnClick(node)!" />
-    }
-</MudStack>
+@if (_isInitialized)
+{
+    <MudStack Spacing="1" Row="Row" Wrap="Wrap.NoWrap" Class="@StackClass" id="q-list" Reverse>
+        @foreach (var node in _nodes)
+        {
+            <NodeSquare Node="node" CellState="GetCellState(node)" ShowTagBadge
+                        ShowTagBadgeTooltip="Game.Preset.ShowTagBadges" OnClick="OnClick(node)!" />
+        }
+    </MudStack>
+}
 
 @code {
     [Parameter, EditorRequired]
@@ -34,8 +37,28 @@
     
     private string StackClass => Row ? "overflow-y-scroll pb-2" : "overflow-x-scroll pr-2 d-inline-flex";
 
+    private Guid? _gameSessionId;
+
+    private bool _isInitialized;
+
     protected override void OnInitialized()
     {
+        InitializeGame();
+        _isInitialized = true;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Game.GameSessionId == _gameSessionId) return;
+
+        _isInitialized = false;
+        InitializeGame();
+        _isInitialized = true;
+    }
+
+    private void InitializeGame()
+    {
+        _gameSessionId = Game.GameSessionId;
         _nodes = GetNodes();
         Game.NodeDrawn += OnNodeDrawn;
     }

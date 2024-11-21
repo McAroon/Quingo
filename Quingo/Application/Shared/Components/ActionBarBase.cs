@@ -73,6 +73,9 @@ public abstract class ActionBarBase : ComponentBase
         {
             Logger.LogError(e, e.Message);
             Snackbar.Add(e.Message, Severity.Error);
+        }
+        finally
+        {
             IsLoading = false;
         }
     }
