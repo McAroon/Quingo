@@ -3,10 +3,10 @@
 
 <MudStack AlignItems="AlignItems.End" Spacing="0" Class="pb-2">
     <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ExitToApp" Href="/">Leave Game</MudButton>
-    @if (ShowHostControls && State.GameState.State == GameStateEnum.Active)
+    @if (ShowHostControls && State.GameState.IsStateActive)
     {
-        <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop"
-                   Disabled="State.GameState.State != GameStateEnum.Active" OnClick="ConfirmEndGame">End Game
+        <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop" OnClick="ConfirmEndGame">
+            End Game
         </MudButton>
     }
 </MudStack>

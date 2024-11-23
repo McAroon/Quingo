@@ -89,17 +89,17 @@ else if (_isInitialized)
     {
         InvokeAsync(async () =>
         {
-            if (state is GameStateEnum.FinalCountdown)
+            if (state == GameStateEnum.FinalCountdown)
             {
                 Snackbar.Add("Countdown!", Severity.Warning);
             }
-            else if (state is GameStateEnum.Canceled)
+            else if (state is GameStateEnum.Canceled && _state.GameState.HostUserId != UserId)
             {
-                await Dialog.ShowMessageBox("Game canceled", $"{_state.GameState.HostName} has canceled the game.");
+                await Dialog.ShowMessageBox("The game has ended", $"{_state.GameState.HostName} has stopped the game. Thanks for playing!");
             }
-            else if (state is GameStateEnum.Finished)
+            else if (state is GameStateEnum.Canceled or GameStateEnum.Finished)
             {
-                await Dialog.ShowMessageBox("The game has ended", $"Thanks for playing!");
+                await Dialog.ShowMessageBox("The game has ended", "Thanks for playing!");
             }
         });
     }

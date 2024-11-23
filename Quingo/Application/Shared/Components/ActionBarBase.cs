@@ -24,7 +24,7 @@ public abstract class ActionBarBase : ComponentBase
     {
         var parameters = new ConfirmDialog.ConfirmDialogParams
         {
-            Prompt = $"Do you want to end game?",
+            Prompt = "Do you want to end the game?",
             ButtonText = "End game",
             ButtonColor = Color.Error
         };

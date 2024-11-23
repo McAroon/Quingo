@@ -1,10 +1,10 @@
 ﻿@inherits ActionBarBase
 
 <MudStack AlignItems="AlignItems.End" Spacing="0" Class="pb-2">
-    @if (IsHost && Game.State == GameStateEnum.Active)
+    @if (IsHost && Game.IsStateActive)
     {
-        <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop"
-                   Disabled="Game.State != GameStateEnum.Active" OnClick="ConfirmEndGame">End Game
+        <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop" OnClick="ConfirmEndGame">
+            End Game
         </MudButton>
     }
     <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ExitToApp" Href="/">Leave Game</MudButton>
