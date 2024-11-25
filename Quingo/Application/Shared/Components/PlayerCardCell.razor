@@ -20,7 +20,7 @@
     private bool ShowTagBadge => State.GameState.Preset.ShowTagBadges;
 
     private bool IsPending => State.GameState.Preset.MatchRule == PackPresetMatchRule.LastDrawn 
-        && Cell.State is PlayerCardCellState.Marked or PlayerCardCellState.Invalid 
+        && Cell.State is PlayerCardCellState.Marked or PlayerCardCellState.Invalid or PlayerCardCellState.MatchingPattern
         && Cell.Node != null
         && Cell.MatchedQNode != null 
         && Cell.MatchedQNode == State.GameState.DrawnNodes.LastOrDefault();
