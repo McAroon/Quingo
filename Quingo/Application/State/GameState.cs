@@ -27,6 +27,8 @@ public class GameState : IDisposable
         _players.CollectionChanged += HandlePlayersChanged;
         _winningPlayers.CollectionChanged += HandleWinningPlayersChanged;
         _spectators.CollectionChanged += HandleSpectatorsChanged;
+        
+        NotifyStateChanged = ((Action)NotifyStateChangedUndebounced).Debounce(200);
 
         Setup();
     }
@@ -337,7 +339,9 @@ public class GameState : IDisposable
         NewGameCreated?.Invoke(game);
     }
 
-    private void NotifyStateChanged()
+    private readonly Action NotifyStateChanged;
+
+    private void NotifyStateChangedUndebounced()
     {
         UpdatedAt = DateTime.UtcNow;
         StateChanged?.Invoke();
