@@ -22,6 +22,8 @@ public record PackPresetData
     public int GameTimer { get; set; } = 0;
 
     public int EndgameTimer { get; set; } = 20;
+
+    public int AutoDrawTimer { get; set; }
     
     public bool ShowTagBadges { get; set; } = true;
 

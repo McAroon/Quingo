@@ -7,7 +7,14 @@
     {
         <tr>
             <th>Game Timer</th>
-            <td>@TimeSpan.FromSeconds(Game.Timer.Value).ToStringHoursOptional()</td>
+            <td>@Game.Timer.DisplayValue</td>
+        </tr>
+    }
+    @if (Game.Preset.AutoDrawTimer > 0 && Game.State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.Paused)
+    {
+        <tr>
+            <th>Auto Draw Timer</th>
+            <td>@Game.AutoDrawTimer.DisplayValue</td>
         </tr>
     }
     @if (Game.WinningPlayers.Count > 0)

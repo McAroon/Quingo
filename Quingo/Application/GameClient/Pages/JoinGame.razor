@@ -21,7 +21,7 @@
     </MudTooltip>
 </MudText>
 
-<MudTable Items="StateService.Games.Where(x => x.State == GameStateEnum.Active)">
+<MudTable Items="StateService.Games.Where(x => x.IsStateActive)">
     <HeaderContent>
         <MudTh>Pack</MudTh>
         <MudTh>Host</MudTh>

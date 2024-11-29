@@ -20,6 +20,7 @@ public class GameState : IDisposable
         State = GameStateEnum.Init;
 
         Timer = new GameTimer(preset.GameTimer);
+        AutoDrawTimer = new GameTimer(preset.AutoDrawTimer);
         _random = new Random(gameSessionId.GetHashCode());
 
         _drawnNodes.CollectionChanged += HandleDrawnNodesChanged;
@@ -66,7 +67,7 @@ public class GameState : IDisposable
     private readonly ObservableCollection<ApplicationUserInfo> _spectators = [];
     public ReadOnlyCollection<ApplicationUserInfo> Spectators => _spectators.AsReadOnly();
 
-    public bool CanDraw => _qNodes.Count > 0;
+    public bool CanDraw => _qNodes.Count > 0 && State is GameStateEnum.Active or GameStateEnum.Paused;
 
     public bool ShowTimer => Preset.GameTimer > 0 || (Preset.EndgameTimer > 0 && State == GameStateEnum.FinalCountdown);
 
@@ -84,35 +85,71 @@ public class GameState : IDisposable
         }
     }
 
-    public bool IsStateActive => State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.FinalCountdown;
+    public bool IsStateActive => State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.Paused
+        or GameStateEnum.FinalCountdown;
 
     public GameTimer Timer { get; private set; }
-    
-    public void ResetGameTimer(int value)
-    {
-        Timer = new GameTimer(value).Start();
-        NotifyStateChanged();
-    }
 
-    public void RefreshGameTimer()
-    {
-        if (Timer.IsRunning)
-            NotifyStateChanged();
-    }
+    public GameTimer AutoDrawTimer { get; private set; }
 
     public string StateDisplayValue => State switch
     {
-        GameStateEnum.Init => "Init",
+        GameStateEnum.Init => "Not Started",
         GameStateEnum.Active => "Active",
+        GameStateEnum.Paused => "Paused",
         GameStateEnum.FinalCountdown => "Countdown",
         GameStateEnum.Finished => "Finished",
         GameStateEnum.Canceled => "Finished",
         _ => ""
     };
 
-    public bool CanJoin(string? playerId) => Preset.MaxPlayers <= 0 
-                                             || Players.Count < Preset.MaxPlayers 
-                                             || (!string.IsNullOrEmpty(playerId) && Players.FirstOrDefault(x => x.PlayerUserId == playerId) != null);
+    public void ResetGameTimer(int value)
+    {
+        Timer.Reset(value).Start();
+        NotifyStateChanged();
+    }
+    
+    public void ResetAutoDrawTimer(int value)
+    {
+        AutoDrawTimer.Reset(value).Start();
+        NotifyStateChanged();
+    }
+
+    public void RefreshGameTimers()
+    {
+        if (Timer.IsRunning || AutoDrawTimer.IsRunning)
+            NotifyStateChanged();
+    }
+
+    public void PauseGame()
+    {
+        if (State is not GameStateEnum.Active) return;
+        
+        Timer.Stop();
+        AutoDrawTimer.Stop();
+        SetState(GameStateEnum.Paused);
+    }
+
+    public void ResumeGame()
+    {
+        if (State is not GameStateEnum.Paused and not GameStateEnum.Init) return;
+        
+        Timer.Start();
+        AutoDrawTimer.Start();
+
+        var startGame = State is GameStateEnum.Init;
+        SetState(GameStateEnum.Active);
+
+        if (startGame)
+        {
+            Draw();
+        }
+    }
+
+    public bool CanJoin(string? playerId) => Preset.MaxPlayers <= 0
+                                             || Players.Count < Preset.MaxPlayers
+                                             || (!string.IsNullOrEmpty(playerId) &&
+                                                 Players.FirstOrDefault(x => x.PlayerUserId == playerId) != null);
 
     private void Setup()
     {
@@ -124,12 +161,11 @@ public class GameState : IDisposable
         _qNodes = Pack.Nodes.Where(x => qTagIds.Any(t => x.HasTag(t)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
         QuestionCount = _qNodes.Count;
         _bingoPatterns = PatternGenerator.GeneratePatterns(Preset.CardSize, Preset.Pattern);
-        State = GameStateEnum.Active;
     }
 
     public void Join(PlayerState player)
     {
-        if (State != GameStateEnum.Active) return;
+        if (!IsStateActive) return;
 
         _players.Add(player);
         player.Validate();
@@ -150,7 +186,7 @@ public class GameState : IDisposable
 
     public void Draw()
     {
-        if (State != GameStateEnum.Active || !CanDraw) return;
+        if (!CanDraw) return;
 
         var idx = _random.Next(0, _qNodes.Count);
         var node = _qNodes[idx];
@@ -161,11 +197,8 @@ public class GameState : IDisposable
         {
             player.Validate();
         }
-
-        if (Preset.GameTimer > 0 && !Timer.IsRunning)
-        {
-            Timer.Start();
-        }
+        
+        ResumeGame();
 
         NotifyStateChanged();
     }
@@ -240,7 +273,7 @@ public class GameState : IDisposable
     public void EndGame()
     {
         if (!IsStateActive) return;
-        
+
         SetState(GameStateEnum.Canceled);
     }
 
@@ -303,7 +336,7 @@ public class GameState : IDisposable
     {
         NewGameCreated?.Invoke(game);
     }
-    
+
     private void NotifyStateChanged()
     {
         UpdatedAt = DateTime.UtcNow;
@@ -380,6 +413,7 @@ public enum GameStateEnum
 {
     Init,
     Active,
+    Paused,
     FinalCountdown,
     Finished,
     Canceled

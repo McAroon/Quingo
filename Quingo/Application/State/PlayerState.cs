@@ -1,4 +1,5 @@
-﻿using Quingo.Shared.Entities;
+﻿using System.Collections.ObjectModel;
+using Quingo.Shared.Entities;
 
 namespace Quingo.Application.State;
 
@@ -157,19 +158,20 @@ public class PlayerState : IDisposable
         {
             cell.ShowValidation = false;
         }
-
-        ValidateCell(cell);
+        var drawnNodes = new List<Node>(GameState.DrawnNodes);
+        ValidateCell(cell, drawnNodes);
         RecalculateScore();
     }
 
     public void Validate(bool isCall = false)
     {
+        var drawnNodes = new List<Node>(GameState.DrawnNodes);
         for (var col = 0; col < Card.Cells.GetLength(0); col++)
         {
             for (var row = 0; row < Card.Cells.GetLength(1); row++)
             {
                 var cell = Card.Cells[col, row];
-                ValidateCell(cell, isCall);
+                ValidateCell(cell, drawnNodes, isCall);
             }
         }
 
@@ -177,7 +179,7 @@ public class PlayerState : IDisposable
         NotifyStateChanged();
     }
 
-    private void ValidateCell(PlayerCardCellData cell, bool isCall = false)
+    private void ValidateCell(PlayerCardCellData cell, IList<Node> drawnNodes, bool isCall = false)
     {
         if (cell.Node == null)
         {

@@ -79,4 +79,30 @@ public abstract class ActionBarBase : ComponentBase
             IsLoading = false;
         }
     }
+
+    protected void PauseGame()
+    {
+        try
+        {
+            Game.PauseGame();
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, e.Message);
+            Snackbar.Add(e.Message, Severity.Error);
+        }
+    }
+    
+    protected void ResumeGame()
+    {
+        try
+        {
+            Game.ResumeGame();
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, e.Message);
+            Snackbar.Add(e.Message, Severity.Error);
+        }
+    }
 }

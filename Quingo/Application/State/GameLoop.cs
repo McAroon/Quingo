@@ -102,7 +102,7 @@ public class GameLoop : IDisposable
         {
             if (CanRemove(game))
             {
-                if (game.State is GameStateEnum.Active)
+                if (game.IsStateActive)
                 {
                     game.SetState(GameStateEnum.Canceled);
                 }
@@ -131,22 +131,29 @@ public class GameLoop : IDisposable
 
     private static void RunGame(GameState game)
     {
+        if (game is { State: GameStateEnum.Active or GameStateEnum.FinalCountdown }
+            and ({ Timer.IsRunning: true } or { AutoDrawTimer.IsRunning: true }))
+        {
+            game.RefreshGameTimers();
+        }
+
         if (game is
             {
-                State: GameStateEnum.Active or GameStateEnum.FinalCountdown,
-                Timer.IsRunning: true, Timer.Value: > 0
+                State: GameStateEnum.Active, CanDraw: true, Preset.AutoDrawTimer: > 0, AutoDrawTimer.Value: < 0
             })
         {
-            game.RefreshGameTimer();
+            game.Draw();
+            game.ResetAutoDrawTimer(game.Preset.AutoDrawTimer);
         }
 
         if (game is { State: GameStateEnum.Active } and
-            ({ WinningPlayers.Count: > 0 } or { Preset.GameTimer: > 0, Timer.Value: <= 0 }))
+            ({ WinningPlayers.Count: > 0 } or { Preset.GameTimer: > 0, Timer.Value: < 0 }))
         {
             if (game.Preset.EndgameTimer > 0)
             {
                 game.SetState(GameStateEnum.FinalCountdown);
                 game.ResetGameTimer(game.Preset.EndgameTimer);
+                game.ResetAutoDrawTimer(0);
             }
             else
             {
@@ -154,7 +161,7 @@ public class GameLoop : IDisposable
             }
         }
 
-        if (game is { State: GameStateEnum.FinalCountdown, Timer.Value: <= 0 })
+        if (game is { State: GameStateEnum.FinalCountdown, Timer.Value: < 0 })
         {
             game.SetState(GameStateEnum.Finished);
         }
@@ -164,10 +171,8 @@ public class GameLoop : IDisposable
     {
         var maxUpdated = game.Players.Select(x => x.UpdatedAt).Concat([game.UpdatedAt]).Max();
         var elapsed = DateTime.UtcNow - maxUpdated;
-        return (game.State is GameStateEnum.Finished or GameStateEnum.Canceled
-                && elapsed > TimeSpan.FromMinutes(RemoveFinishedAfterMin))
-               || game.State is GameStateEnum.Active or GameStateEnum.Init
-               && elapsed > TimeSpan.FromMinutes(RemoveInactiveAfterMin);
+        return (!game.IsStateActive && elapsed > TimeSpan.FromMinutes(RemoveFinishedAfterMin))
+               || game.IsStateActive && elapsed > TimeSpan.FromMinutes(RemoveInactiveAfterMin);
     }
 
     public void Dispose()

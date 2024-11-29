@@ -3,11 +3,11 @@ using System.Collections.ObjectModel;
 
 namespace Quingo.Application.State
 {
-    public class NodeLinkSearch(Node node, ReadOnlyCollection<Node> searchNodes)
+    public class NodeLinkSearch(Node node, IList<Node> searchNodes)
     {
         private Node Node { get; } = node;
 
-        private ReadOnlyCollection<Node> SearchNodes { get; } = searchNodes;
+        private IList<Node> SearchNodes { get; } = searchNodes;
 
         public IEnumerable<Node> Search()
         {

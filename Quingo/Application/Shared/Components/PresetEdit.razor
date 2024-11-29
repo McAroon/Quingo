@@ -14,6 +14,8 @@
                         <MudNumericField @bind-Value="_model.GameTimer" Label="Game Timer"
                                          HelperText="Game timer in seconds, 0 for no timer" Min="0"/>
                         <MudNumericField @bind-Value="_model.EndgameTimer" Label="Endgame Timer" Min="0"/>
+                        <MudNumericField @bind-Value="_model.AutoDrawTimer" Label="Auto Draw Timer"
+                                         HelperText="Auto draw every n seconds, 0 to disable" Min="0"/>
                         <MudSelect T="PackPresetPattern" Label="Winning Pattern" @bind-Value="@_model.Pattern">
                             <MudSelectItem Value="PackPresetPattern.Lines">Line</MudSelectItem>
                             <MudSelectItem Value="PackPresetPattern.FullCard">Full Card</MudSelectItem>
@@ -133,8 +135,9 @@
                 <MudListItem Text="Card Size" SecondaryText="@_model.CardSize.ToString()"/>
                 <MudListItem Text="Free Center" SecondaryText="@(_model.FreeCenter ? "Yes" : "No")"/>
                 <MudListItem Text="Number of Players" SecondaryText="@_model.MaxPlayers.ToString()"/>
-                <MudListItem Text="Game Timer" SecondaryText="@_model.GameTimer.ToString()"/>
-                <MudListItem Text="Endgame Timer" SecondaryText="@_model.EndgameTimer.ToString()"/>
+                <MudListItem Text="Game Timer" SecondaryText="@(_model.GameTimer > 0 ? $"{_model.GameTimer} sec" : "-")"/>
+                <MudListItem Text="Endgame Timer" SecondaryText="@(_model.EndgameTimer > 0 ? $"{_model.EndgameTimer} sec" : "-")"/>
+                <MudListItem Text="Auto Draw" SecondaryText="@(_model.AutoDrawTimer > 0 ? $"{_model.AutoDrawTimer} sec" : "-")"/>
                 <MudListItem Text="Winning Pattern"
                              SecondaryText="@(_model.Pattern == PackPresetPattern.Lines ? "Line" : "Full Card")"/>
                 <MudListItem Text="Match Rule"

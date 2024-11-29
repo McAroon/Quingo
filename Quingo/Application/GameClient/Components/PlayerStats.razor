@@ -1,30 +1,37 @@
 ﻿<table class="dl-table">
     <tr>
         <th>Game State</th>
-        <td>@State.GameState.StateDisplayValue</td>
+        <td>@Game.StateDisplayValue</td>
     </tr>
-    @if (State.GameState.Preset.LivesNumber > 0 && State.GameState.Preset.EnableCall)
+    @if (Game.Preset.LivesNumber > 0 && Game.Preset.EnableCall)
     {
         <tr>
             <th>Lives</th>
             <td>@State.LivesNumber</td>
         </tr>
     }
-    @if (State.GameState.ShowTimer)
+    @if (Game.ShowTimer)
     {
         <tr>
             <th>Game Timer</th>
-            <td>@TimeSpan.FromSeconds(State.GameState.Timer.Value).ToStringHoursOptional()</td>
+            <td>@Game.Timer.DisplayValue</td>
         </tr>
     }
-    @if (State.GameState.WinningPlayers.Count > 0)
+    @if (Game.Preset.AutoDrawTimer > 0 && Game.State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.Paused)
     {
         <tr>
-            <th>@(State.GameState.WinningPlayers.Count == 1 ? "Winner" : "Winners")</th>
-            <td>@string.Join(", ", State.GameState.WinningPlayers.Select(x => x.PlayerName))</td>
+            <th>Auto Draw Timer</th>
+            <td>@Game.AutoDrawTimer.DisplayValue</td>
         </tr>
     }
-    @if (State.GameState.State is GameStateEnum.Finished or GameStateEnum.Canceled)
+    @if (Game.WinningPlayers.Count > 0)
+    {
+        <tr>
+            <th>@(Game.WinningPlayers.Count == 1 ? "Winner" : "Winners")</th>
+            <td>@string.Join(", ", Game.WinningPlayers.Select(x => x.PlayerName))</td>
+        </tr>
+    }
+    @if (Game.State is GameStateEnum.Finished or GameStateEnum.Canceled)
     {
         <tr>
             <th>Score</th>
@@ -36,4 +43,6 @@
 @code {
     [CascadingParameter]
     public PlayerState State { get; set; } = default!;
+
+    private GameState Game => State.GameState;
 }

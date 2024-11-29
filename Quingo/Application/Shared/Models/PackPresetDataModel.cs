@@ -17,6 +17,7 @@ public class PackPresetDataModel
         MaxPlayers = data.MaxPlayers;
         GameTimer = data.GameTimer;
         EndgameTimer = data.EndgameTimer;
+        AutoDrawTimer = data.AutoDrawTimer;
         ShowTagBadges = data.ShowTagBadges;
         EnableCall = data.EnableCall;
         JoinOnCreate = data.JoinOnCreate;
@@ -37,6 +38,7 @@ public class PackPresetDataModel
             MaxPlayers = MaxPlayers,
             GameTimer = GameTimer,
             EndgameTimer = EndgameTimer,
+            AutoDrawTimer = AutoDrawTimer,
             ShowTagBadges = ShowTagBadges,
             EnableCall = EnableCall,
             JoinOnCreate = JoinOnCreate,
@@ -71,6 +73,8 @@ public class PackPresetDataModel
     public int GameTimer { get; set; } = 0;
 
     public int EndgameTimer { get; set; } = 20;
+    
+    public int AutoDrawTimer { get; set; }
 
     public bool ShowTagBadges { get; set; } = true;
 
