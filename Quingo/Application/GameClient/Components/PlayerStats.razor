@@ -14,7 +14,7 @@
     {
         <tr>
             <th>Game Timer</th>
-            <td>@TimeSpan.FromSeconds(State.GameState.GameTimer).ToStringHoursOptional()</td>
+            <td>@TimeSpan.FromSeconds(State.GameState.Timer.Value).ToStringHoursOptional()</td>
         </tr>
     }
     @if (State.GameState.WinningPlayers.Count > 0)

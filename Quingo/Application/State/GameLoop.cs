@@ -134,14 +134,14 @@ public class GameLoop : IDisposable
         if (game is
             {
                 State: GameStateEnum.Active or GameStateEnum.FinalCountdown,
-                GameTimerStartedAt: not null, GameTimer: > 0
+                Timer.IsRunning: true, Timer.Value: > 0
             })
         {
             game.RefreshGameTimer();
         }
 
         if (game is { State: GameStateEnum.Active } and
-            ({ WinningPlayers.Count: > 0 } or { Preset.GameTimer: > 0, GameTimerStartedAt: not null, GameTimer: <= 0 }))
+            ({ WinningPlayers.Count: > 0 } or { Preset.GameTimer: > 0, Timer.Value: <= 0 }))
         {
             if (game.Preset.EndgameTimer > 0)
             {
@@ -154,7 +154,7 @@ public class GameLoop : IDisposable
             }
         }
 
-        if (game is { State: GameStateEnum.FinalCountdown, GameTimerStartedAt: not null, GameTimer: <= 0 })
+        if (game is { State: GameStateEnum.FinalCountdown, Timer.Value: <= 0 })
         {
             game.SetState(GameStateEnum.Finished);
         }

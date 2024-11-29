@@ -19,7 +19,7 @@ public class GameState : IDisposable
         StartedAt = UpdatedAt = DateTime.UtcNow;
         State = GameStateEnum.Init;
 
-        GameTimer = GameTimerInitialValue = preset.GameTimer;
+        Timer = new GameTimer(preset.GameTimer);
         _random = new Random(gameSessionId.GetHashCode());
 
         _drawnNodes.CollectionChanged += HandleDrawnNodesChanged;
@@ -86,26 +86,18 @@ public class GameState : IDisposable
 
     public bool IsStateActive => State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.FinalCountdown;
 
-    public int GameTimer { get; private set; }
-
-    public int GameTimerInitialValue { get; private set; }
-
-    public long? GameTimerStartedAt { get; private set; }
-
+    public GameTimer Timer { get; private set; }
+    
     public void ResetGameTimer(int value)
     {
-        GameTimer = GameTimerInitialValue = value;
-        GameTimerStartedAt = Stopwatch.GetTimestamp();
+        Timer = new GameTimer(value).Start();
         NotifyStateChanged();
     }
 
     public void RefreshGameTimer()
     {
-        if (GameTimerStartedAt == null) return;
-        var elapsed = Stopwatch.GetElapsedTime(GameTimerStartedAt.Value);
-        var value = GameTimerInitialValue - (int)Math.Abs(Math.Round(elapsed.TotalSeconds));
-        GameTimer = value > 0 ? value : 0;
-        NotifyStateChanged();
+        if (Timer.IsRunning)
+            NotifyStateChanged();
     }
 
     public string StateDisplayValue => State switch
@@ -170,9 +162,9 @@ public class GameState : IDisposable
             player.Validate();
         }
 
-        if (Preset.GameTimer > 0 && GameTimerStartedAt == null)
+        if (Preset.GameTimer > 0 && !Timer.IsRunning)
         {
-            GameTimerStartedAt = Stopwatch.GetTimestamp();
+            Timer.Start();
         }
 
         NotifyStateChanged();
@@ -264,6 +256,8 @@ public class GameState : IDisposable
     private void OnGameFinished()
     {
         if (IsStateActive) return;
+
+        Timer.Stop();
 
         if (WinningPlayers.Count == 0 && Players.Count > 0)
         {
