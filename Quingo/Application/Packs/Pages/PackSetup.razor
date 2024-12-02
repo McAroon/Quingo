@@ -6,7 +6,7 @@
 @inject PackRepo Repo
 @inject NavigationManager NavigationManager
 
-@attribute [Authorize]
+@attribute [Authorize(Roles = "editor, admin")]
 
 <PageTitle>Pack</PageTitle>
 <MudContainer MaxWidth="MaxWidth.Small" Gutters="false" Class="ml-0">

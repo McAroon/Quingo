@@ -8,7 +8,9 @@
         <Authorized>
             <MudNavLink Href="game/host" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Gamepad">Create Game</MudNavLink>
             <MudNavLink Href="game/play" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AddBox">Join Game</MudNavLink>
-            <MudNavLink Href="game/setup/packs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Quiz">Packs</MudNavLink>
+            <AuthorizeView Roles="editor, admin" Context="packEdit">
+                <MudNavLink Href="game/setup/packs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Quiz">Packs</MudNavLink>
+            </AuthorizeView>
             <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">@context.User.Identity?.Name</MudNavLink>
             <form action="Account/Logout" method="post">
                 <AntiforgeryToken />
