@@ -194,11 +194,6 @@ public class GameState : IDisposable
         var node = _qNodes[idx];
         _qNodes.Remove(node);
         _drawnNodes.Add(node);
-
-        foreach (var player in Players)
-        {
-            player.Validate();
-        }
         
         ResumeGame();
 
@@ -293,6 +288,11 @@ public class GameState : IDisposable
         if (IsStateActive) return;
 
         Timer.Stop();
+        
+        foreach (var player in Players)
+        {
+            player.Validate();
+        }
 
         if (WinningPlayers.Count == 0 && Players.Count > 0)
         {
