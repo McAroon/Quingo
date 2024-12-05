@@ -23,7 +23,7 @@
         && Cell.State is PlayerCardCellState.Marked or PlayerCardCellState.Invalid or PlayerCardCellState.MatchingPattern
         && Cell.Node != null
         && Cell.MatchedQNode != null 
-        && Cell.MatchedQNode == State.GameState.DrawnNodes.LastOrDefault();
+        && Cell.MatchedQNode == State.DrawState.DrawnNodes.LastOrDefault();
 
     private PlayerCardCellState CellState
     {

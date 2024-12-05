@@ -1,7 +1,7 @@
 ﻿@implements IDisposable
 @inject ISnackbar Snackbar
 
-@if (ShowPlayers)
+@if (ShowPlayers && DisplayPlayers.Any())
 {
     <div class="pb-2">
         <MudButton OnClick="() => { _expandPlayers = !_expandPlayers; }"
@@ -14,7 +14,7 @@
 @if (ShowPlayers && _expandPlayers)
 {
     <MudStack Row Wrap="Wrap.Wrap">
-        @foreach (var player in Game.Players.Where(x => Player != x))
+        @foreach (var player in DisplayPlayers)
         {
             <div class="mw-100">
                 <MudText Typo="Typo.h6" GutterBottom>@player.PlayerName</MudText>
@@ -64,13 +64,14 @@ else
                     @if (ShowPlayers)
                     {
                         <MudTd DataLabel="Score">@context.Score</MudTd>
-                        @if (Player != context)
-                        {
-                            <MudTd DataLabel="Actions">
-                                <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => ViewPlayer(context)">View
+                        <MudTd DataLabel="Actions">
+                            @if (Player != context)
+                            {
+                                <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => ViewPlayer(context)">
+                                    View
                                 </MudButton>
-                            </MudTd>
-                        }
+                            }
+                        </MudTd>
                     }
                 </RowTemplate>
             </MudTable>
@@ -99,6 +100,8 @@ else
     private bool ShowLives => Game.Preset.LivesNumber > 0 && Game.Preset.EnableCall;
 
     private bool ShowPlayers => Player == null || ShowDetails;
+
+    private IEnumerable<PlayerState> DisplayPlayers => Game.Players.Where(x => Player != x);
 
     private DialogOptions _dialogOptions = new()
     {

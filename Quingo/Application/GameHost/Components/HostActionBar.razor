@@ -27,11 +27,11 @@
             </MudButton>
         }
 
-        @if (Game.State is not GameStateEnum.Init && Game.Preset.AutoDrawTimer <= 0)
+        @if (Game.State is not GameStateEnum.Init && Game.Preset.AutoDrawTimer <= 0 && Game.HostCanDraw)
         {
             <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
-                       StartIcon="@Icons.Material.Outlined.SkipNext" OnClick="Draw"
-                       Disabled="!Game.CanDraw">Draw
+                       StartIcon="@Icons.Material.Outlined.SkipNext" OnClick="Draw">
+                Draw
             </MudButton>
         }
     }

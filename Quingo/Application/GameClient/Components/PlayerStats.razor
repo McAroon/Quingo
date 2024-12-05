@@ -1,4 +1,6 @@
-﻿<table class="dl-table">
+﻿@implements IDisposable
+
+<table class="dl-table">
     <tr>
         <th>Game State</th>
         <td>@Game.StateDisplayValue</td>
@@ -21,7 +23,7 @@
     {
         <tr>
             <th>Auto Draw Timer</th>
-            <td>@Game.AutoDrawTimer.DisplayValue</td>
+            <td>@State.DrawState.AutoDrawTimer.DisplayValue</td>
         </tr>
     }
     @if (Game.WinningPlayers.Count > 0)
@@ -45,4 +47,41 @@
     public PlayerState State { get; set; } = default!;
 
     private GameState Game => State.GameState;
+    
+    private Guid? _gameSessionId;
+
+    private bool _isInitialized;
+    
+    protected override void OnInitialized()
+    {
+        InitializeGame();
+        _isInitialized = true;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (State.GameState.GameSessionId == _gameSessionId) return;
+
+        _isInitialized = false;
+        InitializeGame();
+        _isInitialized = true;
+    }
+
+    private void InitializeGame()
+    {
+        _gameSessionId = State.GameState.GameSessionId;
+        State.GameState.TimerUpdated += OnTimerUpdated;
+        State.DrawState.TimerUpdated += OnTimerUpdated;
+    }
+
+    private void OnTimerUpdated()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+    
+    public void Dispose()
+    {
+        State.GameState.TimerUpdated -= OnTimerUpdated;
+        State.DrawState.TimerUpdated -= OnTimerUpdated;
+    }
 }

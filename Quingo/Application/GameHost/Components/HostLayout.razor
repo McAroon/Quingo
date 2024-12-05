@@ -5,12 +5,15 @@
     <MudItem xs="12" lg="6">
         <HostStats/>
     </MudItem>
-    <MudItem xs="12" lg="8">
-        <MudText Typo="Typo.h5" GutterBottom>Draw History (@Game.DrawnNodes.Count / @Game.QuestionCount)</MudText>
-        <QuestionList Game="Game" ShowDetails="ShowDetails" Row/>
-    </MudItem>
+    @if (Game.DrawState != null)
+    {
+        <MudItem xs="12" lg="8">
+            <MudText Typo="Typo.h5" GutterBottom>Draw History (@Game.DrawState.DrawnNodes.Count / @Game.DrawState.QuestionCount)</MudText>
+            <QuestionList DrawState="Game.DrawState" ShowDetails="ShowDetails" Row/>
+        </MudItem>
+    }
     <MudItem xs="12">
-        <MudText Typo="Typo.h5" GutterBottom>Player List</MudText>
+        <MudText Typo="Typo.h5" GutterBottom>Players (@DisplayPlayerCount)</MudText>
         <PlayerList ShowDetails="ShowDetails"/>
     </MudItem>
 </MudGrid>
@@ -23,4 +26,8 @@
     [Parameter, EditorRequired] public bool IsHost { get; set; }
 
     private bool ShowDetails => IsHost || Game.State is GameStateEnum.Finished or GameStateEnum.Canceled;
+    
+    private string DisplayPlayerCount => Game.Preset.MaxPlayers > 0 
+        ? $"{Game.Players.Count} / {Game.Preset.MaxPlayers}" 
+        : Game.Players.Count.ToString();
 }

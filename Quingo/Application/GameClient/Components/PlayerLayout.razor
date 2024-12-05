@@ -9,8 +9,8 @@
         <MudItem xs="12">
             <MudGrid>
                 <MudItem xs="12" md="3" lg="2" Class="@QuestionsClass">
-                    <MudText Typo="Typo.h5" GutterBottom>Draw History (@Player.GameState.DrawnNodes.Count&nbsp;/&nbsp;@Player.GameState.QuestionCount)</MudText>
-                    <QuestionList Game="Player.GameState" ShowDetails="ShowDetails" Row="QuestionsRow" />
+                    <MudText Typo="Typo.h5" GutterBottom>Draw History (@Player.DrawState.DrawnNodes.Count&nbsp;/&nbsp;@Player.DrawState.QuestionCount)</MudText>
+                    <QuestionList DrawState="Player.DrawState" ShowDetails="ShowDetails" Row="QuestionsRow" />
                 </MudItem>
                 <MudItem xs="12" md="9" lg="10">
                     <MudText Typo="Typo.h5" GutterBottom>Player Card</MudText>
@@ -20,7 +20,7 @@
         </MudItem>
     </MudBreakpointProvider>
     <MudItem xs="12">
-        <MudText Typo="Typo.h5" GutterBottom>Players</MudText>
+        <MudText Typo="Typo.h5" GutterBottom>Players (@DisplayPlayerCount)</MudText>
         <CascadingValue Value="Player.GameState">
             <PlayerList Player="Player" ShowDetails="ShowDetails"/>
         </CascadingValue>
@@ -37,5 +37,9 @@
     private bool QuestionsRow => _breakpoint == null || _breakpoint.Breakpoint is Breakpoint.Always or Breakpoint.Sm or Breakpoint.Xs;
 
     private string? QuestionsClass => !QuestionsRow ? "q-list-container-col" : null;
+
+    private string DisplayPlayerCount => Player.GameState.Preset.MaxPlayers > 0 
+        ? $"{Player.GameState.Players.Count} / {Player.GameState.Preset.MaxPlayers}" 
+        : Player.GameState.Players.Count.ToString();
 
 }

@@ -1,4 +1,6 @@
-﻿<table class="dl-table">
+﻿@implements IDisposable
+
+<table class="dl-table">
     <tr>
         <th>Game State</th>
         <td>@Game.StateDisplayValue</td>
@@ -10,11 +12,11 @@
             <td>@Game.Timer.DisplayValue</td>
         </tr>
     }
-    @if (Game.Preset.AutoDrawTimer > 0 && Game.State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.Paused)
+    @if (Game.DrawState != null && Game.Preset.AutoDrawTimer > 0 && Game.State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.Paused)
     {
         <tr>
             <th>Auto Draw Timer</th>
-            <td>@Game.AutoDrawTimer.DisplayValue</td>
+            <td>@Game.DrawState.AutoDrawTimer.DisplayValue</td>
         </tr>
     }
     @if (Game.WinningPlayers.Count > 0)
@@ -29,4 +31,47 @@
 @code {
     [CascadingParameter]
     public GameState Game { get; set; } = default!;
+    
+    private Guid? _gameSessionId;
+
+    private bool _isInitialized;
+    
+    protected override void OnInitialized()
+    {
+        InitializeGame();
+        _isInitialized = true;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Game.GameSessionId == _gameSessionId) return;
+
+        _isInitialized = false;
+        InitializeGame();
+        _isInitialized = true;
+    }
+
+    private void InitializeGame()
+    {
+        _gameSessionId = Game.GameSessionId;
+        Game.TimerUpdated += OnTimerUpdated;
+        if (Game.DrawState != null)
+        {
+            Game.DrawState.TimerUpdated += OnTimerUpdated;
+        }
+    }
+    
+    private void OnTimerUpdated()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+    
+    public void Dispose()
+    {
+        Game.TimerUpdated -= OnTimerUpdated;
+        if (Game.DrawState != null)
+        {
+            Game.DrawState.TimerUpdated -= OnTimerUpdated;
+        }
+    }
 }

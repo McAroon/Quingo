@@ -131,19 +131,21 @@ public class GameLoop : IDisposable
 
     private static void RunGame(GameState game)
     {
-        if (game is { State: GameStateEnum.Active or GameStateEnum.FinalCountdown }
-            and ({ Timer.IsRunning: true } or { AutoDrawTimer.IsRunning: true }))
+        if (game is { State: GameStateEnum.Active or GameStateEnum.FinalCountdown })
         {
             game.RefreshGameTimers();
         }
 
         if (game is
             {
-                State: GameStateEnum.Active, CanDraw: true, Preset.AutoDrawTimer: > 0, AutoDrawTimer.Value: < 0
+                State: GameStateEnum.Active, Preset.AutoDrawTimer: > 0
             })
         {
-            game.Draw();
-            game.ResetAutoDrawTimer(game.Preset.AutoDrawTimer);
+            foreach (var drawState in game.DrawStates.Where(x =>
+                         x is { CanDraw: true, AutoDrawTimer.Value: < 0 }))
+            {
+                drawState.Draw();
+            }
         }
 
         if (game is { State: GameStateEnum.Active } and
@@ -153,7 +155,10 @@ public class GameLoop : IDisposable
             {
                 game.SetState(GameStateEnum.FinalCountdown);
                 game.ResetGameTimer(game.Preset.EndgameTimer);
-                game.ResetAutoDrawTimer(0);
+                foreach (var drawState in game.DrawStates)
+                {
+                    drawState.ResetAutoDrawTimer(0);
+                }
             }
             else
             {

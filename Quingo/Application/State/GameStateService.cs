@@ -105,9 +105,7 @@ public class GameStateService : IDisposable
 
             foreach (var player in game.Players)
             {
-                var playerSessionId = Guid.NewGuid();
-                var newPlayer = new PlayerState(playerSessionId, newGame, player.PlayerUserId, player.PlayerName);
-                newGame.Join(newPlayer);
+                var newPlayer = newGame.Join(player.PlayerUserId, player.PlayerName);
 
                 player.NotifyNewGameCreated(newGame, newPlayer);
             }
@@ -141,10 +139,8 @@ public class GameStateService : IDisposable
             {
                 throw new GameStateException("Unable to join, the room is full");
             }
-
-            var playerSessionId = Guid.NewGuid();
-            var player = new PlayerState(playerSessionId, game, userId, userName);
-            game.Join(player);
+            
+            var player = game.Join(userId, userName);
             return player;
         }
         catch (Exception e) when (e is not GameStateException)

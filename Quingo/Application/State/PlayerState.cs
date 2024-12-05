@@ -1,11 +1,11 @@
-﻿using System.Collections.ObjectModel;
-using Quingo.Shared.Entities;
+﻿using Quingo.Shared.Entities;
 
 namespace Quingo.Application.State;
 
 public class PlayerState : IDisposable
 {
-    public PlayerState(Guid playerSessionId, GameState gameState, string playerUserId, string playerName)
+    public PlayerState(Guid playerSessionId, GameState gameState, string playerUserId, string playerName,
+        GameDrawState drawState)
     {
         PlayerSessionId = playerSessionId;
         GameState = gameState;
@@ -13,20 +13,23 @@ public class PlayerState : IDisposable
         LivesNumber = Preset.LivesNumber;
         PlayerUserId = playerUserId;
         PlayerName = playerName;
+        DrawState = drawState;
         StartedAt = UpdatedAt = DateTime.UtcNow;
 
         Setup();
     }
 
-    public Guid PlayerSessionId { get; set; }
+    public Guid PlayerSessionId { get; }
 
-    public GameState GameState { get; private set; }
+    public GameState GameState { get; }
 
     private Pack Pack => GameState.Pack;
 
     private PackPresetData Preset => GameState.Preset;
 
-    public PlayerCardData Card { get; private set; }
+    public PlayerCardData Card { get; }
+
+    public GameDrawState DrawState { get; }
 
     private int _livesNumber;
 
@@ -64,7 +67,8 @@ public class PlayerState : IDisposable
         var allPresetTags = Preset.Columns.SelectMany(x => x.ColAnswerTags).Distinct().ToList();
         var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct()
             .ToList();
-        var nodes = Pack.Nodes.Where(x => allPresetTags.Any(t => x.HasTag(t.TagId)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
+        var nodes = Pack.Nodes
+            .Where(x => allPresetTags.Any(t => x.HasTag(t.TagId)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
         var tagsCounter = allPresetTags.ToDictionary(x => x.TagId, _ => 0);
 
         for (var col = 0; col < Card.Cells.GetLength(0); col++)
@@ -73,7 +77,9 @@ public class PlayerState : IDisposable
             var colTagIds = colPresetTags.Select(x => x.TagId).ToList();
             var colNodes = nodes.Where(x => colTagIds.Any(t => x.NodeTags.Select(nt => nt.TagId).Contains(t)))
                 .ToList();
-            var colTagsCounter = Preset.SingleColumnConfig ? tagsCounter : colPresetTags.ToDictionary(x => x.TagId, _ => 0);
+            var colTagsCounter = Preset.SingleColumnConfig
+                ? tagsCounter
+                : colPresetTags.ToDictionary(x => x.TagId, _ => 0);
 
             for (var row = 0; row < Card.Cells.GetLength(1); row++)
             {
@@ -105,10 +111,10 @@ public class PlayerState : IDisposable
                         var tagIdx = GameState.Random.Next(0, presetTags.Count);
                         tagId = presetTags[tagIdx].TagId;
                     }
-                   
+
                     var tagNodes = colNodes.Where(x => x.HasTag(tagId)).ToList();
                     colTagsCounter[tagId]++;
-                    
+
                     var idx = GameState.Random.Next(0, tagNodes.Count);
                     var node = tagNodes[idx];
                     colNodes.Remove(node);
@@ -135,12 +141,12 @@ public class PlayerState : IDisposable
     private void Mark(PlayerCardCellData cell, bool? mark = null)
     {
         cell.IsMarked = mark ?? !cell.IsMarked;
-        if (GameState.Preset.MatchRule is PackPresetMatchRule.LastDrawn && GameState.DrawnNodes.Count > 0)
+        if (GameState.Preset.MatchRule is PackPresetMatchRule.LastDrawn && DrawState.DrawnNodes.Count > 0)
         {
             if (cell.IsMarked)
             {
-                cell.MatchedQNode = GameState.DrawnNodes.Last();
-                
+                cell.MatchedQNode = DrawState.DrawnNodes.Last();
+
                 var unmarkCells = Card.AllCells
                     .Where(x => x != cell && x.IsMarked && x.MatchedQNode == cell.MatchedQNode);
                 foreach (var unmarkCell in unmarkCells)
@@ -158,14 +164,15 @@ public class PlayerState : IDisposable
         {
             cell.ShowValidation = false;
         }
-        var drawnNodes = new List<Node>(GameState.DrawnNodes);
+
+        var drawnNodes = new List<Node>(DrawState.DrawnNodes);
         ValidateCell(cell, drawnNodes);
         RecalculateScore();
     }
 
     public void Validate(bool isCall = false)
     {
-        var drawnNodes = new List<Node>(GameState.DrawnNodes);
+        var drawnNodes = new List<Node>(DrawState.DrawnNodes);
         for (var col = 0; col < Card.Cells.GetLength(0); col++)
         {
             for (var row = 0; row < Card.Cells.GetLength(1); row++)
@@ -187,7 +194,7 @@ public class PlayerState : IDisposable
         }
         else
         {
-            var search = new NodeLinkSearch(cell.Node, GameState.DrawnNodes).Search();
+            var search = new NodeLinkSearch(cell.Node, DrawState.DrawnNodes).Search();
             var found = GameState.Preset.MatchRule is PackPresetMatchRule.Default || !cell.IsMarked
                 ? search.FirstOrDefault() != null
                 : cell.MatchedQNode != null && search.FirstOrDefault(x => x.Id == cell.MatchedQNode.Id) != null;
@@ -231,7 +238,7 @@ public class PlayerState : IDisposable
     public event Action? StateChanged;
 
     public event Action<PlayerState>? LifeLost;
-    
+
     public event Action<GameState, PlayerState>? NewGameCreated;
 
     private void NotifyStateChanged()
@@ -239,7 +246,7 @@ public class PlayerState : IDisposable
         UpdatedAt = DateTime.UtcNow;
         StateChanged?.Invoke();
     }
-    
+
     public void NotifyNewGameCreated(GameState game, PlayerState player)
     {
         NewGameCreated?.Invoke(game, player);
@@ -273,7 +280,7 @@ public class PlayerState : IDisposable
 public class PlayerCardData(PackPresetData preset)
 {
     public PlayerCardCellData[,] Cells { get; } = new PlayerCardCellData[preset.CardSize, preset.CardSize];
-    
+
     public IEnumerable<PlayerCardCellData> AllCells => Cells.Cast<PlayerCardCellData>();
 }
 

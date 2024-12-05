@@ -19,7 +19,7 @@
 
 @code {
     [Parameter]
-    public GameState State { get; set; } = default!;
+    public GameDrawState State { get; set; } = default!;
 
     [Parameter]
     public NodeViewModel? Node { get; set; }
@@ -30,15 +30,15 @@
     {
         if (Node == null) return;
 
-        _linkedNodes = new NodeLinkSearch(State.Pack.Nodes.First(x => x.Id == Node.Id), State.Pack.Nodes.AsReadOnly())
+        _linkedNodes = new NodeLinkSearch(State.GameState.Pack.Nodes.First(x => x.Id == Node.Id), State.GameState.Pack.Nodes.AsReadOnly())
             .Search()
             .GroupBy(x => x)
             .Select(x => x.First())
-            .Select(x => (node: new NodeViewModel(x, State.Preset), drawn: State.DrawnNodes.Contains(x)))
+            .Select(x => (node: new NodeViewModel(x, State.GameState.Preset), drawn: State.DrawnNodes.Contains(x)))
             .ToList();
     }
 
-    public static async Task ShowNodeDetails(IDialogService dialog, GameState state, NodeViewModel? nodeModel)
+    public static async Task ShowNodeDetails(IDialogService dialog, GameDrawState state, NodeViewModel? nodeModel)
     {
         var parameters = new DialogParameters<NodeDetailsDialog>
         {

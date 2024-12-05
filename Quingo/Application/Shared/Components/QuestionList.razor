@@ -9,14 +9,14 @@
         @foreach (var node in _nodes)
         {
             <NodeSquare Node="node" CellState="GetCellState(node)" ShowTagBadge
-                        ShowTagBadgeTooltip="Game.Preset.ShowTagBadges" OnClick="OnClick(node)!" />
+                        ShowTagBadgeTooltip="DrawState.GameState.Preset.ShowTagBadges" OnClick="OnClick(node)!" />
         }
     </MudStack>
 }
 
 @code {
     [Parameter, EditorRequired]
-    public GameState Game { get; set; } = default!;
+    public GameDrawState DrawState { get; set; } = default!;
 
     [Parameter]
     public int ItemsToDisplay { get; set; }
@@ -49,7 +49,7 @@
 
     protected override void OnParametersSet()
     {
-        if (Game.GameSessionId == _gameSessionId) return;
+        if (DrawState.GameState.GameSessionId == _gameSessionId) return;
 
         _isInitialized = false;
         InitializeGame();
@@ -58,9 +58,9 @@
 
     private void InitializeGame()
     {
-        _gameSessionId = Game.GameSessionId;
+        _gameSessionId = DrawState.GameState.GameSessionId;
         _nodes = GetNodes();
-        Game.NodeDrawn += OnNodeDrawn;
+        DrawState.NodeDrawn += OnNodeDrawn;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -73,17 +73,17 @@
     }
 
     private PlayerCardCellState GetCellState(NodeViewModel node) =>
-        node.Id == Game.DrawnNodes.Last().Id && _toggleHighlight ? PlayerCardCellState.Marked : default;
+        node.Id == DrawState.DrawnNodes.Last().Id && _toggleHighlight ? PlayerCardCellState.Marked : default;
 
     private async void ShowNodeDetails(NodeViewModel node)
     {
-        await NodeDetailsDialog.ShowNodeDetails(Dialog, Game, node);
+        await NodeDetailsDialog.ShowNodeDetails(Dialog, DrawState, node);
     }
 
     private List<NodeViewModel> GetNodes()
     {
-        return (ItemsToDisplay > 0 ? Game.DrawnNodes.TakeLast(ItemsToDisplay) : Game.DrawnNodes)
-        .Select(x => new NodeViewModel(x, Game.Preset, ShowLinksByTagEnum.Question)).ToList();
+        return (ItemsToDisplay > 0 ? DrawState.DrawnNodes.TakeLast(ItemsToDisplay) : DrawState.DrawnNodes)
+        .Select(x => new NodeViewModel(x, DrawState.GameState.Preset, ShowLinksByTagEnum.Question)).ToList();
     }
 
     private void OnNodeDrawn()
@@ -122,7 +122,7 @@
 
     public void Dispose()
     {
-        Game.NodeDrawn -= OnNodeDrawn;
+        DrawState.NodeDrawn -= OnNodeDrawn;
     }
 
 }
