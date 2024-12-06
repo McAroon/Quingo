@@ -64,6 +64,8 @@ public class PlayerState : IDisposable
             throw new GameStateException("Column number and card size don't match");
         }
 
+        var random = Preset.SamePlayerCards ? new Random(GameState.GameSessionId.GetHashCode()) : GameState.Random;
+
         var allPresetTags = Preset.Columns.SelectMany(x => x.ColAnswerTags).Distinct().ToList();
         var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct()
             .ToList();
@@ -101,21 +103,21 @@ public class PlayerState : IDisposable
                     int tagId;
                     if (belowMinTags.Count > 0)
                     {
-                        var tagIdx = GameState.Random.Next(0, belowMinTags.Count);
+                        var tagIdx = random.Next(0, belowMinTags.Count);
                         tagId = belowMinTags[tagIdx].TagId;
                     }
                     else
                     {
                         var nodePresetTagsExclMax = nodePresetTags.Except(aboveMaxTags).ToList();
                         var presetTags = nodePresetTagsExclMax.Count > 0 ? nodePresetTagsExclMax : nodePresetTags;
-                        var tagIdx = GameState.Random.Next(0, presetTags.Count);
+                        var tagIdx = random.Next(0, presetTags.Count);
                         tagId = presetTags[tagIdx].TagId;
                     }
 
                     var tagNodes = colNodes.Where(x => x.HasTag(tagId)).ToList();
                     colTagsCounter[tagId]++;
 
-                    var idx = GameState.Random.Next(0, tagNodes.Count);
+                    var idx = random.Next(0, tagNodes.Count);
                     var node = tagNodes[idx];
                     colNodes.Remove(node);
                     nodes.Remove(node);
