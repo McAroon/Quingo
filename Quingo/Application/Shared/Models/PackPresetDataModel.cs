@@ -18,6 +18,8 @@ public class PackPresetDataModel
         GameTimer = data.GameTimer;
         EndgameTimer = data.EndgameTimer;
         AutoDrawTimer = data.AutoDrawTimer;
+        SeparateDrawPerPlayer = data.SeparateDrawPerPlayer;
+        SamePlayerCards = data.SamePlayerCards;
         ShowTagBadges = data.ShowTagBadges;
         EnableCall = data.EnableCall;
         JoinOnCreate = data.JoinOnCreate;
@@ -39,6 +41,8 @@ public class PackPresetDataModel
             GameTimer = GameTimer,
             EndgameTimer = EndgameTimer,
             AutoDrawTimer = AutoDrawTimer,
+            SeparateDrawPerPlayer = SeparateDrawPerPlayer,
+            SamePlayerCards = SamePlayerCards,
             ShowTagBadges = ShowTagBadges,
             EnableCall = EnableCall,
             JoinOnCreate = JoinOnCreate,
@@ -75,6 +79,10 @@ public class PackPresetDataModel
     public int EndgameTimer { get; set; } = 20;
     
     public int AutoDrawTimer { get; set; }
+    
+    public bool SeparateDrawPerPlayer { get; set; }
+
+    public bool SamePlayerCards { get; set; }
 
     public bool ShowTagBadges { get; set; } = true;
 

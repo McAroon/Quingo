@@ -24,6 +24,10 @@ public record PackPresetData
     public int EndgameTimer { get; set; } = 20;
 
     public int AutoDrawTimer { get; set; }
+
+    public bool SeparateDrawPerPlayer { get; set; }
+
+    public bool SamePlayerCards { get; set; }
     
     public bool ShowTagBadges { get; set; } = true;
 

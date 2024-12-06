@@ -16,6 +16,8 @@
                         <MudNumericField @bind-Value="_model.EndgameTimer" Label="Endgame Timer" Min="0"/>
                         <MudNumericField @bind-Value="_model.AutoDrawTimer" Label="Auto Draw Timer"
                                          HelperText="Auto draw every n seconds, 0 to disable" Min="0"/>
+                        <MudCheckBox @bind-Value="_model.SeparateDrawPerPlayer" Label="Players draw separately"/>
+                        @* <MudCheckBox @bind-Value="_model.SamePlayerCards" Label="Players have same Cards"/> *@
                         <MudSelect T="PackPresetPattern" Label="Winning Pattern" @bind-Value="@_model.Pattern">
                             <MudSelectItem Value="PackPresetPattern.Lines">Line</MudSelectItem>
                             <MudSelectItem Value="PackPresetPattern.FullCard">Full Card</MudSelectItem>
@@ -27,7 +29,7 @@
                         <MudCheckBox @bind-Value="_model.EnableCall" Label="Enable Call"/>
                         <MudNumericField @bind-Value="_model.LivesNumber" Label="Number of Lives" Min="0"
                                          Disabled="!_model.EnableCall"/>
-                        <MudCheckBox @bind-Value="_model.JoinOnCreate" Label="Host Joins Game"/>
+                        <MudCheckBox @bind-Value="_model.JoinOnCreate" Label="Host joins Game"/>
                         <MudCheckBox @bind-Value="_model.ShowTagBadges" Label="Show Tag Badges"/>
                         <MudCheckBox @bind-Value="_model.SingleColumnConfig" Label="Same Column Config"/>
 
@@ -138,6 +140,8 @@
                 <MudListItem Text="Game Timer" SecondaryText="@(_model.GameTimer > 0 ? $"{_model.GameTimer} sec" : "-")"/>
                 <MudListItem Text="Endgame Timer" SecondaryText="@(_model.EndgameTimer > 0 ? $"{_model.EndgameTimer} sec" : "-")"/>
                 <MudListItem Text="Auto Draw" SecondaryText="@(_model.AutoDrawTimer > 0 ? $"{_model.AutoDrawTimer} sec" : "-")"/>
+                <MudListItem Text="Players draw separately" SecondaryText="@(_model.SeparateDrawPerPlayer ? "Yes" : "No")"/>
+                @* <MudListItem Text="Players have same Cards" SecondaryText="@(_model.SamePlayerCards ? "Yes" : "No")"/> *@
                 <MudListItem Text="Winning Pattern"
                              SecondaryText="@(_model.Pattern == PackPresetPattern.Lines ? "Line" : "Full Card")"/>
                 <MudListItem Text="Match Rule"
@@ -145,7 +149,7 @@
                 <MudListItem Text="Enable Call" SecondaryText="@(_model.EnableCall ? "Yes" : "No")"/>
                 <MudListItem Text="Number of Lives"
                              SecondaryText="@(_model.EnableCall ? _model.LivesNumber.ToString() : "-")"/>
-                <MudListItem Text="Host Joins Game" SecondaryText="@(_model.JoinOnCreate ? "Yes" : "No")"/>
+                <MudListItem Text="Host joins Game" SecondaryText="@(_model.JoinOnCreate ? "Yes" : "No")"/>
                 <MudListItem Text="Show Tag Badges" SecondaryText="@(_model.ShowTagBadges ? "Yes" : "No")"/>
                 @for (var i = 0; i < _model.Columns.Count; i++)
                 {

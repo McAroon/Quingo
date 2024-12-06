@@ -1,6 +1,7 @@
 ﻿@implements IDisposable
 @inject ISnackbar Snackbar
 
+<MudText Typo="Typo.h5" GutterBottom>Players (@DisplayPlayerCount)</MudText>
 @if (ShowPlayers && DisplayPlayers.Any())
 {
     <div class="pb-2">
@@ -115,6 +116,10 @@ else
     private bool _dialogVisible;
 
     private bool _expandPlayers;
+    
+    private string DisplayPlayerCount => Game.Preset.MaxPlayers > 0 
+        ? $"{Game.Players.Count} / {Game.Preset.MaxPlayers}" 
+        : Game.Players.Count.ToString();
 
     private void ViewPlayer(PlayerState player)
     {

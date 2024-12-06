@@ -49,11 +49,16 @@ public abstract class ActionBarBase : ComponentBase
         }
     }
 
+    protected virtual void DrawFunc()
+    {
+        Game.Draw();
+    }
+
     protected void Draw()
     {
         try
         {
-            Game.Draw();
+            DrawFunc();
         }
         catch (Exception e)
         {

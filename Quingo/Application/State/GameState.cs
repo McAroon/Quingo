@@ -21,11 +21,11 @@ public class GameState : IDisposable
 
         Timer = new GameTimer(preset.GameTimer);
         _random = new Random(gameSessionId.GetHashCode());
-        
+
         _players.CollectionChanged += HandlePlayersChanged;
         _winningPlayers.CollectionChanged += HandleWinningPlayersChanged;
         _spectators.CollectionChanged += HandleSpectatorsChanged;
-        
+
         NotifyStateChanged = ((Action)NotifyStateChangedUndebounced).Debounce(100);
 
         Setup();
@@ -49,9 +49,9 @@ public class GameState : IDisposable
 
     private readonly Random _random;
     public Random Random => _random;
-    
+
     public List<Node> QNodes { get; private set; }
-    
+
     private readonly ObservableCollection<PlayerState> _players = [];
     public ReadOnlyCollection<PlayerState> Players => _players.AsReadOnly();
 
@@ -97,7 +97,7 @@ public class GameState : IDisposable
     public ReadOnlyCollection<GameDrawState> DrawStates => _drawStates.AsReadOnly();
 
     public bool HostCanDraw => _drawStates.Count == 1 && _drawStates[0].PlayerSessionId is null;
-    
+
     public GameDrawState? DrawState => HostCanDraw ? DrawStates.FirstOrDefault() : null;
 
     public void ResetGameTimer(int value)
@@ -105,12 +105,12 @@ public class GameState : IDisposable
         Timer.Reset(value).Start();
         NotifyTimerUpdated();
     }
-    
+
     public void RefreshGameTimers()
     {
         if (Timer.IsRunning)
             NotifyTimerUpdated();
-        
+
         foreach (var drawState in _drawStates.Where(x => x.AutoDrawTimer.IsRunning))
         {
             drawState.NotifyTimerUpdated();
@@ -120,7 +120,7 @@ public class GameState : IDisposable
     public void PauseGame()
     {
         if (State is not GameStateEnum.Active) return;
-        
+
         Timer.Stop();
         SetState(GameStateEnum.Paused);
     }
@@ -128,7 +128,7 @@ public class GameState : IDisposable
     public void ResumeGame()
     {
         if (State is not GameStateEnum.Paused and not GameStateEnum.Init) return;
-        
+
         Timer.Start();
 
         var startGame = State is GameStateEnum.Init;
@@ -155,18 +155,27 @@ public class GameState : IDisposable
         QNodes = Pack.Nodes.Where(x => qTagIds.Any(t => x.HasTag(t)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
         _bingoPatterns = PatternGenerator.GeneratePatterns(Preset.CardSize, Preset.Pattern);
 
-        // todo: preset draw per player
-        var drawState = new GameDrawState(this, Players, _random);
-        _drawStates.Add(drawState);
+        if (!Preset.SeparateDrawPerPlayer)
+        {
+            var drawState = new GameDrawState(this, Players);
+            _drawStates.Add(drawState);
+        }
     }
 
     public PlayerState Join(string playerUserId, string playerName)
     {
-        // todo: preset draw per player
         var playerSessionId = Guid.NewGuid();
-        var drawState = _drawStates.First();
+        var drawState = Preset.SeparateDrawPerPlayer
+            ? new GameDrawState(this, Players, playerSessionId)
+            : _drawStates.First();
+        if (!_drawStates.Contains(drawState))
+        {
+            _drawStates.Add(drawState);
+        }
+        
         var player = new PlayerState(playerSessionId, this, playerUserId, playerName, drawState);
         _players.Add(player);
+
         return player;
     }
 
@@ -189,7 +198,7 @@ public class GameState : IDisposable
         {
             drawState.Draw();
         }
-        
+
         ResumeGame();
 
         NotifyStateChanged();
@@ -283,7 +292,7 @@ public class GameState : IDisposable
         if (IsStateActive) return;
 
         Timer.Stop();
-        
+
         foreach (var player in Players)
         {
             player.Validate();
@@ -326,7 +335,7 @@ public class GameState : IDisposable
     public event Action<GameStateEnum>? GameStateChanged;
 
     public event Action<GameState>? NewGameCreated;
-    
+
     public event Action? TimerUpdated;
 
     public void NotifyNewGameCreated(GameState game)
@@ -361,7 +370,7 @@ public class GameState : IDisposable
     {
         NotifyStateChanged();
     }
-    
+
     private void NotifyTimerUpdated()
     {
         TimerUpdated?.Invoke();
@@ -376,7 +385,7 @@ public class GameState : IDisposable
     protected virtual void Dispose(bool disposing)
     {
         if (_disposedValue) return;
-        
+
         StateChanged = null;
         PlayerJoined = null;
         GameStateChanged = null;

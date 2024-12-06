@@ -5,14 +5,14 @@ namespace Quingo.Application.State;
 
 public class GameDrawState : IDisposable
 {
-    public GameDrawState(GameState gameState, ReadOnlyCollection<PlayerState> players, Random random,
+    public GameDrawState(GameState gameState, ReadOnlyCollection<PlayerState> players,
         Guid? playerSessionId = null)
     {
         GameState = gameState;
-        _random = random;
         Players = players;
         PlayerSessionId = playerSessionId;
 
+        _random = new Random(gameState.GameSessionId.GetHashCode());
         _qNodes = [..gameState.QNodes];
         QuestionCount = _qNodes.Count;
         AutoDrawTimer = new GameTimer(Preset.AutoDrawTimer);
@@ -45,7 +45,9 @@ public class GameDrawState : IDisposable
     private readonly List<Node> _qNodes;
     public ReadOnlyCollection<Node> QNodes => _qNodes.AsReadOnly();
 
-    public bool CanDraw => _qNodes.Count > 0 && State is GameStateEnum.Active or GameStateEnum.Paused;
+    public bool CanDraw => _qNodes.Count > 0 && State is GameStateEnum.Active;
+
+    public bool PlayerCanDraw(string userId) => PlayerState != null && PlayerState.PlayerUserId == userId;
 
     public PlayerState? PlayerState =>
         PlayerSessionId.HasValue ? Players.FirstOrDefault(x => x.PlayerSessionId == PlayerSessionId) : null;

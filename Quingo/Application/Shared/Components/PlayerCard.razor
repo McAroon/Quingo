@@ -1,5 +1,7 @@
 ﻿@inject IDialogService Dialog
 
+@implements IDisposable
+
 <MudStack Spacing="1" Row Class="pb-2" Wrap="Wrap.NoWrap">
     @foreach (var col in State.GameState.Preset.Columns)
     {
@@ -41,6 +43,35 @@
                                                                        && cell.IsMarked
                                                                        && cell.MatchedQNode != null
                                                                        && cell.MatchedQNode != State.DrawState.DrawnNodes.LastOrDefault();
+    private Guid? _gameSessionId;
+
+    private bool _isInitialized;
+
+    protected override void OnInitialized()
+    {
+        InitializeGame();
+        _isInitialized = true;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (State.GameState.GameSessionId == _gameSessionId) return;
+
+        _isInitialized = false;
+        InitializeGame();
+        _isInitialized = true;
+    }
+
+    private void InitializeGame()
+    {
+        _gameSessionId = State.GameState.GameSessionId;
+        State.DrawState.NodeDrawn += OnNodeDrawn;
+    }
+
+    private void OnNodeDrawn()
+    {
+        InvokeAsync(StateHasChanged);
+    }
 
     private Action<PlayerCardCellData>? OnCellClick(PlayerCardCellData cell)
     {
@@ -84,5 +115,9 @@
             State.Mark(cell.Col, cell.Row);
         }
     }
-
+    
+    public void Dispose()
+    {
+        State.DrawState.NodeDrawn -= OnNodeDrawn;
+    }
 }
