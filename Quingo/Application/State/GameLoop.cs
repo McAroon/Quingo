@@ -148,6 +148,11 @@ public class GameLoop : IDisposable
             }
         }
 
+        if (game is { State: GameStateEnum.Active, AllPlayersDone: true })
+        {
+            game.SetState(GameStateEnum.Finished);
+        }
+
         if (game is { State: GameStateEnum.Active } and
             ({ WinningPlayers.Count: > 0 } or { Preset.GameTimer: > 0, Timer.Value: < 0 }))
         {

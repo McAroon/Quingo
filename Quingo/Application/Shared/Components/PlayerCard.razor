@@ -3,7 +3,7 @@
 @implements IDisposable
 
 <MudStack Spacing="1" Row Class="pb-2" Wrap="Wrap.NoWrap">
-    @foreach (var col in State.GameState.Preset.Columns)
+    @foreach (var col in Player.GameState.Preset.Columns)
     {
         <MudCard Outlined Class="node-square node-header">
             <MudCardContent Class="node-square-content">
@@ -15,34 +15,37 @@
     }
 </MudStack>
 
-@for (int row = 0; row < State.Card.Cells.GetLength(1); row++)
+@for (int row = 0; row < Player.Card.Cells.GetLength(1); row++)
 {
     var cRow = row;
     <MudStack Spacing="1" Row Class="pb-1" Wrap="Wrap.NoWrap">
-        @for (int col = 0; col < State.Card.Cells.GetLength(0); col++)
+        @for (int col = 0; col < Player.Card.Cells.GetLength(0); col++)
         {
-            var cell = State.Card.Cells[col, cRow];
+            var cell = Player.Card.Cells[col, cRow];
             <PlayerCardCell Cell="cell" ShowDetails="ShowDetails" OnClick="@(OnCellClick(cell)!)"/>
         }
     </MudStack>
 }
 
 @code {
-    [CascadingParameter] public PlayerState State { get; set; } = default!;
+    [CascadingParameter] public PlayerState Player { get; set; } = default!;
 
     [Parameter] public bool ReadOnly { get; set; }
 
     [Parameter] public bool ShowDetails { get; set; }
 
-    private PackPresetData Preset => State.GameState.Preset;
+    private PackPresetData Preset => Player.GameState.Preset;
 
-    private bool CanMark => !ReadOnly && State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown && (Preset.MatchRule is PackPresetMatchRule.Default || State.DrawState.DrawnNodes.Count > 0);
+    private bool CanMark => !ReadOnly && Player.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown
+                                      && (Preset.MatchRule is PackPresetMatchRule.Default || Player.DrawState.DrawnNodes.Count > 0)
+                                      && Player.Status is not PlayerStatus.Done;
 
 
     private bool RequireUnmarkConfirmation(PlayerCardCellData cell) => Preset.MatchRule is PackPresetMatchRule.LastDrawn
                                                                        && cell.IsMarked
                                                                        && cell.MatchedQNode != null
-                                                                       && cell.MatchedQNode != State.DrawState.DrawnNodes.LastOrDefault();
+                                                                       && cell.MatchedQNode != Player.DrawState.DrawnNodes.LastOrDefault();
+
     private Guid? _gameSessionId;
 
     private bool _isInitialized;
@@ -55,7 +58,7 @@
 
     protected override void OnParametersSet()
     {
-        if (State.GameState.GameSessionId == _gameSessionId) return;
+        if (Player.GameState.GameSessionId == _gameSessionId) return;
 
         _isInitialized = false;
         InitializeGame();
@@ -64,8 +67,8 @@
 
     private void InitializeGame()
     {
-        _gameSessionId = State.GameState.GameSessionId;
-        State.DrawState.NodeDrawn += OnNodeDrawn;
+        _gameSessionId = Player.GameState.GameSessionId;
+        Player.DrawState.NodeDrawn += OnNodeDrawn;
     }
 
     private void OnNodeDrawn()
@@ -97,14 +100,14 @@
     {
         if (CanMark)
         {
-            State.Mark(cell.Col, cell.Row);
+            Player.Mark(cell.Col, cell.Row);
         }
     }
 
     private async void ShowCellDetails(PlayerCardCellData cell)
     {
-        var model = cell.Node == null ? null : new NodeViewModel(cell.Node, State.GameState.Preset);
-        await NodeDetailsDialog.ShowNodeDetails(Dialog, State.DrawState, model);
+        var model = cell.Node == null ? null : new NodeViewModel(cell.Node, Player.GameState.Preset);
+        await NodeDetailsDialog.ShowNodeDetails(Dialog, Player.DrawState, model);
     }
 
     private async void ShowUnmarkConfirmation(PlayerCardCellData cell)
@@ -112,12 +115,13 @@
         var result = await Dialog.ShowMessageBox("Confirmation", "The cell will be unmarked", "OK", null, "Cancel");
         if (result == true)
         {
-            State.Mark(cell.Col, cell.Row);
+            Player.Mark(cell.Col, cell.Row);
         }
     }
-    
+
     public void Dispose()
     {
-        State.DrawState.NodeDrawn -= OnNodeDrawn;
+        Player.DrawState.NodeDrawn -= OnNodeDrawn;
     }
+
 }

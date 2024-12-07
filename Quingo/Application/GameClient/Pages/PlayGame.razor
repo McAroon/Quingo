@@ -48,7 +48,8 @@ else if (_isInitialized)
         }
         catch (Exception e)
         {
-            Logger.LogError(e, e.Message);
+            if (e is not GameStateException)
+                Logger.LogError(e, e.Message);
             _initError = e.Message;
         }
     }
@@ -66,7 +67,8 @@ else if (_isInitialized)
         }
         catch (Exception e)
         {
-            Logger.LogError(e, e.Message);
+            if (e is not GameStateException)
+                Logger.LogError(e, e.Message);
             _initError = e.Message;
         }
     }

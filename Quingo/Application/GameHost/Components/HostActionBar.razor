@@ -7,7 +7,10 @@
             End Game
         </MudButton>
     }
-    <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ExitToApp" Href="/">Leave Game</MudButton>
+    else
+    {
+        <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ExitToApp" Href="/">Leave Game</MudButton>
+    }
 </MudStack>
 <MudStack Justify="Justify.Center" Row>
     @if (IsHost && Game.IsStateActive)

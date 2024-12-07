@@ -99,7 +99,7 @@ public class GameState : IDisposable
     private readonly List<GameDrawState> _drawStates = [];
     public ReadOnlyCollection<GameDrawState> DrawStates => _drawStates.AsReadOnly();
 
-    public bool HostCanDraw => _drawStates.Count == 1 && _drawStates[0].PlayerSessionId is null;
+    public bool HostCanDraw => _drawStates.Count == 1 && _drawStates[0].PlayerState is null;
 
     public GameDrawState? DrawState => HostCanDraw ? DrawStates.FirstOrDefault() : null;
 
@@ -173,16 +173,19 @@ public class GameState : IDisposable
     {
         var playerSessionId = Guid.NewGuid();
         var drawState = Preset.SeparateDrawPerPlayer
-            ? new GameDrawState(this, Players, playerSessionId)
+            ? new GameDrawState(this, Players)
             : _drawStates.First();
         if (!_drawStates.Contains(drawState))
         {
             _drawStates.Add(drawState);
         }
-        
-        var player = new PlayerState(playerSessionId, this, playerUserId, playerName, drawState);
-        _players.Add(player);
 
+        var player = new PlayerState(playerSessionId, this, playerUserId, playerName, drawState);
+        if (Preset.SeparateDrawPerPlayer)
+        {
+            drawState.PlayerState = player;
+        }
+        _players.Add(player);
         return player;
     }
 

@@ -69,8 +69,7 @@ public class PlayerState : IDisposable
             
             _status = value;
             UpdatedAt = DateTime.UtcNow;
-            StateChanged?.Invoke();
-            GameState.NotifyStateChanged();
+            StatusChanged?.Invoke(value);
         }
     }
     
@@ -251,6 +250,8 @@ public class PlayerState : IDisposable
     public void SetStatus(PlayerStatus status)
     {
         Status = status;
+        NotifyStateChanged();
+        GameState.NotifyStateChanged();
     }
 
     private static bool IsCenter(int size, int i, int j)
@@ -266,6 +267,8 @@ public class PlayerState : IDisposable
     public event Action<PlayerState>? LifeLost;
 
     public event Action<GameState, PlayerState>? NewGameCreated;
+
+    public event Action<PlayerStatus>? StatusChanged;
 
     private void NotifyStateChanged()
     {
@@ -289,6 +292,7 @@ public class PlayerState : IDisposable
             StateChanged = null;
             LifeLost = null;
             NewGameCreated = null;
+            StatusChanged = null;
             disposedValue = true;
         }
     }

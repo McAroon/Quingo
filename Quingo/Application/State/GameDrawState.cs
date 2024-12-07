@@ -5,12 +5,10 @@ namespace Quingo.Application.State;
 
 public class GameDrawState : IDisposable
 {
-    public GameDrawState(GameState gameState, ReadOnlyCollection<PlayerState> players,
-        Guid? playerSessionId = null)
+    public GameDrawState(GameState gameState, ReadOnlyCollection<PlayerState> players)
     {
         GameState = gameState;
         Players = players;
-        PlayerSessionId = playerSessionId;
 
         _random = new Random(gameState.GameSessionId.GetHashCode());
         _qNodes = [..gameState.QNodes];
@@ -32,8 +30,6 @@ public class GameDrawState : IDisposable
 
     public ReadOnlyCollection<PlayerState> Players { get; set; }
 
-    public Guid? PlayerSessionId { get; }
-
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
 
@@ -49,8 +45,20 @@ public class GameDrawState : IDisposable
 
     public bool PlayerCanDraw(string userId) => PlayerState != null && PlayerState.PlayerUserId == userId;
 
-    public PlayerState? PlayerState =>
-        PlayerSessionId.HasValue ? Players.FirstOrDefault(x => x.PlayerSessionId == PlayerSessionId) : null;
+    private PlayerState? _playerState;
+
+    public PlayerState? PlayerState
+    {
+        get => _playerState;
+        set
+        {
+            if (_playerState != null)
+                _playerState.StatusChanged -= HandlePlayerStatusChanged;
+            _playerState = value;
+            if (_playerState != null)
+                _playerState.StatusChanged += HandlePlayerStatusChanged;
+        }
+    }
 
     public GameTimer AutoDrawTimer { get; }
 
@@ -75,17 +83,27 @@ public class GameDrawState : IDisposable
     {
         switch (state)
         {
-            case GameStateEnum.Active:
+            case GameStateEnum.Active when PlayerState is not { Status: PlayerStatus.Done }:
                 AutoDrawTimer.Start();
                 break;
-            case GameStateEnum.Paused:
-            case GameStateEnum.FinalCountdown:
-            case GameStateEnum.Finished:
-            case GameStateEnum.Canceled:
+            default:
                 AutoDrawTimer.Stop();
                 break;
+        }
+    }
+
+    private void HandlePlayerStatusChanged(PlayerStatus status)
+    {
+        if (GameState.State is not GameStateEnum.Active) return;
+        
+        switch (status)
+        {
+            case PlayerStatus.Ready:
+                AutoDrawTimer.Start();
+                break;
             default:
-                throw new ArgumentOutOfRangeException(nameof(state), state, null);
+                AutoDrawTimer.Stop();
+                break;
         }
     }
     
@@ -118,6 +136,11 @@ public class GameDrawState : IDisposable
 
         _drawnNodes.CollectionChanged -= HandleDrawnNodesChanged;
         GameState.GameStateChanged -= HandleGameStateChanged;
+        
+        if (PlayerState != null)
+        {
+            PlayerState.StatusChanged -= HandlePlayerStatusChanged;
+        }
 
         _disposedValue = true;
     }
