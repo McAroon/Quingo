@@ -89,8 +89,8 @@ else
                     <MudTd DataLabel="Name">@context.PlayerName</MudTd>
                     @if (Game.IsStateActive)
                     {
-                        <MudTd DataLabel="Status" Class="@PlayerStatusTextColorClass(context)">
-                            @PlayerStatusText(context)
+                        <MudTd DataLabel="Status">
+                            <span class="@PlayerStatusTextColorClass(context)">@PlayerStatusText(context)</span>
                         </MudTd>
                     }
                     @if (ShowLives)
