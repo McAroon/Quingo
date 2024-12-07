@@ -72,7 +72,10 @@ public class GameState : IDisposable
         get => _state;
         private set
         {
+            if (_state == value) return;
+            
             _state = value;
+            UpdatedAt = DateTime.UtcNow;
             GameStateChanged?.Invoke(value);
         }
     }
@@ -99,6 +102,10 @@ public class GameState : IDisposable
     public bool HostCanDraw => _drawStates.Count == 1 && _drawStates[0].PlayerSessionId is null;
 
     public GameDrawState? DrawState => HostCanDraw ? DrawStates.FirstOrDefault() : null;
+
+    public bool AllPlayersReady => Players.All(x => x.Status is PlayerStatus.Ready);
+    
+    public bool AllPlayersDone => Players.All(x => x.Status is PlayerStatus.Done);
 
     public void ResetGameTimer(int value)
     {
@@ -343,7 +350,7 @@ public class GameState : IDisposable
         NewGameCreated?.Invoke(game);
     }
 
-    private readonly Action NotifyStateChanged;
+    public Action NotifyStateChanged { get; }
 
     private void NotifyStateChangedUndebounced()
     {

@@ -12,11 +12,18 @@
 <MudStack Justify="Justify.Center" Row>
     @if (IsHost && Game.IsStateActive)
     {
-        @if (Game.State is GameStateEnum.Paused or GameStateEnum.Init)
+        @if (Game.State is GameStateEnum.Init)
+        {
+            <MudButton Color="Game.AllPlayersReady ? Color.Success : Color.Error" Size="Size.Large" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Outlined.PlayArrow" OnClick="ResumeGame">
+                Start
+            </MudButton>
+        }
+        else if (Game.State is GameStateEnum.Paused)
         {
             <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
                        StartIcon="@Icons.Material.Outlined.PlayArrow" OnClick="ResumeGame">
-                @(Game.State is GameStateEnum.Paused ? "Resume" : "Start")
+                Resume
             </MudButton>
         }
         else

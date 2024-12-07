@@ -3,7 +3,7 @@
 
 <MudStack AlignItems="AlignItems.End" Spacing="0" Class="pb-2">
     <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ExitToApp" Href="/">Leave Game</MudButton>
-    @if (ShowHostControls && State.GameState.IsStateActive)
+    @if (ShowHostControls && Player.GameState.IsStateActive)
     {
         <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop" OnClick="ConfirmEndGame">
             End Game
@@ -11,13 +11,37 @@
     }
 </MudStack>
 <MudStack Justify="Justify.Center" Row>
+    @if (Game.State is GameStateEnum.Init && !Player.IsHost)
+    {
+        @if (Player.Status is PlayerStatus.NotReady)
+        {
+            <MudButton Color="Color.Error" Size="Size.Large" Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Outlined.CheckBoxOutlineBlank"
+                       OnClick="() => Player.SetStatus(PlayerStatus.Ready)">Ready
+            </MudButton>
+        }
+        else
+        {
+            <MudButton Color="Color.Success" Size="Size.Large" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Outlined.CheckBox"
+                       OnClick="() => Player.SetStatus(PlayerStatus.NotReady)">Ready
+            </MudButton>
+        }
+    }
     @if (ShowHostControls && Game.IsStateActive)
     {
-        @if (Game.State is GameStateEnum.Paused or GameStateEnum.Init)
+        @if (Game.State is GameStateEnum.Init)
+        {
+            <MudButton Color="Game.AllPlayersReady ? Color.Success : Color.Error" Size="Size.Large" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Outlined.PlayArrow" OnClick="ResumeGame">
+                Start
+            </MudButton>
+        }
+        else if (Game.State is GameStateEnum.Paused)
         {
             <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
                        StartIcon="@Icons.Material.Outlined.PlayArrow" OnClick="ResumeGame">
-                @(Game.State is GameStateEnum.Paused ? "Resume" : "Start")
+                Resume
             </MudButton>
         }
         else
@@ -28,28 +52,28 @@
             </MudButton>
         }
     }
-    @if (State.GameState.Preset.EnableCall)
+    @if (Player.GameState.Preset.EnableCall)
     {
         <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
                    StartIcon="@Icons.Material.Outlined.BackHand" OnClick="Call"
                    Disabled="!AllowCall">Call
         </MudButton>
     }
-    @if ((ShowHostControls || State.DrawState.PlayerCanDraw(UserId)) 
+    @if ((ShowHostControls || Player.DrawState.PlayerCanDraw(UserId))
          && Game.IsStateActive && Game.State is not GameStateEnum.Init)
     {
         <MudBreakpointProvider>
             <MudHidden Invert Breakpoint="Breakpoint.MdAndUp">
                 <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
                            StartIcon="@Icons.Material.Outlined.SkipNext" OnClick="Draw"
-                           Disabled="!State.DrawState.CanDraw">Next
+                           Disabled="!Player.DrawState.CanDraw">Next
                 </MudButton>
             </MudHidden>
             <MudHidden Invert Breakpoint="Breakpoint.SmAndDown">
                 <div class="fab-br">
                     <MudFab StartIcon="@Icons.Material.Outlined.SkipNext" Color="Color.Primary" OnClick="Draw"
                             Label="Next"
-                            Disabled="!State.DrawState.CanDraw"/>
+                            Disabled="!Player.DrawState.CanDraw"/>
                 </div>
             </MudHidden>
         </MudBreakpointProvider>
@@ -64,19 +88,20 @@
 </MudStack>
 
 @code {
-    [CascadingParameter] public PlayerState State { get; set; } = default!;
+    [CascadingParameter] public PlayerState Player { get; set; } = default!;
 
     [CascadingParameter(Name = "UserId")] public override string UserId { get; set; } = default!;
 
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
-    public override GameState Game => State.GameState;
+    public override GameState Game => Player.GameState;
 
-    private bool AllowCall => State.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown
-                              && State.GameState.Preset.EnableCall
-                              && State.LivesNumber > 0 && !State.GameState.WinningPlayers.Contains(State);
-
-    private bool ShowHostControls => State.PlayerUserId == State.GameState.HostUserId || _user?.IsInRole("admin") == true;
+    private bool AllowCall => Player.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown
+                              && Player.GameState.Preset.EnableCall
+                              && Player.LivesNumber > 0 && !Player.GameState.WinningPlayers.Contains(Player);
+    
+    
+    private bool ShowHostControls => Player.IsHost || _user?.IsInRole("admin") == true;
 
     private ClaimsPrincipal? _user;
 
@@ -94,7 +119,7 @@
         {
             if (AllowCall)
             {
-                State.GameState.Call(State);
+                Player.GameState.Call(Player);
             }
         }
         catch (Exception e)
@@ -106,9 +131,9 @@
 
     protected override void DrawFunc()
     {
-        if (State.DrawState.PlayerCanDraw(UserId))
+        if (Player.DrawState.PlayerCanDraw(UserId))
         {
-            State.DrawState.Draw();
+            Player.DrawState.Draw();
         }
         else
         {

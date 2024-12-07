@@ -20,6 +20,16 @@
             <div class="mw-100">
                 <MudText Typo="Typo.h6" GutterBottom>@player.PlayerName</MudText>
                 <table class="dl-table">
+                    @if (Game.State is GameStateEnum.Init)
+                    {
+                        <tr>
+                            <th>Status</th>
+                            <td
+                                class="@(player.Status is PlayerStatus.Ready ? "mud-success-text" : "mud-error-text")">
+                                @(player.Status is PlayerStatus.Ready ? "Ready" : "Not Ready")
+                            </td>
+                        </tr>
+                    }
                     @if (ShowLives)
                     {
                         <tr>
@@ -44,8 +54,28 @@ else
     <MudGrid>
         <MudItem xs="12" lg="8">
             <MudTable Items="Game.Players">
+                <ColGroup>
+                    <col style="width: 40%;"/>
+                    @if (Game.State is GameStateEnum.Init)
+                    {
+                        <col style="width: 25%;"/>
+                    }
+                    @if (ShowLives)
+                    {
+                        <col/>
+                    }
+                    @if (ShowPlayers)
+                    {
+                        <col/>
+                        <col/>
+                    }
+                </ColGroup>
                 <HeaderContent>
                     <MudTh>Name</MudTh>
+                    @if (Game.State is GameStateEnum.Init)
+                    {
+                        <MudTh>Status</MudTh>
+                    }
                     @if (ShowLives)
                     {
                         <MudTh>Lives</MudTh>
@@ -58,6 +88,13 @@ else
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd DataLabel="Name">@context.PlayerName</MudTd>
+                    @if (Game.State is GameStateEnum.Init)
+                    {
+                        <MudTd DataLabel="Status"
+                               Class="@(context.Status is PlayerStatus.Ready ? "mud-success-text" : "mud-error-text")">
+                            @(context.Status is PlayerStatus.Ready ? "Ready" : "Not Ready")
+                        </MudTd>
+                    }
                     @if (ShowLives)
                     {
                         <MudTd DataLabel="Lives">@context.LivesNumber</MudTd>
@@ -82,7 +119,9 @@ else
 
 <MudDialog @bind-Visible="_dialogVisible" Options="_dialogOptions">
     <TitleContent>
-        View player: @_selectedPlayer?.PlayerName
+        <MudText Typo="Typo.h6">
+            View Player: @_selectedPlayer?.PlayerName
+        </MudText>
     </TitleContent>
     <DialogContent>
         <CascadingValue Value="_selectedPlayer">
@@ -116,9 +155,9 @@ else
     private bool _dialogVisible;
 
     private bool _expandPlayers;
-    
-    private string DisplayPlayerCount => Game.Preset.MaxPlayers > 0 
-        ? $"{Game.Players.Count} / {Game.Preset.MaxPlayers}" 
+
+    private string DisplayPlayerCount => Game.Preset.MaxPlayers > 0
+        ? $"{Game.Players.Count} / {Game.Preset.MaxPlayers}"
         : Game.Players.Count.ToString();
 
     private void ViewPlayer(PlayerState player)
