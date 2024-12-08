@@ -18,7 +18,7 @@
         @if (Game.State is GameStateEnum.Init)
         {
             <MudButton Color="Game.AllPlayersReady ? Color.Success : Color.Error" Size="Size.Large" Variant="Variant.Filled"
-                       StartIcon="@Icons.Material.Outlined.PlayArrow" OnClick="ResumeGame">
+                       StartIcon="@Icons.Material.Outlined.PlayArrow" OnClick="ResumeGame" Disabled="Game.Players.Count == 0">
                 Start
             </MudButton>
         }

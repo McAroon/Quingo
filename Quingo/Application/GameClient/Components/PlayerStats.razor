@@ -12,20 +12,6 @@
             <td>@State.LivesNumber</td>
         </tr>
     }
-    @if (Game.ShowTimer)
-    {
-        <tr>
-            <th>Game Timer</th>
-            <td>@Game.Timer.DisplayValue</td>
-        </tr>
-    }
-    @if (Game.Preset.AutoDrawTimer > 0 && Game.State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.Paused)
-    {
-        <tr>
-            <th>Auto Draw Timer</th>
-            <td>@State.DrawState.AutoDrawTimer.DisplayValue</td>
-        </tr>
-    }
     @if (Game.WinningPlayers.Count > 0)
     {
         <tr>
@@ -42,16 +28,27 @@
     }
 </table>
 
+<MudStack Row Spacing="4" Class="pt-4">
+    @if (Game.ShowTimer)
+    {
+        <GameTimerProgress Timer="Game.Timer" Title="Timer" ColorPercentages="Game.TimerColorPercentages"/>
+    }
+
+    @if (Game.Preset.AutoDrawTimer > 0 && Game.State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.Paused)
+    {
+        <GameTimerProgress Timer="State.DrawState.AutoDrawTimer" Title="Next"/>
+    }
+</MudStack>
+
 @code {
-    [CascadingParameter]
-    public PlayerState State { get; set; } = default!;
+    [CascadingParameter] public PlayerState State { get; set; } = default!;
 
     private GameState Game => State.GameState;
-    
+
     private Guid? _gameSessionId;
 
     private bool _isInitialized;
-    
+
     protected override void OnInitialized()
     {
         InitializeGame();
@@ -78,10 +75,11 @@
     {
         InvokeAsync(StateHasChanged);
     }
-    
+
     public void Dispose()
     {
         State.GameState.TimerUpdated -= OnTimerUpdated;
         State.DrawState.TimerUpdated -= OnTimerUpdated;
     }
+
 }

@@ -6,13 +6,13 @@
     text-align: left;
 }
 
-    .dl-table th {
-        padding-right: 30px;
-    }
+.dl-table th {
+    padding-right: 30px;
+}
 
-    .dl-table th, .dl-table td {
-        padding-bottom: 5px;
-    }
+.dl-table th, .dl-table td {
+    padding-bottom: 5px;
+}
 
 .icon-inline {
     margin-bottom: -7px;
@@ -34,32 +34,33 @@
     padding: 4px;
 }
 
-    .node-square .node-square-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: space-between;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-size: cover;
-        border-radius: var(--mud-default-borderradius);
-        padding: 0;
-        overflow: hidden;
-    }
+.node-square .node-square-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    border-radius: var(--mud-default-borderradius);
+    padding: 0;
+    overflow: hidden;
+}
 
-    .node-square .node-text {
-        border-radius: 30px;
-        padding: 5px 8px;
-        min-width: 36px;
-        color: var(--mud-palette-primary-text);
-        background-color: rgba(39,39,47,0.5);
-        line-height: 1.1;
-    }
+.node-square .node-text {
+    border-radius: 30px;
+    padding: 5px 8px;
+    min-width: 36px;
+    color: var(--mud-palette-primary-text);
+    background-color: rgba(39, 39, 47, 0.5);
+    line-height: 1.1;
+}
 
 @media (max-width: 768px) {
     #q-list .node-square {
         width: 22vw;
     }
+
     .node-square .node-text.mud-typography-h6 {
         font-size: 2.6vw;
     }
@@ -76,17 +77,17 @@
     }
 }
 
-    .node-square.node-header {
-        background-color: var(--mud-palette-info-hover);
-        max-height: 110px;
-        height: auto;
-        aspect-ratio: auto;
-    }
+.node-square.node-header {
+    background-color: var(--mud-palette-info-hover);
+    max-height: 110px;
+    height: auto;
+    aspect-ratio: auto;
+}
 
-    .node-square.node-header .node-text {
-        background-color: initial;
-        color: var(--mud-palette-text-primary);
-    }
+.node-square.node-header .node-text {
+    background-color: initial;
+    color: var(--mud-palette-text-primary);
+}
 
 .node-primary {
     background-color: var(--mud-palette-primary);
@@ -119,10 +120,10 @@
     flex-direction: row-reverse;
 }
 
-    .node-square .node-square-content .node-badges .node-badge {
-        margin: 2px;
-        opacity: 0.9;
-    }
+.node-square .node-square-content .node-badges .node-badge {
+    margin: 2px;
+    opacity: 0.9;
+}
 
 .mud-chip.chip-xs {
     padding: 0 6px;
@@ -138,37 +139,42 @@
     box-sizing: initial;
 }
 
-    .pack-card.mud-paper-outlined {
-        border: 4px solid var(--mud-palette-primary);
-        padding: 0;
-    }
+.pack-card.mud-paper-outlined {
+    border: 4px solid var(--mud-palette-primary);
+    padding: 0;
+}
 
-        .pack-card.mud-paper-outlined .mud-card-media {
-            border-top-left-radius: 0;
-            border-top-right-radius: 0;
-        }
-    .pack-card .pack-default-image {
-        height: 300px;
-        background-color: var(--mud-palette-text-primary);
-        mask: url(media/box.svg) no-repeat 50% 50%;
-        mask-size: 80%;
-    }
+.pack-card.mud-paper-outlined .mud-card-media {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.pack-card .pack-default-image {
+    height: 300px;
+    background-color: var(--mud-palette-text-primary);
+    mask: url(media/box.svg) no-repeat 50% 50%;
+    mask-size: 80%;
+}
+
 .q-list-container-col {
     max-height: 640px;
 }
+
 .q-list-container-col #q-list {
     height: fit-content;
     max-height: 100%;
 }
-    #q-list {
-        width: fit-content;
-        max-width: 100%;
-    }
-    #q-list .node-square {
-        scroll-margin-top: 70px;
-        flex-shrink: 0;
-    }    
-    
+
+#q-list {
+    width: fit-content;
+    max-width: 100%;
+}
+
+#q-list .node-square {
+    scroll-margin-top: 70px;
+    flex-shrink: 0;
+}
+
 .fab-br {
     bottom: 16px;
     right: 16px;
@@ -193,4 +199,29 @@
 
 .mud-nested-list > .mud-list-item.mud-nested-list-lvl2 + .mud-collapse-container {
     padding-left: 16px;
+}
+
+.game-timer {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.game-timer .game-timer-progress-background {
+    position: absolute;
+    opacity: 0.2;
+}
+
+.game-timer .game-timer-progress {
+    z-index: 10;
+}
+
+.game-timer .game-timer-value {
+    position: absolute;
+    top: 18px;
+}
+
+.game-timer .mud-progress-circular-svg {
+    overflow: visible;
 }

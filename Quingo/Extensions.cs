@@ -35,9 +35,19 @@ public static class Extensions
         }
     }
 
-    public static string ToStringHoursOptional(this TimeSpan span)
+    public static string ToTimerString(this TimeSpan value, TimeSpan maxValue)
     {
-        return span.Hours > 0 ? span.ToString(@"hh\:mm\:ss") : span.ToString(@"mm\:ss");
+        if (maxValue.Hours > 0)
+        {
+            return value.ToString(@"hh\:mm\:ss");
+        }
+
+        if (maxValue.Minutes > 0)
+        {
+            return value.ToString(@"mm\:ss");
+        }
+
+        return value.Seconds.ToString();
     }
     
     public static string FormatWithTimeZone(this DateTime date, string? timeZone)

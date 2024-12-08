@@ -1,0 +1,44 @@
+﻿<div class="game-timer">
+    <div class="game-timer-value">
+        <MudText Color="TimerValueColor" Typo="Typo.body2">@Timer.DisplayValue</MudText>
+    </div>
+    <div class="game-timer-progress-background">
+        <MudProgressCircular Color="Color.Default" Value="100" Size="Size.Large"
+                             StrokeWidth="4"/>
+    </div>
+    <div class="game-timer-progress">
+        <MudProgressCircular Color="TimerProgressColor" Value="Timer.ElapsedPercentage" Size="Size.Large"
+                             StrokeWidth="4"/>
+    </div>
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <div class="game-timer-title">
+            <b>@Title</b>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public GameTimer Timer { get; set; } = default!;
+
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>
+    /// Upper bounds after which the color changes to yellow and red.
+    /// </summary>
+    [Parameter] public (int yellow, int red) ColorPercentages { get; set; } = (0, 0);
+
+    private Color TimerProgressColor =>
+        Timer.ElapsedPercentage < ColorPercentages.red
+            ? Color.Error
+            : Timer.ElapsedPercentage < ColorPercentages.yellow
+                ? Color.Warning
+                : Color.Primary;
+
+    private Color TimerValueColor => Timer.ElapsedPercentage < ColorPercentages.red
+        ? Color.Error
+        : Timer.ElapsedPercentage < ColorPercentages.yellow
+            ? Color.Warning
+            : Color.Default;
+
+}

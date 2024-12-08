@@ -83,7 +83,14 @@ public class GameState : IDisposable
     public bool IsStateActive => State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.Paused
         or GameStateEnum.FinalCountdown;
 
-    public GameTimer Timer { get; private set; }
+    public GameTimer Timer { get; }
+    
+    public (int, int) TimerColorPercentages => State switch
+    {
+        GameStateEnum.FinalCountdown => (0, 101),
+        GameStateEnum.Finished or GameStateEnum.Canceled => (0, 0),
+        _ => (25, 10),
+    };
 
     public string StateDisplayValue => State switch
     {
