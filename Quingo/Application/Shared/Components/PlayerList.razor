@@ -41,9 +41,7 @@
                         <td>@player.Score</td>
                     </tr>
                 </table>
-                <CascadingValue Value="player">
-                    <PlayerCard ReadOnly ShowDetails="ShowDetails"/>
-                </CascadingValue>
+                @RenderPlayer(player)
             </div>
         }
     </MudStack>
@@ -122,13 +120,26 @@ else
         </MudText>
     </TitleContent>
     <DialogContent>
-        <CascadingValue Value="_selectedPlayer">
-            <PlayerCard ReadOnly ShowDetails="ShowDetails"/>
-        </CascadingValue>
+        @RenderPlayer(_selectedPlayer)
     </DialogContent>
 </MudDialog>
 
 @code {
+
+    private RenderFragment RenderPlayer(PlayerState? player) => player == null
+        ? null
+        : @<CascadingValue Value="player">
+              @if (Game.Preset.SeparateDrawPerPlayer)
+              {
+                  <QuestionList DrawState="player.DrawState"
+                                ShowDetails="ShowDetails"
+                                ItemsToDisplay="4"
+                                TitleTypo="Typo.h6"
+                                ScrollOnDraw="false" Row/>
+              }
+              <PlayerCard TitleTypo="Typo.h6" ReadOnly ShowDetails="ShowDetails"/>
+          </CascadingValue>;
+
     [CascadingParameter] public GameState Game { get; set; } = default!;
 
     [Parameter] public PlayerState? Player { get; set; }
@@ -167,7 +178,7 @@ else
         PlayerStatus.Done => "Done",
         _ => "-"
     };
-    
+
     private string PlayerStatusTextColorClass(PlayerState player) => player.Status switch
     {
         PlayerStatus.Ready or PlayerStatus.NotReady

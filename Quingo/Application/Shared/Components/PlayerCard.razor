@@ -2,6 +2,7 @@
 
 @implements IDisposable
 
+<MudText Typo="TitleTypo" GutterBottom>Player Card</MudText>
 <MudStack Spacing="1" Row Class="pb-2" Wrap="Wrap.NoWrap">
     @foreach (var col in Player.GameState.Preset.Columns)
     {
@@ -33,6 +34,8 @@
     [Parameter] public bool ReadOnly { get; set; }
 
     [Parameter] public bool ShowDetails { get; set; }
+    
+    [Parameter] public Typo TitleTypo { get; set; } = Typo.h5;
 
     private PackPresetData Preset => Player.GameState.Preset;
 

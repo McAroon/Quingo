@@ -3,31 +3,34 @@
 
 @implements IDisposable
 
-<MudText Typo="Typo.h5" GutterBottom>Draw History (@DrawState.DrawnNodes.Count&nbsp;/&nbsp;@DrawState.QuestionCount)</MudText>
+<MudText Typo="TitleTypo" GutterBottom>Draw History (@DrawState.DrawnNodes.Count&nbsp;/&nbsp;@DrawState.QuestionCount)
+</MudText>
 @if (_isInitialized)
 {
     <MudStack Spacing="1" Row="Row" Wrap="Wrap.NoWrap" Class="@StackClass" id="q-list" Reverse>
         @foreach (var node in _nodes)
         {
             <NodeSquare Node="node" CellState="GetCellState(node)" ShowTagBadge
-                        ShowTagBadgeTooltip="DrawState.GameState.Preset.ShowTagBadges" OnClick="OnClick(node)!" />
+                        ShowTagBadgeTooltip="DrawState.GameState.Preset.ShowTagBadges" OnClick="OnClick(node)!"/>
         }
     </MudStack>
 }
 
 @code {
-    [Parameter, EditorRequired]
-    public GameDrawState DrawState { get; set; } = default!;
+    const int MaxItemsToDisplay = 30;
 
-    [Parameter]
-    public int ItemsToDisplay { get; set; }
+    [Parameter, EditorRequired] public GameDrawState DrawState { get; set; } = default!;
 
-    [Parameter]
-    public bool ShowDetails { get; set; }
+    [Parameter] public int ItemsToDisplay { get; set; }
 
-    [Parameter]
-    public bool Row { get; set; }
+    [Parameter] public bool ShowDetails { get; set; }
 
+    [Parameter] public bool Row { get; set; }
+
+    [Parameter] public Typo TitleTypo { get; set; } = Typo.h5;
+
+    [Parameter] public bool ScrollOnDraw { get; set; } = true;
+    
     private bool _toggleHighlight = true;
 
     private List<NodeViewModel> _nodes = [];
@@ -35,7 +38,7 @@
     private Func<NodeViewModel, Action?> OnClick => (node) => ShowDetails ? () => ShowNodeDetails(node) : null;
 
     private CancellationTokenSource _blinkCancelSrc = new();
-    
+
     private string StackClass => Row ? "overflow-y-scroll pb-2" : "overflow-x-scroll pr-2 d-inline-flex";
 
     private Guid? _gameSessionId;
@@ -66,7 +69,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && _nodes.Count > 0)
+        if (firstRender && _nodes.Count > 0 && ScrollOnDraw)
         {
             await Task.Delay(100);
             await Js.InvokeAsync<bool>("window.scrollToLastChild", "q-list");
@@ -83,20 +86,24 @@
 
     private List<NodeViewModel> GetNodes()
     {
-        return (ItemsToDisplay > 0 ? DrawState.DrawnNodes.TakeLast(ItemsToDisplay) : DrawState.DrawnNodes)
-        .Select(x => new NodeViewModel(x, DrawState.GameState.Preset, ShowLinksByTagEnum.Question)).ToList();
+        var itemsToDisplay = ItemsToDisplay > 0 ? ItemsToDisplay : MaxItemsToDisplay;
+        return DrawState.DrawnNodes.TakeLast(itemsToDisplay)
+            .Select(x => new NodeViewModel(x, DrawState.GameState.Preset, ShowLinksByTagEnum.Question)).ToList();
     }
 
     private void OnNodeDrawn()
     {
         InvokeAsync(async () =>
-      {
-          _nodes = GetNodes();
-          StateHasChanged();
-          await Task.Delay(100);
-          await Js.InvokeAsync<bool>("window.scrollToLastChild", "q-list");
-          await Blink();
-      });
+        {
+            _nodes = GetNodes();
+            StateHasChanged();
+            await Task.Delay(100);
+            if (ScrollOnDraw)
+            {
+                await Js.InvokeAsync<bool>("window.scrollToLastChild", "q-list");
+            }
+            await Blink();
+        });
     }
 
     private async Task Blink()
