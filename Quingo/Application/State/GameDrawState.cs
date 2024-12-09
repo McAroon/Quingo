@@ -85,6 +85,10 @@ public class GameDrawState : IDisposable
         {
             case GameStateEnum.Active when PlayerState is not { Status: PlayerStatus.Done }:
                 AutoDrawTimer.Start();
+                if (DrawnNodes.Count == 0)
+                {
+                    Draw();
+                }
                 break;
             default:
                 AutoDrawTimer.Stop();

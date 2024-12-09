@@ -144,14 +144,7 @@ public class GameState : IDisposable
         if (State is not GameStateEnum.Paused and not GameStateEnum.Init) return;
 
         Timer.Start();
-
-        var startGame = State is GameStateEnum.Init;
         SetState(GameStateEnum.Active);
-
-        if (startGame)
-        {
-            Draw();
-        }
     }
 
     public bool CanJoin(string? playerId) => Preset.MaxPlayers <= 0
@@ -191,6 +184,17 @@ public class GameState : IDisposable
         if (Preset.SeparateDrawPerPlayer)
         {
             drawState.PlayerState = player;
+            if (State is GameStateEnum.Active)
+            {
+                if (Preset.AutoDrawTimer > 0)
+                {
+                    drawState.ResetAutoDrawTimer(Preset.AutoDrawTimer * 2);
+                }
+                else
+                {
+                    drawState.Draw();
+                }
+            }
         }
         _players.Add(player);
         return player;
