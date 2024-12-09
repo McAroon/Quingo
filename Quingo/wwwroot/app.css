@@ -48,12 +48,20 @@
 }
 
 .node-square .node-text {
-    border-radius: 30px;
-    padding: 5px 8px;
-    min-width: 36px;
-    color: var(--mud-palette-primary-text);
-    background-color: rgba(39, 39, 47, 0.5);
-    line-height: 1.1;
+    padding: 0 2px 2px 2px;
+    color: white;
+    line-height: 1.05;
+    font-size: 1.3rem;
+    letter-spacing: .01rem;
+    text-shadow:
+            0.05em 0 black,
+            0 0.05em black,
+            -0.05em 0 black,
+            0 -0.05em black,
+            -0.05em -0.05em black,
+            -0.05em 0.05em black,
+            0.05em -0.05em black,
+            0.05em 0.05em black;
 }
 
 @media (max-width: 768px) {
