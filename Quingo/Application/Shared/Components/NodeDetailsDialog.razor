@@ -3,14 +3,23 @@
         <MudStack Spacing="1" Row Wrap="Wrap.Wrap" Class="pt-1 pb-2">
             <NodeSquare Node="Node" ShowTagBadgeTooltip ShowTagBadge />
         </MudStack>
+        @if (_drawnLinkedNodes.Count > 0)
+        {
+            <MudText Typo="Typo.h6" GutterBottom>Drawn Linked Items</MudText>
+            <MudStack Spacing="1" Row Wrap="Wrap.Wrap" Class="pb-1">
+                @foreach (var node in _drawnLinkedNodes)
+                {
+                    <NodeSquare Node="node" ShowTagBadgeTooltip ShowTagBadge />
+                }
+            </MudStack>
+        }
         @if (_linkedNodes.Count > 0)
         {
-            <MudText Typo="Typo.h6" GutterBottom>Linked Items</MudText>
+            <MudText Typo="Typo.h6" GutterBottom>All Linked Items</MudText>
             <MudStack Spacing="1" Row Wrap="Wrap.Wrap" Class="pb-1">
-                @foreach (var (node, drawn) in _linkedNodes)
+                @foreach (var node in _linkedNodes)
                 {
-                    <NodeSquare Node="node" CellState="drawn ? PlayerCardCellState.Marked : PlayerCardCellState.Default"
-                                ShowTagBadgeTooltip ShowTagBadge />
+                    <NodeSquare Node="node" ShowTagBadgeTooltip ShowTagBadge />
                 }
             </MudStack>
         }
@@ -24,18 +33,23 @@
     [Parameter]
     public NodeViewModel? Node { get; set; }
 
-    private List<(NodeViewModel node, bool drawn)> _linkedNodes = [];
+    private List<NodeViewModel> _linkedNodes = [];
+    
+    private List<NodeViewModel> _drawnLinkedNodes = [];
 
     protected override void OnInitialized()
     {
         if (Node == null) return;
 
-        _linkedNodes = new NodeLinkSearch(State.GameState.Pack.Nodes.First(x => x.Id == Node.Id), State.GameState.Pack.Nodes.AsReadOnly())
+        var linkedNodes = new NodeLinkSearch(State.GameState.Pack.Nodes.First(x => x.Id == Node.Id), State.GameState.Pack.Nodes.AsReadOnly())
             .Search()
             .GroupBy(x => x)
             .Select(x => x.First())
             .Select(x => (node: new NodeViewModel(x, State.GameState.Preset), drawn: State.DrawnNodes.Contains(x)))
             .ToList();
+
+        _linkedNodes = linkedNodes.Select(x => x.node).ToList();
+        _drawnLinkedNodes = linkedNodes.Where(x => x.drawn).Select(x => x.node).ToList();
     }
 
     public static async Task ShowNodeDetails(IDialogService dialog, GameDrawState state, NodeViewModel? nodeModel)
