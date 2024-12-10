@@ -13,7 +13,10 @@
 <MudLayout>
     <MudAppBar Elevation="1" Dense>
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">Quingo</MudText>
+        <MudStack Row Class="ml-3" Spacing="1" AlignItems="AlignItems.Center">
+            <div class="q-logo"></div>
+            <MudText Typo="Typo.h5">Quingo</MudText>
+        </MudStack>
         <MudSpacer />
         <MudToggleIconButton Color="Color.Inherit" @bind-Toggled="_isDarkMode" @bind-Toggled:after="OnDarkModeToggle" 
             Icon="@Icons.Material.Filled.LightMode" ToggledIcon="@Icons.Material.Filled.DarkMode" />

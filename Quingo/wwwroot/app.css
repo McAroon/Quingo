@@ -233,3 +233,11 @@
 .game-timer .mud-progress-circular-svg {
     overflow: visible;
 }
+
+.q-logo {
+    height: 48px;
+    aspect-ratio: 1;
+    background-color: var(--mud-palette-appbar-text);
+    mask: url(favicon.svg) no-repeat 50% 50%;
+    mask-size: 80%;
+}
