@@ -9,7 +9,7 @@
             <MudStack Spacing="1" Row Wrap="Wrap.Wrap" Class="pb-1">
                 @foreach (var node in _drawnLinkedNodes)
                 {
-                    <NodeSquare Node="node" ShowTagBadgeTooltip ShowTagBadge />
+                    <NodeSquare Node="node" ShowTagBadgeTooltip ShowTagBadge CellState="PlayerCardCellState.Marked" />
                 }
             </MudStack>
         }
