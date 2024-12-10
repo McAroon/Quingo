@@ -206,7 +206,7 @@
             _model.FreeCenter = false;
         }
 
-        _model.Columns.MatchListSize(_model.CardSize, () => new PackPresetColumnModel());
+        _model.Columns.MatchListSize(_model.CardSize, i => new PackPresetColumnModel(i));
     }
 
     private string GetTagsSelectText(IList<string> selected)

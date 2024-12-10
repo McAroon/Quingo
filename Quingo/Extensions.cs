@@ -5,11 +5,11 @@ namespace Quingo;
 
 public static class Extensions
 {
-    public static void MatchListSize<T>(this List<T> list, int size, Func<T> createNewFunc)
+    public static void MatchListSize<T>(this List<T> list, int size, Func<int, T> createNewFunc)
     {
         if (list.Count < size)
         {
-            list.AddRange(Enumerable.Repeat((object)default!, size - list.Count).Select(_ => createNewFunc()));
+            list.AddRange(Enumerable.Repeat((object)default!, size - list.Count).Select((_, i) => createNewFunc(i + list.Count)));
         }
         else if (list.Count > size)
         {

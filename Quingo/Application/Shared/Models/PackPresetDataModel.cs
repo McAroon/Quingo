@@ -27,7 +27,7 @@ public class PackPresetDataModel
         MatchRule = data.MatchRule;
         SingleColumnConfig = data.SingleColumnConfig;
 
-        Columns.MatchListSize(data.CardSize, () => new PackPresetColumnModel());
+        Columns.MatchListSize(data.CardSize, i => new PackPresetColumnModel(i));
     }
 
     public PackPresetData ToData()
@@ -77,9 +77,9 @@ public class PackPresetDataModel
     public int GameTimer { get; set; } = 0;
 
     public int EndgameTimer { get; set; } = 20;
-    
+
     public int AutoDrawTimer { get; set; }
-    
+
     public bool SeparateDrawPerPlayer { get; set; }
 
     public bool SamePlayerCards { get; set; }
@@ -98,11 +98,11 @@ public class PackPresetDataModel
 
     public List<PackPresetColumnModel> Columns { get; set; } =
     [
-        new PackPresetColumnModel("B"),
-        new PackPresetColumnModel("I"),
-        new PackPresetColumnModel("N"),
-        new PackPresetColumnModel("G"),
-        new PackPresetColumnModel("O")
+        new("B"),
+        new("I"),
+        new("N"),
+        new("G"),
+        new("O")
     ];
 }
 
@@ -110,6 +110,11 @@ public class PackPresetColumnModel
 {
     public PackPresetColumnModel()
     {
+    }
+
+    public PackPresetColumnModel(int index)
+    {
+        Name = LetterFromIndex(index);
     }
 
     public PackPresetColumnModel(string name)
@@ -132,6 +137,14 @@ public class PackPresetColumnModel
     public IEnumerable<PackPresetTagModel> AnswerTags { get; set; } = [];
 
     public IEnumerable<int> ExcludeTags { get; set; } = [];
+
+    private static string LetterFromIndex(int index)
+    {
+        var letter = index + 65;
+        return letter is < char.MinValue or > char.MaxValue
+            ? string.Empty
+            : ((char)letter).ToString();
+    }
 }
 
 public class PackPresetTagModel
