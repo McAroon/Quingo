@@ -46,7 +46,7 @@
             </MudButton>
         }
     }
-    @if (Game.State is GameStateEnum.Active or GameStateEnum.Paused or GameStateEnum.FinalCountdown)
+    @if (!Game.Preset.EnableCall && Game.State is GameStateEnum.Active or GameStateEnum.Paused or GameStateEnum.FinalCountdown)
     {
         @if (Player.Status is PlayerStatus.Done)
         {
