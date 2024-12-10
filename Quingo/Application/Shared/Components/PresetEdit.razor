@@ -6,7 +6,7 @@
                 <MudCardContent>
                     <MudForm @ref="@_form">
                         <MudNumericField @bind-Value="_model.CardSize" @bind-Value:after="OnCardSizeUpdated"
-                                         Label="Card Size" Min="1" Max="9" Required/>
+                                         Label="Card Size" Min="3" Max="5" Required/>
                         <MudCheckBox @bind-Value="_model.FreeCenter" Label="Free Center"
                                      Disabled="!_model.IsFreeCenterEnabled"/>
                         <MudNumericField @bind-Value="_model.MaxPlayers" Label="Number of Players"
