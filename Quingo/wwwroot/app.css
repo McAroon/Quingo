@@ -94,6 +94,7 @@
 
 .node-square.node-header .node-text {
     background-color: initial;
+    text-shadow: none;
     color: var(--mud-palette-text-primary);
 }
 
