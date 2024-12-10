@@ -8,6 +8,7 @@
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject UserManager<ApplicationUser> UserManager
 
 <PageTitle>Log in</PageTitle>
 
@@ -24,7 +25,7 @@
             <MudGrid>
                 <MudItem md="12">
                     <MudStaticTextField For="@(() => Input.Username)" @bind-Value="Input.Username" 
-                        Label="Username" Placeholder="username" 
+                        Label="Username/Email" Placeholder="username" 
                         UserAttributes="@(new() { { "autocomplete", "true" }, { "aria-required", "true" } } )" />
                 </MudItem>
                 <MudItem md="12">
@@ -79,9 +80,11 @@
 
     public async Task LoginUser()
     {
+        var user = await UserManager.FindByNameAsync(Input.Username) ?? await UserManager.FindByEmailAsync(Input.Username);
         // This doesn't count login failures towards account lockout
         // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-        var result = await SignInManager.PasswordSignInAsync(Input.Username, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+        var result = await SignInManager.PasswordSignInAsync(user?.UserName ?? string.Empty, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+
         if (result.Succeeded)
         {
             Logger.LogInformation("User logged in.");
@@ -107,6 +110,7 @@
     private sealed class InputModel
     {
         [Required]
+        [Display(Name = "Username/Email")]
         public string Username { get; set; } = "";
 
         [Required]
