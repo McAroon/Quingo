@@ -389,7 +389,7 @@ public class GameState : IDisposable
     private void HandleSpectatorsChanged(object? sender,
         System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        NotifyStateChanged();
+        // NotifyStateChanged();
     }
 
     private void NotifyTimerUpdated()
