@@ -23,7 +23,7 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory, 
         return pack;
     }
 
-    public async Task<Pack?> GetPack(ApplicationDbContext context, int packId)
+    public async Task<Pack?> GetPack(ApplicationDbContext context, int packId, bool ignoreQueryFilters = false)
     {
         var packQ = context.Packs
             .Include(x => x.Tags)
@@ -34,6 +34,10 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory, 
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksFrom)
             .Include(x => x.Nodes).ThenInclude(x => x.NodeLinksTo)
             .AsSplitQuery();
+        if (ignoreQueryFilters)
+        {
+            packQ = packQ.IgnoreQueryFilters();
+        }
         var pack = await packQ.FirstOrDefaultAsync(x => x.Id == packId);
         if (pack == null) return null;
 

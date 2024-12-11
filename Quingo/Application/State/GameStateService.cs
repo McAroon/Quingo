@@ -114,6 +114,8 @@ public class GameStateService : IDisposable
             {
                 newGame.Spectate(spectator);
             }
+            
+            _logger.LogInformation("Created repeat game id:{id} oldId:{oldId}", sessionId, game.GameSessionId);
         }
         catch (Exception e) when (e is not GameStateException)
         {
