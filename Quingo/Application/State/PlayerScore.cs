@@ -82,7 +82,7 @@ public class PlayerScore(PlayerState player)
 
     private int CalculateErrorPenalties()
     {
-        return AllCells.Count(x => !x.IsValid);
+        return AllCells.Count(x => x.IsMarked && !x.IsValid);
     }
 
     private int CalculateDrawPenalties()
