@@ -120,8 +120,9 @@
                               && Player.GameState.Preset.EnableCall
                               && Player.LivesNumber > 0 && !Player.GameState.WinningPlayers.Contains(Player);
 
-    private bool DisableDraw => !Player.DrawState.CanDraw || (Player.DrawState.PlayerCanDraw(UserId) && Player.Status is PlayerStatus.Done);
-
+    protected override bool DisableDraw => !Player.DrawState.CanDraw 
+                                           || (Player.DrawState.PlayerCanDraw(UserId) && Player.Status is PlayerStatus.Done) 
+                                           || (!Player.DrawState.PlayerCanDraw(UserId) && !ShowHostControls);
 
     private bool ShowHostControls => Player.IsHost || _user?.IsInRole("admin") == true;
 

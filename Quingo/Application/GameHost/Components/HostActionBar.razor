@@ -40,7 +40,7 @@
         @if (Game.State is not GameStateEnum.Init && Game.HostCanDraw)
         {
             <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
-                       StartIcon="@Icons.Material.Outlined.SkipNext" OnClick="Draw">
+                       StartIcon="@Icons.Material.Outlined.SkipNext" OnClick="Draw" Disabled="DisableDraw">
                 Next
             </MudButton>
         }
@@ -58,6 +58,8 @@
     [CascadingParameter] public override GameState Game { get; set; } = default!;
 
     [CascadingParameter(Name = "UserId")] public override string UserId { get; set; } = default!;
-
+    
     [Parameter] public bool IsHost { get; set; }
+
+    protected override bool DisableDraw => !IsHost || !Game.HostCanDraw || Game.State is not GameStateEnum.Active;
 }
