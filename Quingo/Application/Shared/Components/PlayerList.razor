@@ -38,7 +38,7 @@
                     }
                     <tr>
                         <th>Score</th>
-                        <td>@player.Score</td>
+                        <td><PlayerScoreInfo Score="player.Score"/></td>
                     </tr>
                 </table>
                 @RenderPlayer(player)
@@ -97,7 +97,7 @@ else
                     }
                     @if (ShowPlayers)
                     {
-                        <MudTd DataLabel="Score">@context.Score</MudTd>
+                        <MudTd DataLabel="Score"><PlayerScoreInfo Score="context.Score"/></MudTd>
                         <MudTd DataLabel="Actions">
                             @if (Player != context)
                             {

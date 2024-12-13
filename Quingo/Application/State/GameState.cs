@@ -63,7 +63,7 @@ public class GameState : IDisposable
 
     public bool ShowTimer => Preset.GameTimer > 0 || (Preset.EndgameTimer > 0 && State == GameStateEnum.FinalCountdown);
 
-    private List<bool[,]> _bingoPatterns = [];
+    private CardPattern _bingoPattern = default!;
 
     private GameStateEnum _state;
 
@@ -160,7 +160,7 @@ public class GameState : IDisposable
         var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct()
             .ToList();
         QNodes = Pack.Nodes.Where(x => qTagIds.Any(t => x.HasTag(t)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
-        _bingoPatterns = PatternGenerator.GeneratePatterns(Preset.CardSize, Preset.Pattern);
+        _bingoPattern = PatternGenerator.GeneratePatterns(Preset.CardSize, Preset.Pattern);
 
         if (!Preset.SeparateDrawPerPlayer)
         {
@@ -246,39 +246,14 @@ public class GameState : IDisposable
     private bool ValidatePatterns(PlayerState player, bool isCall = false)
     {
         player.Validate(isCall);
-        var isValid = false;
-        var validPattern = new bool[Preset.CardSize, Preset.CardSize];
 
-        foreach (var pattern in _bingoPatterns)
-        {
-            var patternValid = true;
-
-            for (var col = 0; col < Preset.CardSize; col++)
-            {
-                for (var row = 0; row < Preset.CardSize; row++)
-                {
-                    var patCell = pattern[col, row];
-                    var plCell = player.Card.Cells[col, row];
-                    patternValid = (patCell & plCell.IsMarked & plCell.IsValid) == patCell;
-                    if (!patternValid) break;
-                }
-
-                if (!patternValid) break;
-            }
-
-            if (patternValid)
-            {
-                isValid = true;
-                validPattern = pattern;
-                break;
-            }
-        }
-
-        if (!isValid)
+        var validPatternIdx = _bingoPattern.Validate(player.Card).FirstOrDefault();
+        if (validPatternIdx == null)
         {
             return false;
         }
-
+        
+        var validPattern = _bingoPattern.Patterns[validPatternIdx.Value];
         for (var col = 0; col < Preset.CardSize; col++)
         {
             for (var row = 0; row < Preset.CardSize; row++)
@@ -328,9 +303,9 @@ public class GameState : IDisposable
             }
             else
             {
-                var maxScore = Players.Select(x => x.Score).Max();
+                var maxScore = Players.Select(x => x.Score.ScoreTotal).Max();
                 var maxScorePlayerIds = Players
-                    .Where(x => x.Score == maxScore)
+                    .Where(x => x.Score.ScoreTotal == maxScore)
                     .Select(x => x.PlayerUserId).ToList();
                 SetWinningPlayers(maxScorePlayerIds);
             }

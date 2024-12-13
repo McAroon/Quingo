@@ -25,6 +25,7 @@ public class PackPresetDataModel
         JoinOnCreate = data.JoinOnCreate;
         Pattern = data.Pattern;
         MatchRule = data.MatchRule;
+        ScoringRules = data.ScoringRules.ToEnumerable();
         SingleColumnConfig = data.SingleColumnConfig;
 
         Columns.MatchListSize(data.CardSize, i => new PackPresetColumnModel(i));
@@ -48,6 +49,7 @@ public class PackPresetDataModel
             JoinOnCreate = JoinOnCreate,
             Pattern = Pattern,
             MatchRule = MatchRule,
+            ScoringRules = ScoringRules.ToFlagsEnum(),
             SingleColumnConfig = SingleColumnConfig,
             Columns = Columns.Select(c => new PackPresetColumn
             {
@@ -93,6 +95,8 @@ public class PackPresetDataModel
     public PackPresetPattern Pattern { get; set; } = PackPresetPattern.Lines;
 
     public PackPresetMatchRule MatchRule { get; set; } = PackPresetMatchRule.Default;
+
+    public IEnumerable<PackPresetScoringRules> ScoringRules { get; set; }
 
     public bool SingleColumnConfig { get; set; }
 

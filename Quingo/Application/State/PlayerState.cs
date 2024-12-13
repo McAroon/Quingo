@@ -16,6 +16,7 @@ public class PlayerState : IDisposable
         DrawState = drawState;
         StartedAt = UpdatedAt = DateTime.UtcNow;
         Status = IsHost ? PlayerStatus.Ready : PlayerStatus.NotReady;
+        Score = new PlayerScore(this);
 
         Setup();
     }
@@ -52,7 +53,7 @@ public class PlayerState : IDisposable
 
     public string PlayerName { get; private set; }
 
-    public int Score { get; private set; }
+    public PlayerScore Score { get; private set; }
 
     public DateTime StartedAt { get; private set; }
 
@@ -74,6 +75,8 @@ public class PlayerState : IDisposable
     }
     
     public bool IsHost => PlayerUserId == GameState.HostUserId;
+    
+    public int? DoneTimer { get; private set; }
 
     private void Setup()
     {
@@ -187,7 +190,7 @@ public class PlayerState : IDisposable
 
         var drawnNodes = new List<Node>(DrawState.DrawnNodes);
         ValidateCell(cell, drawnNodes);
-        RecalculateScore();
+        Score.Calculate();
     }
 
     public void Validate(bool isCall = false)
@@ -202,7 +205,7 @@ public class PlayerState : IDisposable
             }
         }
 
-        RecalculateScore();
+        Score.Calculate();
         NotifyStateChanged();
     }
 
@@ -233,11 +236,6 @@ public class PlayerState : IDisposable
         }
     }
 
-    private void RecalculateScore()
-    {
-        Score = Card.AllCells.Count(x => x.IsMarked && x.IsValid);
-    }
-
     public void RemoveLife()
     {
         if (LivesNumber > 0)
@@ -250,6 +248,7 @@ public class PlayerState : IDisposable
     public void SetStatus(PlayerStatus status)
     {
         Status = status;
+        DoneTimer = status is PlayerStatus.Done ? GameState.Timer.Value : null;
         NotifyStateChanged();
         GameState.NotifyStateChanged();
     }

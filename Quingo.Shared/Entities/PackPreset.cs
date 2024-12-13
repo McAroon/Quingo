@@ -38,9 +38,11 @@ public record PackPresetData
     public PackPresetPattern Pattern { get; set; }
 
     public PackPresetMatchRule MatchRule { get; set; }
+
+    public PackPresetScoringRules ScoringRules { get; set; }
     
     public bool SingleColumnConfig { get; set; }
-
+    
     public List<PackPresetColumn> Columns { get; set; } = [];
 }
 
@@ -74,6 +76,49 @@ public enum PackPresetMatchRule
 {
     Default,
     LastDrawn
+}
+
+[Flags]
+public enum PackPresetScoringRules
+{
+    None = 0,
+    CellScore = 1 << 0,
+    PatternBonus = 1 << 1,
+    TimeBonus = 1 << 2,
+    ErrorPenalty = 1 << 3,
+    DrawPenalty = 1 << 4
+}
+
+public static class ScoringRulesExtensions
+{
+    public static bool HasFlag(this PackPresetScoringRules value, PackPresetScoringRules flag)
+    {
+        return (value & flag) != 0;
+    }
+    
+    public static string GetName(this PackPresetScoringRules value) => value switch
+    {
+        PackPresetScoringRules.None => "None",
+        PackPresetScoringRules.CellScore => "Cell Score",
+        PackPresetScoringRules.PatternBonus => "Pattern Bonus",
+        PackPresetScoringRules.TimeBonus => "Time Bonus",
+        PackPresetScoringRules.ErrorPenalty => "Error Penalty",
+        PackPresetScoringRules.DrawPenalty => "Draw Penalty",
+        _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
+    };
+
+    public static IEnumerable<PackPresetScoringRules> ToEnumerable(this PackPresetScoringRules value)
+    {
+        return Enum.GetValues<PackPresetScoringRules>()
+            .Where(x => x != PackPresetScoringRules.None && value.HasFlag(x));
+    }
+
+    public static PackPresetScoringRules ToFlagsEnum(this IEnumerable<PackPresetScoringRules> value)
+    {
+        return value
+            .Aggregate(PackPresetScoringRules.None, (a, b) => a | b);
+    }
+    
 }
 
 

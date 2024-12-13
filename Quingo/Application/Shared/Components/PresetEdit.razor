@@ -26,6 +26,20 @@
                             <MudSelectItem Value="PackPresetMatchRule.Default">Default</MudSelectItem>
                             <MudSelectItem Value="PackPresetMatchRule.LastDrawn">Last Drawn Only</MudSelectItem>
                         </MudSelect>
+                        <MudSelect T="PackPresetScoringRules" MultiSelection Label="Scoring Rules"
+                                   @bind-SelectedValues="@_model.ScoringRules" ToStringFunc="x => x.GetName()">
+                            @foreach (var rule in (PackPresetScoringRules[])
+                                      [
+                                          PackPresetScoringRules.CellScore,
+                                          PackPresetScoringRules.PatternBonus,
+                                          PackPresetScoringRules.TimeBonus,
+                                          PackPresetScoringRules.ErrorPenalty,
+                                          PackPresetScoringRules.DrawPenalty
+                                      ])
+                            {
+                                <MudSelectItem T="PackPresetScoringRules" Value="rule">@rule.GetName()</MudSelectItem>
+                            }
+                        </MudSelect>
                         <MudCheckBox @bind-Value="_model.EnableCall" Label="Enable Call"/>
                         <MudNumericField @bind-Value="_model.LivesNumber" Label="Number of Lives" Min="0"
                                          Disabled="!_model.EnableCall"/>
@@ -146,6 +160,7 @@
                              SecondaryText="@(_model.Pattern == PackPresetPattern.Lines ? "Line" : "Full Card")"/>
                 <MudListItem Text="Match Rule"
                              SecondaryText="@(_model.MatchRule == PackPresetMatchRule.Default ? "Default" : "Last Drawn Only")"/>
+                <MudListItem Text="Scoring Rules" SecondaryText="@GetScoringRuleNames(_model.ScoringRules)"/>
                 <MudListItem Text="Enable Call" SecondaryText="@(_model.EnableCall ? "Yes" : "No")"/>
                 <MudListItem Text="Number of Lives"
                              SecondaryText="@(_model.EnableCall ? _model.LivesNumber.ToString() : "-")"/>
@@ -222,7 +237,9 @@
     }
 
     private string? GetTagName(int tagId) => Pack.Tags.FirstOrDefault(x => x.Id == tagId)?.Name;
-
+    
+    private string GetScoringRuleNames(IEnumerable<PackPresetScoringRules> rules) => string.Join(", ", rules.Select(x => x.GetName()));
+    
     private void OnColumnConfigUpdated(PackPresetColumnModel col)
     {
         if (!_model.SingleColumnConfig || _model.Columns.IndexOf(col) != 0) return;

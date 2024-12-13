@@ -1,0 +1,61 @@
+﻿<span class="d-inline-flex align-center">
+    <span class="@NumClass(Score.ScoreTotal)">@Score.ScoreTotal</span>
+    @if (ShowInfo)
+    {
+        <MudMenu Icon="@Icons.Material.Outlined.Info" AriaLabel="Score Info" AnchorOrigin="Origin.BottomCenter"
+                 TransformOrigin="Origin.TopCenter">
+            <div class="pa-4">
+                <table class="dl-table">
+                    @if (RuleEnabled(PackPresetScoringRules.CellScore))
+                    {
+                    <tr>
+                            <th>@PackPresetScoringRules.CellScore.GetName()</th>
+                            <td>@Score.ScoreCells</td>
+                        </tr>
+                    }
+                    @if (RuleEnabled(PackPresetScoringRules.PatternBonus))
+                    {
+                    <tr>
+                            <th>@PackPresetScoringRules.PatternBonus.GetName()</th>
+                            <td>@Score.ScorePatternBonus</td>
+                        </tr>
+                    }
+                    @if (RuleEnabled(PackPresetScoringRules.TimeBonus))
+                    {
+                    <tr>
+                            <th>@PackPresetScoringRules.TimeBonus.GetName()</th>
+                            <td>@Score.ScoreRemainingTime</td>
+                        </tr>
+                    }
+                    @if (RuleEnabled(PackPresetScoringRules.ErrorPenalty) && Score.ScoreErrorPenalties > 0)
+                    {
+                    <tr>
+                            <th>@PackPresetScoringRules.ErrorPenalty.GetName()</th>
+                            <td class="mud-error-text">-@Score.ScoreErrorPenalties</td>
+                        </tr>
+                    }
+                    @if (RuleEnabled(PackPresetScoringRules.DrawPenalty) && Score.ScoreDrawPenalties > 0)
+                    {
+                    <tr>
+                            <th>@PackPresetScoringRules.DrawPenalty.GetName()</th>
+                            <td class="mud-error-text">-@Score.ScoreDrawPenalties</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </MudMenu>
+    }
+</span>
+
+
+
+@code {
+    [Parameter, EditorRequired] public PlayerScore Score { get; set; } = default!;
+
+    private string NumClass(int num) => num < 0 ? "mud-error-text" : string.Empty;
+
+    private bool RuleEnabled(PackPresetScoringRules rule) => Score.Preset.ScoringRules.HasFlag(rule);
+
+    private bool ShowInfo => Score.Preset.ScoringRules.ToEnumerable().Any();
+
+}

@@ -1,17 +1,31 @@
-﻿using Quingo.Shared.Entities;
+﻿using System.Collections.Concurrent;
+using Quingo.Shared.Entities;
 
 namespace Quingo.Application.State;
 
 public class PatternGenerator
 {
-    public static List<bool[,]> GeneratePatterns(int size, PackPresetPattern pattern)
+    private static readonly ConcurrentDictionary<(int size, PackPresetPattern pattern), CardPattern> Cache = [];
+    
+    public static CardPattern GeneratePatterns(int size, PackPresetPattern patternType)
     {
-        return pattern switch
+        var key = (size, pattern: patternType);
+        if (Cache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+        
+        var generated = patternType switch
         {
             PackPresetPattern.Lines => GenerateLinePatterns(size),
             PackPresetPattern.FullCard => GenerateFullCardPattern(size),
-            _ => throw new InvalidOperationException($"Pattern {pattern} is not supported")
+            _ => throw new InvalidOperationException($"Pattern {patternType} is not supported")
         };
+
+        var pattern = new CardPattern(size, patternType, generated);
+        Cache[key] = pattern;
+
+        return pattern;
     }
     private static List<bool[,]> GenerateFullCardPattern(int size)
     {
