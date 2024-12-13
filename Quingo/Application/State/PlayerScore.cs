@@ -77,6 +77,7 @@ public class PlayerScore(PlayerState player)
         var allCells = AllCells.ToList();
         var cellPercentage = allCells.Count(x => x.IsMarked && x.IsValid) / (decimal)allCells.Count;
         var result = timer * TimeMultiplier * cellPercentage;
+        if (result < 0) result = 0;
         return (int)Math.Round(result);
     }
 

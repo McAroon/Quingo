@@ -100,7 +100,7 @@ public static class ScoringRulesExtensions
     {
         PackPresetScoringRules.None => "None",
         PackPresetScoringRules.CellScore => "Cell Score",
-        PackPresetScoringRules.PatternBonus => "Pattern Bonus",
+        PackPresetScoringRules.PatternBonus => "Line Bonus",
         PackPresetScoringRules.TimeBonus => "Time Bonus",
         PackPresetScoringRules.ErrorPenalty => "Error Penalty",
         PackPresetScoringRules.DrawPenalty => "Draw Penalty",
