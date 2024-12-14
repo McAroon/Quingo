@@ -1,23 +1,23 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Quingo.Infrastructure.Database;
-using Quingo.Shared.Entities;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Quingo.Infrastructure;
+using Quingo.Infrastructure.Database;
 using Quingo.Infrastructure.Database.Repos;
+using Quingo.Shared.Entities;
 using Quingo.Shared.Models;
 
-namespace Quingo.Application.State;
+namespace Quingo.Application.Core;
 
-public class GameStateService : IDisposable
+public class GameService : IDisposable
 {
-    private readonly ConcurrentDictionary<Guid, GameState> _state = new();
-    public IReadOnlyList<GameState> Games => new List<GameState>(_state.Values).AsReadOnly();
+    private readonly ConcurrentDictionary<Guid, GameInstance> _state = new();
+    public IReadOnlyList<GameInstance> Games => new List<GameInstance>(_state.Values).AsReadOnly();
 
     private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
 
-    private readonly ILogger<GameStateService> _logger;
+    private readonly ILogger<GameService> _logger;
 
     private readonly GameLoop _loop;
 
@@ -25,7 +25,7 @@ public class GameStateService : IDisposable
 
     private readonly UserConnectionTracker _userTracker;
 
-    public GameStateService(IDbContextFactory<ApplicationDbContext> dbContextFactory, ILogger<GameStateService> logger,
+    public GameService(IDbContextFactory<ApplicationDbContext> dbContextFactory, ILogger<GameService> logger,
         ICacheService cache, UserConnectionTracker userTracker)
     {
         _dbContextFactory = dbContextFactory;
@@ -35,14 +35,14 @@ public class GameStateService : IDisposable
         _userTracker = userTracker;
     }
 
-    public async Task<GameState> StartGame(int packId, PackPresetData preset, string userId)
+    public async Task<GameInstance> StartGame(int packId, PackPresetData preset, string userId)
     {
         try
         {
             var startTime = Stopwatch.GetTimestamp();
             if (_state.Values.Any(x => x.IsStateActive && x.HostUserId == userId))
             {
-                throw new GameStateException("User is already hosting a game");
+                throw new GameException("User is already hosting a game");
             }
 
             var repo = new PackRepo(_dbContextFactory, _cache);
@@ -52,7 +52,7 @@ public class GameStateService : IDisposable
             var pack = await repo.GetPack(packId);
             if (pack == null)
             {
-                throw new GameStateException("Pack not found");
+                throw new GameException("Pack not found");
             }
 
             var getPackTime = Stopwatch.GetElapsedTime(startTime);
@@ -61,15 +61,15 @@ public class GameStateService : IDisposable
             var user = await db.Users.FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
             {
-                throw new GameStateException("User not found");
+                throw new GameException("User not found");
             }
 
             var sessionId = Guid.NewGuid();
 
-            var game = new GameState(sessionId, pack, preset, userId, user.UserName, _userTracker);
+            var game = new GameInstance(sessionId, pack, preset, userId, user.UserName, _userTracker);
             if (!_state.TryAdd(sessionId, game))
             {
-                throw new GameStateException("Error creating game");
+                throw new GameException("Error creating game");
             }
 
             var createGameTime = Stopwatch.GetElapsedTime(startTime2);
@@ -81,9 +81,9 @@ public class GameStateService : IDisposable
 
             return game;
         }
-        catch (Exception e) when (e is not GameStateException)
+        catch (Exception e) when (e is not GameException)
         {
-            throw new GameStateException("Error creating game", e);
+            throw new GameException("Error creating game", e);
         }
     }
 
@@ -94,14 +94,14 @@ public class GameStateService : IDisposable
             var game = GetGameState(gameSessionId);
             if (game.IsStateActive)
             {
-                throw new GameStateException("The current game is still active");
+                throw new GameException("The current game is still active");
             }
 
             var sessionId = Guid.NewGuid();
-            var newGame = new GameState(sessionId, game.Pack, game.Preset, game.HostUserId, game.HostName, _userTracker);
+            var newGame = new GameInstance(sessionId, game.Pack, game.Preset, game.HostUserId, game.HostName, _userTracker);
             if (!_state.TryAdd(sessionId, newGame))
             {
-                throw new GameStateException("Error creating game");
+                throw new GameException("Error creating game");
             }
 
             game.NotifyNewGameCreated(newGame);
@@ -120,13 +120,13 @@ public class GameStateService : IDisposable
             
             _logger.LogInformation("Created repeat game id:{id} oldId:{oldId}", sessionId, game.GameSessionId);
         }
-        catch (Exception e) when (e is not GameStateException)
+        catch (Exception e) when (e is not GameException)
         {
-            throw new GameStateException("Error creating game", e);
+            throw new GameException("Error creating game", e);
         }
     }
 
-    public PlayerState JoinGame(Guid gameSessionId, string userId, string userName)
+    public PlayerInstance JoinGame(Guid gameSessionId, string userId, string userName)
     {
         ArgumentNullException.ThrowIfNull(userId, nameof(userId));
         ArgumentNullException.ThrowIfNull(userName, nameof(userName));
@@ -142,15 +142,15 @@ public class GameStateService : IDisposable
 
             if (!game.CanJoin(userId))
             {
-                throw new GameStateException("Unable to join, the room is full");
+                throw new GameException("Unable to join, the room is full");
             }
             
             var player = game.Join(userId, userName);
             return player;
         }
-        catch (Exception e) when (e is not GameStateException)
+        catch (Exception e) when (e is not GameException)
         {
-            throw new GameStateException("Error joining the game", e);
+            throw new GameException("Error joining the game", e);
         }
     }
 
@@ -165,47 +165,47 @@ public class GameStateService : IDisposable
             var player = game.Players.FirstOrDefault(x => x.PlayerUserId == userId);
             if (player != null)
             {
-                throw new GameStateException("Unable to spectate, the user already joined as player");
+                throw new GameException("Unable to spectate, the user already joined as player");
             }
 
             var userInfo = new ApplicationUserInfo(userId, userName);
             game.Spectate(userInfo);
         }
-        catch (Exception e) when (e is not GameStateException)
+        catch (Exception e) when (e is not GameException)
         {
-            throw new GameStateException("Error trying to spectate the game", e);
+            throw new GameException("Error trying to spectate the game", e);
         }
     }
 
-    public async Task<GameState> GetGameState(Guid gameSessionId, string userId)
+    public async Task<GameInstance> GetGameState(Guid gameSessionId, string userId)
     {
         var game = GetGameState(gameSessionId);
         var hasAccess = await CheckUserAccess(game, userId);
         if (!hasAccess && game.Spectators.FirstOrDefault(x => x.UserId == userId) == null)
         {
-            throw new GameStateException("User is not allowed to access the game");
+            throw new GameException("User is not allowed to access the game");
         }
 
         return game;
     }
 
-    private GameState GetGameState(Guid gameSessionId)
+    private GameInstance GetGameState(Guid gameSessionId)
     {
         if (!_state.TryGetValue(gameSessionId, out var game))
         {
-            throw new GameStateException("Game not found");
+            throw new GameException("Game not found");
         }
 
         return game;
     }
 
-    public PlayerState GetPlayerState(Guid gameSessionId, Guid playerSessionId, string userId)
+    public PlayerInstance GetPlayerState(Guid gameSessionId, Guid playerSessionId, string userId)
     {
         var game = GetGameState(gameSessionId);
         var player = game.Players.FirstOrDefault(x => x.PlayerSessionId == playerSessionId && x.PlayerUserId == userId);
         if (player == null)
         {
-            throw new GameStateException("Player not found");
+            throw new GameException("Player not found");
         }
 
         return player;
@@ -220,18 +220,18 @@ public class GameStateService : IDisposable
             var hasAccess = await CheckUserAccess(game, userId);
             if (!hasAccess)
             {
-                throw new GameStateException("User is not allowed to end the game");
+                throw new GameException("User is not allowed to end the game");
             }
 
             game.EndGame();
         }
-        catch (Exception e) when (e is not GameStateException)
+        catch (Exception e) when (e is not GameException)
         {
-            throw new GameStateException("Error while trying to end the game", e);
+            throw new GameException("Error while trying to end the game", e);
         }
     }
 
-    private async Task<bool> CheckUserAccess(GameState game, string userId)
+    private async Task<bool> CheckUserAccess(GameInstance game, string userId)
     {
         if (game.HostUserId == userId) return true;
 

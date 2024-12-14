@@ -55,7 +55,7 @@
 </MudStack>
 
 @code {
-    [CascadingParameter] public override GameState Game { get; set; } = default!;
+    [CascadingParameter] public override GameInstance Game { get; set; } = default!;
 
     [CascadingParameter(Name = "UserId")] public override string UserId { get; set; } = default!;
     

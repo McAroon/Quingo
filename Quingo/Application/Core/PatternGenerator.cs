@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
 using Quingo.Shared.Entities;
 
-namespace Quingo.Application.State;
+namespace Quingo.Application.Core;
 
-public class PatternGenerator
+public static class PatternGenerator
 {
     private static readonly ConcurrentDictionary<(int size, PackPresetPattern pattern), CardPattern> Cache = [];
     

@@ -4,7 +4,7 @@
 @using System.Security.Claims
 @using Quingo.Shared
 
-@inject GameStateService StateService
+@inject GameService GameService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 @inject ILogger<JoinGame> Logger
@@ -21,7 +21,7 @@
     </MudTooltip>
 </MudText>
 
-<MudTable Items="StateService.Games.Where(x => x.IsStateActive)">
+<MudTable Items="GameService.Games.Where(x => x.IsStateActive)">
     <HeaderContent>
         <MudTh>Pack</MudTh>
         <MudTh>Host</MudTh>
@@ -52,7 +52,7 @@
 
     private string? _userName;
 
-    private string PlayersFormat(GameState state) => state.Preset.MaxPlayers <= 0 ? state.Players.Count.ToString() : $"{state.Players.Count}/{state.Preset.MaxPlayers}";
+    private string PlayersFormat(GameInstance instance) => instance.Preset.MaxPlayers <= 0 ? instance.Players.Count.ToString() : $"{instance.Players.Count}/{instance.Preset.MaxPlayers}";
 
     private string? _timeZone;
 
@@ -71,19 +71,19 @@
         }
     }
 
-    private void Join(GameState game)
+    private void Join(GameInstance game)
     {
         try
         {
             ArgumentNullException.ThrowIfNull(_userId, nameof(_userId));
             ArgumentNullException.ThrowIfNull(_userName, nameof(_userName));
 
-            var player = StateService.JoinGame(game.GameSessionId, _userId, _userName);
+            var player = GameService.JoinGame(game.GameSessionId, _userId, _userName);
             NavigationManager.NavigateTo($"/game/play/{game.GameSessionId}/{player.PlayerSessionId}");
         }
         catch (Exception e)
         {
-            if (e is not GameStateException)
+            if (e is not GameException)
             {
                 Logger.LogError(e, e.Message);
             }
@@ -91,18 +91,18 @@
         }
     }
 
-    private void Spectate(GameState game)
+    private void Spectate(GameInstance game)
     {
         try
         {
             ArgumentNullException.ThrowIfNull(_userId, nameof(_userId));
             ArgumentNullException.ThrowIfNull(_userName, nameof(_userName));
-            StateService.SpectateGame(game.GameSessionId, _userId, _userName);
+            GameService.SpectateGame(game.GameSessionId, _userId, _userName);
             NavigationManager.NavigateTo($"/game/spectate/{game.GameSessionId}");
         }
         catch (Exception e)
         {
-            if (e is not GameStateException)
+            if (e is not GameException)
             {
                 Logger.LogError(e, e.Message);
             }

@@ -1,13 +1,13 @@
-﻿using Quingo.Shared.Entities;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using Quingo.Infrastructure;
+using Quingo.Shared.Entities;
 using Quingo.Shared.Models;
 
-namespace Quingo.Application.State;
+namespace Quingo.Application.Core;
 
-public class GameState : IDisposable
+public class GameInstance : IDisposable
 {
-    public GameState(Guid gameSessionId, Pack pack, PackPresetData preset, string hostUserId,
+    public GameInstance(Guid gameSessionId, Pack pack, PackPresetData preset, string hostUserId,
         string? hostName, UserConnectionTracker userTracker)
     {
         GameSessionId = gameSessionId;
@@ -53,11 +53,11 @@ public class GameState : IDisposable
 
     public List<Node> QNodes { get; private set; }
 
-    private readonly ObservableCollection<PlayerState> _players = [];
-    public ReadOnlyCollection<PlayerState> Players => _players.AsReadOnly();
+    private readonly ObservableCollection<PlayerInstance> _players = [];
+    public ReadOnlyCollection<PlayerInstance> Players => _players.AsReadOnly();
 
-    private readonly ObservableCollection<PlayerState> _winningPlayers = [];
-    public ReadOnlyCollection<PlayerState> WinningPlayers => _winningPlayers.AsReadOnly();
+    private readonly ObservableCollection<PlayerInstance> _winningPlayers = [];
+    public ReadOnlyCollection<PlayerInstance> WinningPlayers => _winningPlayers.AsReadOnly();
 
     private readonly ObservableCollection<ApplicationUserInfo> _spectators = [];
     public ReadOnlyCollection<ApplicationUserInfo> Spectators => _spectators.AsReadOnly();
@@ -172,7 +172,7 @@ public class GameState : IDisposable
         }
     }
 
-    public PlayerState Join(string playerUserId, string playerName)
+    public PlayerInstance Join(string playerUserId, string playerName)
     {
         var playerSessionId = Guid.NewGuid();
         var drawState = Preset.SeparateDrawPerPlayer
@@ -183,7 +183,7 @@ public class GameState : IDisposable
             _drawStates.Add(drawState);
         }
 
-        var player = new PlayerState(playerSessionId, this, playerUserId, playerName, drawState);
+        var player = new PlayerInstance(playerSessionId, this, playerUserId, playerName, drawState);
         if (Preset.SeparateDrawPerPlayer)
         {
             drawState.PlayerState = player;
@@ -228,7 +228,7 @@ public class GameState : IDisposable
         NotifyStateChanged();
     }
 
-    public void Call(PlayerState player)
+    public void Call(PlayerInstance player)
     {
         if (player.LivesNumber <= 0
             || !Preset.EnableCall
@@ -246,7 +246,7 @@ public class GameState : IDisposable
         }
     }
 
-    private bool ValidatePatterns(PlayerState player, bool isCall = false)
+    private bool ValidatePatterns(PlayerInstance player, bool isCall = false)
     {
         player.Validate(isCall);
 
@@ -329,15 +329,15 @@ public class GameState : IDisposable
 
     public event Action? StateChanged;
 
-    public event Action<PlayerState>? PlayerJoined;
+    public event Action<PlayerInstance>? PlayerJoined;
 
     public event Action<GameStateEnum>? GameStateChanged;
 
-    public event Action<GameState>? NewGameCreated;
+    public event Action<GameInstance>? NewGameCreated;
 
     public event Action? TimerUpdated;
 
-    public void NotifyNewGameCreated(GameState game)
+    public void NotifyNewGameCreated(GameInstance game)
     {
         NewGameCreated?.Invoke(game);
     }
@@ -353,7 +353,7 @@ public class GameState : IDisposable
     private void HandlePlayersChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         NotifyStateChanged();
-        var player = e.NewItems?.Count > 0 ? (PlayerState?)e.NewItems[0] : null;
+        var player = e.NewItems?.Count > 0 ? (PlayerInstance?)e.NewItems[0] : null;
         if (player != null)
             PlayerJoined?.Invoke(player);
     }

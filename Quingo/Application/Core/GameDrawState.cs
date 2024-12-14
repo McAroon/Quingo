@@ -1,34 +1,34 @@
 ﻿using System.Collections.ObjectModel;
 using Quingo.Shared.Entities;
 
-namespace Quingo.Application.State;
+namespace Quingo.Application.Core;
 
 public class GameDrawState : IDisposable
 {
-    public GameDrawState(GameState gameState, ReadOnlyCollection<PlayerState> players)
+    public GameDrawState(GameInstance gameInstance, ReadOnlyCollection<PlayerInstance> players)
     {
-        GameState = gameState;
+        GameInstance = gameInstance;
         Players = players;
 
-        _random = new Random(gameState.GameSessionId.GetHashCode());
-        _qNodes = [..gameState.QNodes];
+        _random = new Random(gameInstance.GameSessionId.GetHashCode());
+        _qNodes = [..gameInstance.QNodes];
         QuestionCount = _qNodes.Count;
         AutoDrawTimer = new GameTimer(Preset.AutoDrawTimer);
         CreatedAt = UpdatedAt = DateTime.UtcNow;
 
         _drawnNodes.CollectionChanged += HandleDrawnNodesChanged;
-        GameState.GameStateChanged += HandleGameStateChanged;
+        GameInstance.GameStateChanged += HandleGameInstanceChanged;
     }
 
-    public GameState GameState { get; }
+    public GameInstance GameInstance { get; }
 
     private readonly Random _random;
 
-    private PackPresetData Preset => GameState.Preset;
+    private PackPresetData Preset => GameInstance.Preset;
 
-    private GameStateEnum State => GameState.State;
+    private GameStateEnum State => GameInstance.State;
 
-    public ReadOnlyCollection<PlayerState> Players { get; set; }
+    public ReadOnlyCollection<PlayerInstance> Players { get; set; }
 
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
@@ -45,9 +45,9 @@ public class GameDrawState : IDisposable
 
     public bool PlayerCanDraw(string userId) => PlayerState != null && PlayerState.PlayerUserId == userId;
 
-    private PlayerState? _playerState;
+    private PlayerInstance? _playerState;
 
-    public PlayerState? PlayerState
+    public PlayerInstance? PlayerState
     {
         get => _playerState;
         set
@@ -79,7 +79,7 @@ public class GameDrawState : IDisposable
         ResetAutoDrawTimer(Preset.AutoDrawTimer);
     }
 
-    private void HandleGameStateChanged(GameStateEnum state)
+    private void HandleGameInstanceChanged(GameStateEnum state)
     {
         switch (state)
         {
@@ -98,7 +98,7 @@ public class GameDrawState : IDisposable
 
     private void HandlePlayerStatusChanged(PlayerStatus status)
     {
-        if (GameState.State is not GameStateEnum.Active) return;
+        if (GameInstance.State is not GameStateEnum.Active) return;
         
         switch (status)
         {
@@ -139,7 +139,7 @@ public class GameDrawState : IDisposable
         TimerUpdated = null;
 
         _drawnNodes.CollectionChanged -= HandleDrawnNodesChanged;
-        GameState.GameStateChanged -= HandleGameStateChanged;
+        GameInstance.GameStateChanged -= HandleGameInstanceChanged;
         
         if (PlayerState != null)
         {

@@ -9,7 +9,7 @@
     {
         <tr>
             <th>Lives</th>
-            <td>@State.LivesNumber</td>
+            <td>@Instance.LivesNumber</td>
         </tr>
     }
     @if (Game.WinningPlayers.Count > 0)
@@ -23,7 +23,7 @@
     {
         <tr>
             <th>Score</th>
-            <td><PlayerScoreInfo Score="State.Score"/></td>
+            <td><PlayerScoreInfo Score="Instance.Score"/></td>
         </tr>
     }
 </table>
@@ -36,14 +36,14 @@
 
     @if (Game.Preset.AutoDrawTimer > 0 && Game.State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.Paused)
     {
-        <GameTimerProgress Timer="State.DrawState.AutoDrawTimer" Title="Next"/>
+        <GameTimerProgress Timer="Instance.DrawState.AutoDrawTimer" Title="Next"/>
     }
 </MudStack>
 
 @code {
-    [CascadingParameter] public PlayerState State { get; set; } = default!;
+    [CascadingParameter] public PlayerInstance Instance { get; set; } = default!;
 
-    private GameState Game => State.GameState;
+    private GameInstance Game => Instance.GameInstance;
 
     private Guid? _gameSessionId;
 
@@ -57,7 +57,7 @@
 
     protected override void OnParametersSet()
     {
-        if (State.GameState.GameSessionId == _gameSessionId) return;
+        if (Instance.GameInstance.GameSessionId == _gameSessionId) return;
 
         _isInitialized = false;
         InitializeGame();
@@ -66,10 +66,10 @@
 
     private void InitializeGame()
     {
-        _gameSessionId = State.GameState.GameSessionId;
-        State.GameState.TimerUpdated += OnTimerUpdated;
-        State.DrawState.TimerUpdated += OnTimerUpdated;
-        State.OnPageConnection(true);
+        _gameSessionId = Instance.GameInstance.GameSessionId;
+        Instance.GameInstance.TimerUpdated += OnTimerUpdated;
+        Instance.DrawState.TimerUpdated += OnTimerUpdated;
+        Instance.OnPageConnection(true);
     }
 
     private void OnTimerUpdated()
@@ -79,9 +79,9 @@
 
     public void Dispose()
     {
-        State.GameState.TimerUpdated -= OnTimerUpdated;
-        State.DrawState.TimerUpdated -= OnTimerUpdated;
-        State.OnPageConnection(false);
+        Instance.GameInstance.TimerUpdated -= OnTimerUpdated;
+        Instance.DrawState.TimerUpdated -= OnTimerUpdated;
+        Instance.OnPageConnection(false);
     }
 
 }

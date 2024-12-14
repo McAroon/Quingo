@@ -4,7 +4,7 @@
 
 <MudText Typo="TitleTypo" GutterBottom>Player Card</MudText>
 <MudStack Spacing="1" Row Class="pb-2" Wrap="Wrap.NoWrap">
-    @foreach (var col in Player.GameState.Preset.Columns)
+    @foreach (var col in Player.GameInstance.Preset.Columns)
     {
         <MudCard Outlined Class="node-square node-header">
             <MudCardContent Class="node-square-content">
@@ -29,7 +29,7 @@
 }
 
 @code {
-    [CascadingParameter] public PlayerState Player { get; set; } = default!;
+    [CascadingParameter] public PlayerInstance Player { get; set; } = default!;
 
     [Parameter] public bool ReadOnly { get; set; }
 
@@ -37,9 +37,9 @@
     
     [Parameter] public Typo TitleTypo { get; set; } = Typo.h5;
 
-    private PackPresetData Preset => Player.GameState.Preset;
+    private PackPresetData Preset => Player.GameInstance.Preset;
 
-    private bool CanMark => !ReadOnly && Player.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown
+    private bool CanMark => !ReadOnly && Player.GameInstance.State is GameStateEnum.Active or GameStateEnum.FinalCountdown
                                       && (Preset.MatchRule is PackPresetMatchRule.Default || Player.DrawState.DrawnNodes.Count > 0)
                                       && Player.Status is not PlayerStatus.Done;
 
@@ -61,7 +61,7 @@
 
     protected override void OnParametersSet()
     {
-        if (Player.GameState.GameSessionId == _gameSessionId) return;
+        if (Player.GameInstance.GameSessionId == _gameSessionId) return;
 
         _isInitialized = false;
         InitializeGame();
@@ -70,7 +70,7 @@
 
     private void InitializeGame()
     {
-        _gameSessionId = Player.GameState.GameSessionId;
+        _gameSessionId = Player.GameInstance.GameSessionId;
         Player.DrawState.NodeDrawn += OnNodeDrawn;
     }
 
@@ -109,7 +109,7 @@
 
     private async void ShowCellDetails(PlayerCardCellData cell)
     {
-        var model = cell.Node == null ? null : new NodeViewModel(cell.Node, Player.GameState.Preset);
+        var model = cell.Node == null ? null : new NodeViewModel(cell.Node, Player.GameInstance.Preset);
         await NodeDetailsDialog.ShowNodeDetails(Dialog, Player.DrawState, model);
     }
 

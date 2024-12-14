@@ -2,7 +2,7 @@
 @inherits ActionBarBase
 
 <MudStack AlignItems="AlignItems.End" Spacing="0" Class="pb-2">
-    @if (ShowHostControls && Player.GameState.IsStateActive)
+    @if (ShowHostControls && Player.GameInstance.IsStateActive)
     {
         <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Stop" OnClick="ConfirmEndGame">
             End Game
@@ -72,7 +72,7 @@
             Start
         </MudButton>
     }
-    @if (Player.GameState.Preset.EnableCall)
+    @if (Player.GameInstance.Preset.EnableCall)
     {
         <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
                    StartIcon="@Icons.Material.Outlined.BackHand" OnClick="Call"
@@ -108,17 +108,17 @@
 </MudStack>
 
 @code {
-    [CascadingParameter] public PlayerState Player { get; set; } = default!;
+    [CascadingParameter] public PlayerInstance Player { get; set; } = default!;
 
     [CascadingParameter(Name = "UserId")] public override string UserId { get; set; } = default!;
 
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
-    public override GameState Game => Player.GameState;
+    public override GameInstance Game => Player.GameInstance;
 
-    private bool AllowCall => Player.GameState.State is GameStateEnum.Active or GameStateEnum.FinalCountdown
-                              && Player.GameState.Preset.EnableCall
-                              && Player.LivesNumber > 0 && !Player.GameState.WinningPlayers.Contains(Player);
+    private bool AllowCall => Player.GameInstance.State is GameStateEnum.Active or GameStateEnum.FinalCountdown
+                              && Player.GameInstance.Preset.EnableCall
+                              && Player.LivesNumber > 0 && !Player.GameInstance.WinningPlayers.Contains(Player);
 
     protected override bool DisableDraw => !Player.DrawState.CanDraw 
                                            || (Player.DrawState.PlayerCanDraw(UserId) && Player.Status is PlayerStatus.Done) 
@@ -142,7 +142,7 @@
         {
             if (AllowCall)
             {
-                Player.GameState.Call(Player);
+                Player.GameInstance.Call(Player);
             }
         }
         catch (Exception e)

@@ -41,11 +41,11 @@
     {
         if (Node == null) return;
 
-        var linkedNodes = new NodeLinkSearch(State.GameState.Pack.Nodes.First(x => x.Id == Node.Id), State.GameState.Pack.Nodes.AsReadOnly())
+        var linkedNodes = new NodeLinkSearch(State.GameInstance.Pack.Nodes.First(x => x.Id == Node.Id), State.GameInstance.Pack.Nodes.AsReadOnly())
             .Search()
             .GroupBy(x => x)
             .Select(x => x.First())
-            .Select(x => (node: new NodeViewModel(x, State.GameState.Preset), drawn: State.DrawnNodes.Contains(x)))
+            .Select(x => (node: new NodeViewModel(x, State.GameInstance.Preset), drawn: State.DrawnNodes.Contains(x)))
             .ToList();
 
         _linkedNodes = linkedNodes.Select(x => x.node).ToList();

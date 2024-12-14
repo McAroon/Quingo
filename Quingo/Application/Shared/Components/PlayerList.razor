@@ -132,7 +132,7 @@ else
 
 @code {
 
-    private RenderFragment RenderPlayer(PlayerState? player) => player == null
+    private RenderFragment RenderPlayer(PlayerInstance? player) => player == null
         ? null
         : @<CascadingValue Value="player">
               @if (Game.Preset.SeparateDrawPerPlayer)
@@ -146,7 +146,7 @@ else
               <PlayerCard TitleTypo="Typo.h6" ReadOnly ShowDetails="ShowDetails"/>
           </CascadingValue>;
 
-    private RenderFragment RenderPlayerName(PlayerState? player, Size iconSize) => player == null
+    private RenderFragment RenderPlayerName(PlayerInstance? player, Size iconSize) => player == null
         ? null
         : @<span class="d-flex align-center">
               @if (!player.IsPlayerConnected)
@@ -159,9 +159,9 @@ else
               @player.PlayerName
           </span>;
 
-    [CascadingParameter] public GameState Game { get; set; } = default!;
+    [CascadingParameter] public GameInstance Game { get; set; } = default!;
 
-    [Parameter] public PlayerState? Player { get; set; }
+    [Parameter] public PlayerInstance? Player { get; set; }
 
     [Parameter] public bool ShowDetails { get; set; }
 
@@ -169,7 +169,7 @@ else
 
     private bool ShowPlayers => Player == null || ShowDetails;
 
-    private IEnumerable<PlayerState> DisplayPlayers => Game.Players.Where(x => Player != x);
+    private IEnumerable<PlayerInstance> DisplayPlayers => Game.Players.Where(x => Player != x);
 
     private DialogOptions _dialogOptions = new()
     {
@@ -178,7 +178,7 @@ else
         CloseButton = true
     };
 
-    private PlayerState? _selectedPlayer;
+    private PlayerInstance? _selectedPlayer;
 
     private bool _dialogVisible;
 
@@ -188,7 +188,7 @@ else
         ? $"{Game.Players.Count} / {Game.Preset.MaxPlayers}"
         : Game.Players.Count.ToString();
 
-    private string PlayerStatusText(PlayerState player) => player.Status switch
+    private string PlayerStatusText(PlayerInstance player) => player.Status switch
     {
         PlayerStatus.Ready or PlayerStatus.NotReady
             when Game.State is GameStateEnum.Active or GameStateEnum.Paused or GameStateEnum.FinalCountdown => "Playing",
@@ -198,7 +198,7 @@ else
         _ => "-"
     };
 
-    private string PlayerStatusTextColorClass(PlayerState player) => player.Status switch
+    private string PlayerStatusTextColorClass(PlayerInstance player) => player.Status switch
     {
         PlayerStatus.Ready or PlayerStatus.NotReady
             when Game.State is GameStateEnum.Active or GameStateEnum.Paused or GameStateEnum.FinalCountdown => "mud-warning-text",
@@ -208,7 +208,7 @@ else
         _ => string.Empty
     };
 
-    private void ViewPlayer(PlayerState player)
+    private void ViewPlayer(PlayerInstance player)
     {
         _selectedPlayer = player;
         _dialogVisible = true;
@@ -225,7 +225,7 @@ else
         }
     }
 
-    private void OnPlayerJoined(PlayerState player)
+    private void OnPlayerJoined(PlayerInstance player)
     {
         Snackbar.Add($"{player.PlayerName} has joined!", Severity.Info);
         player.StateChanged += OnStateChanged;
@@ -242,7 +242,7 @@ else
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnLifeLost(PlayerState player)
+    private void OnLifeLost(PlayerInstance player)
     {
         if (player != Player)
         {

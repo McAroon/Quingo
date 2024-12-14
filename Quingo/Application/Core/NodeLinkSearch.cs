@@ -1,7 +1,6 @@
 ﻿using Quingo.Shared.Entities;
-using System.Collections.ObjectModel;
 
-namespace Quingo.Application.State
+namespace Quingo.Application.Core
 {
     public class NodeLinkSearch(Node node, IList<Node> searchNodes)
     {

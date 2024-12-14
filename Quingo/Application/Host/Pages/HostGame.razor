@@ -7,7 +7,7 @@
 @implements IDisposable
 
 @inject ILogger<HostGame> Logger
-@inject GameStateService StateService
+@inject GameService GameService
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 
@@ -37,7 +37,7 @@ else if (_isInitialized)
 
     private string? _initError;
 
-    private GameState _game = default!;
+    private GameInstance _game = default!;
 
     private bool _isInitialized;
 
@@ -57,7 +57,7 @@ else if (_isInitialized)
         }
         catch (Exception e)
         {
-            if (e is not GameStateException)
+            if (e is not GameException)
                 Logger.LogError(e, e.Message);
             _initError = e.Message;
         }
@@ -75,7 +75,7 @@ else if (_isInitialized)
         }
         catch (Exception e)
         {
-            if (e is not GameStateException)
+            if (e is not GameException)
                 Logger.LogError(e, e.Message);
             _initError = e.Message;
         }
@@ -83,7 +83,7 @@ else if (_isInitialized)
 
     private async Task InitializeGame()
     {
-        _game = await StateService.GetGameState(GameSessionId, UserId);
+        _game = await GameService.GetGameState(GameSessionId, UserId);
         var player = _game.Players.FirstOrDefault(x => x.PlayerUserId == UserId);
         if (player != null)
         {
@@ -99,7 +99,7 @@ else if (_isInitialized)
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnNewGameCreated(GameState game)
+    private void OnNewGameCreated(GameInstance game)
     {
         InvokeAsync(() =>
         {

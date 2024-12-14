@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MudBlazor.Services;
 using Quingo;
+using Quingo.Application.Core;
 using Quingo.Application.Packs.Services;
-using Quingo.Application.State;
 using Quingo.Components;
 using Quingo.Components.Account;
 using Quingo.Infrastructure;
@@ -82,7 +82,7 @@ builder.Services.AddDataProtection()
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-builder.Services.AddSingleton<GameStateService>();
+builder.Services.AddSingleton<GameService>();
 builder.Services.AddScoped<GenerateStandardBingo>();
 builder.Services.AddSingleton<TempUserStorage>();
 builder.Services.AddScoped<PackRepo>();

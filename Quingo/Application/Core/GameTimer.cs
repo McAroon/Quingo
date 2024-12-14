@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Quingo.Application.State;
+namespace Quingo.Application.Core;
 
 public class GameTimer(int initialValue)
 {

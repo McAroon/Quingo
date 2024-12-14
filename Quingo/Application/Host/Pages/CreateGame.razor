@@ -6,7 +6,7 @@
 
 @inject ILogger<CreateGame> Logger
 @inject PackRepo Repo
-@inject GameStateService StateService
+@inject GameService GameService
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 @inject FileStoreService Files
@@ -85,7 +85,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var exGame = StateService.Games
+        var exGame = GameService.Games
             .FirstOrDefault(x => x.HostUserId == UserId && x.IsStateActive);
         if (exGame != null)
         {
@@ -119,10 +119,10 @@
             ArgumentNullException.ThrowIfNull(_preset, nameof(_preset));
 
             _isLoading = true;
-            var game = await StateService.StartGame(_pack.Id, _preset.Data, UserId);
+            var game = await GameService.StartGame(_pack.Id, _preset.Data, UserId);
             if (_preset.Data.JoinOnCreate)
             {
-                var player = StateService.JoinGame(game.GameSessionId, UserId, _userName ?? string.Empty);
+                var player = GameService.JoinGame(game.GameSessionId, UserId, _userName ?? string.Empty);
                 NavigationManager.NavigateTo($"/game/play/{game.GameSessionId}/{player.PlayerSessionId}");
             }
             else

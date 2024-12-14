@@ -2,7 +2,7 @@
 
 @code {
     [CascadingParameter]
-    public PlayerState State { get; set; } = default!;
+    public PlayerInstance Instance { get; set; } = default!;
 
     [Parameter, EditorRequired]
     public PlayerCardCellData Cell { get; set; } = default!;
@@ -15,15 +15,15 @@
 
     private Action? OnNodeClick => OnClick != null ? () => OnClick(Cell) : null;
 
-    private NodeViewModel? Node => Cell.Node == null ? null : new NodeViewModel(Cell.Node, State.GameState.Preset, ShowLinksByTagEnum.Answer);
+    private NodeViewModel? Node => Cell.Node == null ? null : new NodeViewModel(Cell.Node, Instance.GameInstance.Preset, ShowLinksByTagEnum.Answer);
 
-    private bool ShowTagBadge => State.GameState.Preset.ShowTagBadges;
+    private bool ShowTagBadge => Instance.GameInstance.Preset.ShowTagBadges;
 
-    private bool IsPending => State.GameState.Preset.MatchRule == PackPresetMatchRule.LastDrawn 
+    private bool IsPending => Instance.GameInstance.Preset.MatchRule == PackPresetMatchRule.LastDrawn 
         && Cell.State is PlayerCardCellState.Marked or PlayerCardCellState.Invalid or PlayerCardCellState.MatchingPattern
         && Cell.Node != null
         && Cell.MatchedQNode != null 
-        && Cell.MatchedQNode == State.DrawState.DrawnNodes.LastOrDefault();
+        && Cell.MatchedQNode == Instance.DrawState.DrawnNodes.LastOrDefault();
 
     private PlayerCardCellState CellState
     {

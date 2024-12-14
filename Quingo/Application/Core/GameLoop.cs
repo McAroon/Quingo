@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace Quingo.Application.State;
+namespace Quingo.Application.Core;
 
 public class GameLoop : IDisposable
 {
@@ -10,11 +10,11 @@ public class GameLoop : IDisposable
     private const int ParallelEntries = 10;
 
     private readonly ILogger _logger;
-    private readonly ConcurrentDictionary<Guid, GameState> _state;
+    private readonly ConcurrentDictionary<Guid, GameInstance> _state;
     private Timer? _timer;
     private Guid _id;
 
-    public GameLoop(ILogger logger, ConcurrentDictionary<Guid, GameState> state)
+    public GameLoop(ILogger logger, ConcurrentDictionary<Guid, GameInstance> state)
     {
         _logger = logger;
         _state = state;
@@ -96,7 +96,7 @@ public class GameLoop : IDisposable
         }
     }
 
-    private static void RunLoopTick(GameLoop loop, GameState game)
+    private static void RunLoopTick(GameLoop loop, GameInstance game)
     {
         try
         {
@@ -129,7 +129,7 @@ public class GameLoop : IDisposable
         }
     }
 
-    private static void RunGame(GameState game)
+    private static void RunGame(GameInstance game)
     {
         if (game is { State: GameStateEnum.Active or GameStateEnum.FinalCountdown })
         {
@@ -177,7 +177,7 @@ public class GameLoop : IDisposable
         }
     }
 
-    private static bool CanRemove(GameState game)
+    private static bool CanRemove(GameInstance game)
     {
         var maxUpdated = game.Players.Select(x => x.UpdatedAt).Concat([game.UpdatedAt]).Max();
         var elapsed = DateTime.UtcNow - maxUpdated;

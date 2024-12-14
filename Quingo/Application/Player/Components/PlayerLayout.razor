@@ -18,16 +18,16 @@
         </MudItem>
     </MudBreakpointProvider>
     <MudItem xs="12">
-        <CascadingValue Value="Player.GameState">
+        <CascadingValue Value="Player.GameInstance">
             <PlayerList Player="Player" ShowDetails="ShowDetails"/>
         </CascadingValue>
     </MudItem>
 </MudGrid>
 
 @code {
-    [CascadingParameter] public PlayerState Player { get; set; } = default!;
+    [CascadingParameter] public PlayerInstance Player { get; set; } = default!;
 
-    private bool ShowDetails => Player.GameState.State is GameStateEnum.Finished or GameStateEnum.Canceled;
+    private bool ShowDetails => Player.GameInstance.State is GameStateEnum.Finished or GameStateEnum.Canceled;
 
     private MudBreakpointProvider? _breakpoint;
 

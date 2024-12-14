@@ -1,6 +1,6 @@
 ﻿using Quingo.Shared.Entities;
 
-namespace Quingo.Application.State;
+namespace Quingo.Application.Core;
 
 public class PlayerCardData(PackPresetData preset)
 {

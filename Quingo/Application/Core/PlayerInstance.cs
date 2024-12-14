@@ -1,14 +1,14 @@
 ﻿using Quingo.Shared.Entities;
 
-namespace Quingo.Application.State;
+namespace Quingo.Application.Core;
 
-public class PlayerState : IDisposable
+public class PlayerInstance : IDisposable
 {
-    public PlayerState(Guid playerSessionId, GameState gameState, string playerUserId, string playerName,
+    public PlayerInstance(Guid playerSessionId, GameInstance gameInstance, string playerUserId, string playerName,
         GameDrawState drawState)
     {
         PlayerSessionId = playerSessionId;
-        GameState = gameState;
+        GameInstance = gameInstance;
         Card = new PlayerCardData(Preset);
         LivesNumber = Preset.LivesNumber;
         PlayerUserId = playerUserId;
@@ -23,11 +23,11 @@ public class PlayerState : IDisposable
 
     public Guid PlayerSessionId { get; }
 
-    public GameState GameState { get; }
+    public GameInstance GameInstance { get; }
 
-    private Pack Pack => GameState.Pack;
+    private Pack Pack => GameInstance.Pack;
 
-    private PackPresetData Preset => GameState.Preset;
+    private PackPresetData Preset => GameInstance.Preset;
 
     public PlayerCardData Card { get; }
 
@@ -74,21 +74,21 @@ public class PlayerState : IDisposable
         }
     }
     
-    public bool IsHost => PlayerUserId == GameState.HostUserId;
+    public bool IsHost => PlayerUserId == GameInstance.HostUserId;
     
     public int? DoneTimer { get; private set; }
 
     private int _pageConnectionCount;
-    public bool IsPlayerConnected => _pageConnectionCount > 0 && GameState.UserTracker.IsConnected(PlayerUserId);
+    public bool IsPlayerConnected => _pageConnectionCount > 0 && GameInstance.UserTracker.IsConnected(PlayerUserId);
 
     private void Setup()
     {
         if (Preset.Columns.Count != Preset.CardSize)
         {
-            throw new GameStateException("Column number and card size don't match");
+            throw new GameException("Column number and card size don't match");
         }
 
-        var random = Preset.SamePlayerCards ? new Random(GameState.GameSessionId.GetHashCode()) : GameState.Random;
+        var random = Preset.SamePlayerCards ? new Random(GameInstance.GameSessionId.GetHashCode()) : GameInstance.Random;
 
         var allPresetTags = Preset.Columns.SelectMany(x => x.ColAnswerTags).Distinct().ToList();
         var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct()
@@ -167,7 +167,7 @@ public class PlayerState : IDisposable
     private void Mark(PlayerCardCellData cell, bool? mark = null)
     {
         cell.IsMarked = mark ?? !cell.IsMarked;
-        if (GameState.Preset.MatchRule is PackPresetMatchRule.LastDrawn && DrawState.DrawnNodes.Count > 0)
+        if (GameInstance.Preset.MatchRule is PackPresetMatchRule.LastDrawn && DrawState.DrawnNodes.Count > 0)
         {
             if (cell.IsMarked)
             {
@@ -221,7 +221,7 @@ public class PlayerState : IDisposable
         else
         {
             var search = new NodeLinkSearch(cell.Node, DrawState.DrawnNodes).Search();
-            var found = GameState.Preset.MatchRule is PackPresetMatchRule.Default || !cell.IsMarked
+            var found = GameInstance.Preset.MatchRule is PackPresetMatchRule.Default || !cell.IsMarked
                 ? search.FirstOrDefault() != null
                 : cell.MatchedQNode != null && search.FirstOrDefault(x => x.Id == cell.MatchedQNode.Id) != null;
 
@@ -251,9 +251,9 @@ public class PlayerState : IDisposable
     public void SetStatus(PlayerStatus status)
     {
         Status = status;
-        DoneTimer = status is PlayerStatus.Done ? GameState.Timer.Value : null;
+        DoneTimer = status is PlayerStatus.Done ? GameInstance.Timer.Value : null;
         NotifyStateChanged();
-        GameState.NotifyStateChanged();
+        GameInstance.NotifyStateChanged();
     }
 
     public void OnPageConnection(bool connected)
@@ -279,9 +279,9 @@ public class PlayerState : IDisposable
 
     public event Action? StateChanged;
 
-    public event Action<PlayerState>? LifeLost;
+    public event Action<PlayerInstance>? LifeLost;
 
-    public event Action<GameState, PlayerState>? NewGameCreated;
+    public event Action<GameInstance, PlayerInstance>? NewGameCreated;
 
     public event Action<PlayerStatus>? StatusChanged;
 
@@ -291,7 +291,7 @@ public class PlayerState : IDisposable
         StateChanged?.Invoke();
     }
 
-    public void NotifyNewGameCreated(GameState game, PlayerState player)
+    public void NotifyNewGameCreated(GameInstance game, PlayerInstance player)
     {
         NewGameCreated?.Invoke(game, player);
     }

@@ -1,16 +1,16 @@
 ﻿using Quingo.Shared.Entities;
 
-namespace Quingo.Application.State;
+namespace Quingo.Application.Core;
 
-public class PlayerScore(PlayerState player)
+public class PlayerScore(PlayerInstance player)
 {
     private const int CellMultiplier = 10;
     private const decimal TimeMultiplier = 1;
     private const decimal DrawMultiplier = 1;
-    public PackPresetData Preset => player.GameState.Preset;
+    public PackPresetData Preset => player.GameInstance.Preset;
 
     private readonly CardPattern _bonusPattern =
-        PatternGenerator.GeneratePatterns(player.GameState.Preset.CardSize, PackPresetPattern.Lines);
+        PatternGenerator.GeneratePatterns(player.GameInstance.Preset.CardSize, PackPresetPattern.Lines);
 
     private IEnumerable<PlayerCardCellData> AllCells => player.Card.AllCells;
 
@@ -73,7 +73,7 @@ public class PlayerScore(PlayerState player)
     private int CalculateTimeBonus()
     {
         var timer = player.DoneTimer ??
-               (player.GameState.State is GameStateEnum.FinalCountdown ? 0 : player.GameState.Timer.Value);
+               (player.GameInstance.State is GameStateEnum.FinalCountdown ? 0 : player.GameInstance.Timer.Value);
         var allCells = AllCells.ToList();
         var cellPercentage = allCells.Count(x => x.IsMarked && x.IsValid) / (decimal)allCells.Count;
         var result = timer * TimeMultiplier * cellPercentage;

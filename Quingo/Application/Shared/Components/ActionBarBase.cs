@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
-using Quingo.Application.State;
+using Quingo.Application.Core;
 
 namespace Quingo.Application.Shared.Components;
 
@@ -9,7 +9,7 @@ public abstract class ActionBarBase : ComponentBase, IAsyncDisposable
 {
     [Inject] protected ILogger<ActionBarBase> Logger { get; set; } = default!;
 
-    [Inject] protected GameStateService StateService { get; set; } = default!;
+    [Inject] protected GameService GameService { get; set; } = default!;
 
     [Inject] protected IDialogService DialogService { get; set; } = default!;
 
@@ -17,7 +17,7 @@ public abstract class ActionBarBase : ComponentBase, IAsyncDisposable
     
     [Inject] protected IJSRuntime Js { get; set; } = default!;
 
-    public virtual GameState Game { get; set; } = default!;
+    public virtual GameInstance Game { get; set; } = default!;
 
     public virtual string UserId { get; set; } = default!;
 
@@ -58,7 +58,7 @@ public abstract class ActionBarBase : ComponentBase, IAsyncDisposable
     {
         try
         {
-            await StateService.EndGame(Game.GameSessionId, UserId);
+            await GameService.EndGame(Game.GameSessionId, UserId);
         }
         catch (Exception e)
         {
@@ -93,7 +93,7 @@ public abstract class ActionBarBase : ComponentBase, IAsyncDisposable
         IsLoading = true;
         try
         {
-            StateService.PlayAgain(Game.GameSessionId);
+            GameService.PlayAgain(Game.GameSessionId);
         }
         catch (Exception e)
         {

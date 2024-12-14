@@ -11,7 +11,7 @@
         @foreach (var node in _nodes)
         {
             <NodeSquare Node="node" CellState="GetCellState(node)" ShowTagBadge
-                        ShowTagBadgeTooltip="DrawState.GameState.Preset.ShowTagBadges" OnClick="OnClick(node)!"/>
+                        ShowTagBadgeTooltip="DrawState.GameInstance.Preset.ShowTagBadges" OnClick="OnClick(node)!"/>
         }
     </MudStack>
 }
@@ -53,7 +53,7 @@
 
     protected override void OnParametersSet()
     {
-        if (DrawState.GameState.GameSessionId == _gameSessionId) return;
+        if (DrawState.GameInstance.GameSessionId == _gameSessionId) return;
 
         _isInitialized = false;
         InitializeGame();
@@ -62,7 +62,7 @@
 
     private void InitializeGame()
     {
-        _gameSessionId = DrawState.GameState.GameSessionId;
+        _gameSessionId = DrawState.GameInstance.GameSessionId;
         _nodes = GetNodes();
         DrawState.NodeDrawn += OnNodeDrawn;
     }
@@ -88,7 +88,7 @@
     {
         var itemsToDisplay = ItemsToDisplay > 0 ? ItemsToDisplay : MaxItemsToDisplay;
         return DrawState.DrawnNodes.TakeLast(itemsToDisplay)
-            .Select(x => new NodeViewModel(x, DrawState.GameState.Preset, ShowLinksByTagEnum.Question)).ToList();
+            .Select(x => new NodeViewModel(x, DrawState.GameInstance.Preset, ShowLinksByTagEnum.Question)).ToList();
     }
 
     private void OnNodeDrawn()
