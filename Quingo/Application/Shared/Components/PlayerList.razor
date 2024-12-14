@@ -18,7 +18,7 @@
         @foreach (var player in DisplayPlayers)
         {
             <div class="mw-100">
-                <MudText Typo="Typo.h6" GutterBottom>@player.PlayerName</MudText>
+                <MudText Typo="Typo.h6" GutterBottom>@RenderPlayerName(player, Size.Medium)</MudText>
                 <table class="dl-table">
                     @if (Game.IsStateActive)
                     {
@@ -38,7 +38,9 @@
                     }
                     <tr>
                         <th>Score</th>
-                        <td><PlayerScoreInfo Score="player.Score"/></td>
+                        <td>
+                            <PlayerScoreInfo Score="player.Score"/>
+                        </td>
                     </tr>
                 </table>
                 @RenderPlayer(player)
@@ -84,7 +86,9 @@ else
                     }
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Name">@context.PlayerName</MudTd>
+                    <MudTd DataLabel="Name">
+                        @RenderPlayerName(context, Size.Small)
+                    </MudTd>
                     @if (Game.IsStateActive)
                     {
                         <MudTd DataLabel="Status">
@@ -97,7 +101,9 @@ else
                     }
                     @if (ShowPlayers)
                     {
-                        <MudTd DataLabel="Score"><PlayerScoreInfo Score="context.Score"/></MudTd>
+                        <MudTd DataLabel="Score">
+                            <PlayerScoreInfo Score="context.Score"/>
+                        </MudTd>
                         <MudTd DataLabel="Actions">
                             @if (Player != context)
                             {
@@ -139,6 +145,19 @@ else
               }
               <PlayerCard TitleTypo="Typo.h6" ReadOnly ShowDetails="ShowDetails"/>
           </CascadingValue>;
+
+    private RenderFragment RenderPlayerName(PlayerState? player, Size iconSize) => player == null
+        ? null
+        : @<span class="d-flex align-center">
+              @if (!player.IsPlayerConnected)
+              {
+                  <MudTooltip Text="Disconnected">
+                      <MudIcon Icon="@Icons.Material.Filled.WarningAmber" Size="iconSize" Color="Color.Warning"
+                               Class="d-flex mr-1"/>
+                  </MudTooltip>
+              }
+              @player.PlayerName
+          </span>;
 
     [CascadingParameter] public GameState Game { get; set; } = default!;
 
@@ -198,6 +217,7 @@ else
     protected override void OnInitialized()
     {
         Game.PlayerJoined += OnPlayerJoined;
+        Game.UserTracker.ConnectionsChanged += OnConnectionsChanged;
         foreach (var player in Game.Players)
         {
             player.StateChanged += OnStateChanged;
@@ -213,6 +233,11 @@ else
     }
 
     private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnConnectionsChanged(string userId, bool connected)
     {
         InvokeAsync(StateHasChanged);
     }
@@ -237,6 +262,7 @@ else
     public void Dispose()
     {
         Game.PlayerJoined -= OnPlayerJoined;
+        Game.UserTracker.ConnectionsChanged -= OnConnectionsChanged;
         foreach (var player in Game.Players)
         {
             player.StateChanged -= OnStateChanged;

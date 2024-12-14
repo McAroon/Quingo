@@ -1,5 +1,6 @@
 using Amazon.S3;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -88,6 +89,8 @@ builder.Services.AddScoped<PackRepo>();
 builder.Services.AddScoped<PackNodeService>();
 builder.Services.AddSingleton<IMemoryCache, MemoryCache>();
 builder.Services.AddSingleton<ICacheService, MemoryCacheService>();
+builder.Services.AddSingleton<UserConnectionTracker>();
+builder.Services.AddScoped<CircuitHandler, TrackingCircuitHandler>();
 
 // S3
 var s3Settings = builder.Configuration.GetSection(nameof(S3Settings)).Get<S3Settings>() ?? new();

@@ -78,6 +78,9 @@ public class PlayerState : IDisposable
     
     public int? DoneTimer { get; private set; }
 
+    private int _pageConnectionCount;
+    public bool IsPlayerConnected => _pageConnectionCount > 0 && GameState.UserTracker.IsConnected(PlayerUserId);
+
     private void Setup()
     {
         if (Preset.Columns.Count != Preset.CardSize)
@@ -251,6 +254,19 @@ public class PlayerState : IDisposable
         DoneTimer = status is PlayerStatus.Done ? GameState.Timer.Value : null;
         NotifyStateChanged();
         GameState.NotifyStateChanged();
+    }
+
+    public void OnPageConnection(bool connected)
+    {
+        if (connected)
+        {
+            Interlocked.Increment(ref _pageConnectionCount);
+        }
+        else
+        {
+            Interlocked.Decrement(ref _pageConnectionCount);
+        }
+        NotifyStateChanged();
     }
 
     private static bool IsCenter(int size, int i, int j)

@@ -33,7 +33,7 @@ class GameKeyListener {
         e.preventDefault();
         if (e.repeat) return;
 
-        this.actionBarRef.invokeMethodAsync('Draw');
+        this.actionBarRef.invokeMethodAsync('Draw').catch(() => {});
     }
     
     add(ref) {

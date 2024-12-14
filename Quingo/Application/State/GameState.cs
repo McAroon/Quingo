@@ -1,6 +1,6 @@
 ﻿using Quingo.Shared.Entities;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
+using Quingo.Infrastructure;
 using Quingo.Shared.Models;
 
 namespace Quingo.Application.State;
@@ -8,7 +8,7 @@ namespace Quingo.Application.State;
 public class GameState : IDisposable
 {
     public GameState(Guid gameSessionId, Pack pack, PackPresetData preset, string hostUserId,
-        string? hostName)
+        string? hostName, UserConnectionTracker userTracker)
     {
         GameSessionId = gameSessionId;
         PackId = pack.Id;
@@ -16,6 +16,7 @@ public class GameState : IDisposable
         Preset = preset;
         HostUserId = hostUserId;
         HostName = hostName;
+        UserTracker = userTracker;
         StartedAt = UpdatedAt = DateTime.UtcNow;
         State = GameStateEnum.Init;
 
@@ -35,9 +36,9 @@ public class GameState : IDisposable
 
     public int PackId { get; private set; }
 
-    public Pack Pack { get; private set; }
+    public Pack Pack { get; }
 
-    public PackPresetData Preset { get; private set; }
+    public PackPresetData Preset { get; }
 
     public string HostUserId { get; private set; }
 
@@ -113,6 +114,8 @@ public class GameState : IDisposable
     public bool AllPlayersReady => Players.All(x => x.Status is PlayerStatus.Ready);
     
     public bool AllPlayersDone => Players.All(x => x.Status is PlayerStatus.Done);
+
+    public UserConnectionTracker UserTracker { get; }
 
     public void ResetGameTimer(int value)
     {

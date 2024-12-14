@@ -23,13 +23,16 @@ public class GameStateService : IDisposable
 
     private readonly ICacheService _cache;
 
+    private readonly UserConnectionTracker _userTracker;
+
     public GameStateService(IDbContextFactory<ApplicationDbContext> dbContextFactory, ILogger<GameStateService> logger,
-        ICacheService cache)
+        ICacheService cache, UserConnectionTracker userTracker)
     {
         _dbContextFactory = dbContextFactory;
         _logger = logger;
         _cache = cache;
         _loop = new GameLoop(logger, _state);
+        _userTracker = userTracker;
     }
 
     public async Task<GameState> StartGame(int packId, PackPresetData preset, string userId)
@@ -63,7 +66,7 @@ public class GameStateService : IDisposable
 
             var sessionId = Guid.NewGuid();
 
-            var game = new GameState(sessionId, pack, preset, userId, user.UserName);
+            var game = new GameState(sessionId, pack, preset, userId, user.UserName, _userTracker);
             if (!_state.TryAdd(sessionId, game))
             {
                 throw new GameStateException("Error creating game");
@@ -95,7 +98,7 @@ public class GameStateService : IDisposable
             }
 
             var sessionId = Guid.NewGuid();
-            var newGame = new GameState(sessionId, game.Pack, game.Preset, game.HostUserId, game.HostName);
+            var newGame = new GameState(sessionId, game.Pack, game.Preset, game.HostUserId, game.HostName, _userTracker);
             if (!_state.TryAdd(sessionId, newGame))
             {
                 throw new GameStateException("Error creating game");
