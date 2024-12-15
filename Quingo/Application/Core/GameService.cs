@@ -35,7 +35,7 @@ public class GameService : IDisposable
         _userTracker = userTracker;
     }
 
-    public async Task<GameInstance> StartGame(int packId, PackPresetData preset, string userId)
+    public async Task<GameInstance> StartGame(int packId, PackPresetData preset, GameOptions options, string userId)
     {
         try
         {
@@ -66,7 +66,7 @@ public class GameService : IDisposable
 
             var sessionId = Guid.NewGuid();
 
-            var game = new GameInstance(sessionId, pack, preset, userId, user.UserName, _userTracker);
+            var game = new GameInstance(sessionId, pack, preset, userId, user.UserName, _userTracker, options);
             if (!_state.TryAdd(sessionId, game))
             {
                 throw new GameException("Error creating game");
@@ -98,7 +98,8 @@ public class GameService : IDisposable
             }
 
             var sessionId = Guid.NewGuid();
-            var newGame = new GameInstance(sessionId, game.Pack, game.Preset, game.HostUserId, game.HostName, _userTracker);
+            var newGame = new GameInstance(sessionId, game.Pack, game.Preset, game.HostUserId, game.HostName,
+                _userTracker, game.Options);
             if (!_state.TryAdd(sessionId, newGame))
             {
                 throw new GameException("Error creating game");
@@ -117,7 +118,7 @@ public class GameService : IDisposable
             {
                 newGame.Spectate(spectator);
             }
-            
+
             _logger.LogInformation("Created repeat game id:{id} oldId:{oldId}", sessionId, game.GameSessionId);
         }
         catch (Exception e) when (e is not GameException)
@@ -126,7 +127,7 @@ public class GameService : IDisposable
         }
     }
 
-    public PlayerInstance JoinGame(Guid gameSessionId, string userId, string userName)
+    public PlayerInstance JoinGame(Guid gameSessionId, string userId, string userName, string? password = null)
     {
         ArgumentNullException.ThrowIfNull(userId, nameof(userId));
         ArgumentNullException.ThrowIfNull(userName, nameof(userName));
@@ -144,7 +145,12 @@ public class GameService : IDisposable
             {
                 throw new GameException("Unable to join, the room is full");
             }
-            
+
+            if (!string.IsNullOrWhiteSpace(game.Options.Password) && password != game.Options.Password)
+            {
+                throw new GameException("Incorrect password");
+            }
+
             var player = game.Join(userId, userName);
             return player;
         }

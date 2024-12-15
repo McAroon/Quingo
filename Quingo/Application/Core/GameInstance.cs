@@ -8,7 +8,7 @@ namespace Quingo.Application.Core;
 public class GameInstance : IDisposable
 {
     public GameInstance(Guid gameSessionId, Pack pack, PackPresetData preset, string hostUserId,
-        string? hostName, UserConnectionTracker userTracker)
+        string? hostName, UserConnectionTracker userTracker, GameOptions options)
     {
         GameSessionId = gameSessionId;
         PackId = pack.Id;
@@ -17,6 +17,8 @@ public class GameInstance : IDisposable
         HostUserId = hostUserId;
         HostName = hostName;
         UserTracker = userTracker;
+        Options = options;
+
         StartedAt = UpdatedAt = DateTime.UtcNow;
         State = GameStateEnum.Init;
 
@@ -74,7 +76,7 @@ public class GameInstance : IDisposable
         private set
         {
             if (_state == value) return;
-            
+
             _state = value;
             UpdatedAt = DateTime.UtcNow;
             GameStateChanged?.Invoke(value);
@@ -85,7 +87,7 @@ public class GameInstance : IDisposable
         or GameStateEnum.FinalCountdown;
 
     public GameTimer Timer { get; }
-    
+
     public (int, int) TimerColorPercentages => State switch
     {
         GameStateEnum.FinalCountdown => (0, 101),
@@ -112,10 +114,12 @@ public class GameInstance : IDisposable
     public GameDrawState? DrawState => HostCanDraw ? DrawStates.FirstOrDefault() : null;
 
     public bool AllPlayersReady => Players.All(x => x.Status is PlayerStatus.Ready);
-    
+
     public bool AllPlayersDone => Players.All(x => x.Status is PlayerStatus.Done);
 
     public UserConnectionTracker UserTracker { get; }
+
+    public GameOptions Options { get; }
 
     public void ResetGameTimer(int value)
     {
@@ -199,6 +203,7 @@ public class GameInstance : IDisposable
                 }
             }
         }
+
         _players.Add(player);
         return player;
     }
@@ -255,7 +260,7 @@ public class GameInstance : IDisposable
         {
             return false;
         }
-        
+
         var validPattern = _bingoPattern.Patterns[validPatternIdx.Value];
         for (var col = 0; col < Preset.CardSize; col++)
         {

@@ -9,6 +9,7 @@
 @inject ISnackbar Snackbar
 @inject ILogger<JoinGame> Logger
 @inject TempUserStorage Store
+@inject IDialogService DialogService
 
 @attribute [Authorize]
 
@@ -27,6 +28,7 @@
         <MudTh>Host</MudTh>
         <MudTh>Started</MudTh>
         <MudTh>Players</MudTh>
+        <MudTh>Password</MudTh>
         <MudTh>Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
@@ -34,8 +36,9 @@
         <MudTd DataLabel="Host">@context.HostName</MudTd>
         <MudTd DataLabel="Started">@context.StartedAt.FormatWithTimeZone(_timeZone)</MudTd>
         <MudTd DataLabel="Players">@PlayersFormat(context)</MudTd>
+        <MudTd DataLabel="Password">@(!string.IsNullOrEmpty(context.Options.Password) ? "Yes" : "No")</MudTd>
         <MudTd DataLabel="Actions">
-            <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => Join(context)"
+            <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => OnJoin(context)"
                        Disabled="!context.CanJoin(_userId)">Join
             </MudButton>
             <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => Spectate(context)"
@@ -71,14 +74,35 @@
         }
     }
 
-    private void Join(GameInstance game)
+    private async Task OnJoin(GameInstance game)
+    {
+        ArgumentNullException.ThrowIfNull(_userId, nameof(_userId));
+
+        if (game.HostUserId == _userId
+            || game.Players.FirstOrDefault(x => x.PlayerUserId == _userId) != null
+            || string.IsNullOrWhiteSpace(game.Options.Password))
+        {
+            Join(game);
+        }
+        else
+        {
+            bool OnSubmit(string password)
+            {
+                return password == game.Options.Password && Join(game, password);
+            }
+
+            await JoinDialog.ShowDialog(DialogService, OnSubmit);
+        }
+    }
+
+    private bool Join(GameInstance game, string? password = null)
     {
         try
         {
             ArgumentNullException.ThrowIfNull(_userId, nameof(_userId));
             ArgumentNullException.ThrowIfNull(_userName, nameof(_userName));
 
-            var player = GameService.JoinGame(game.GameSessionId, _userId, _userName);
+            var player = GameService.JoinGame(game.GameSessionId, _userId, _userName, password);
             NavigationManager.NavigateTo($"/game/play/{game.GameSessionId}/{player.PlayerSessionId}");
         }
         catch (Exception e)
@@ -87,8 +111,12 @@
             {
                 Logger.LogError(e, e.Message);
             }
+
             Snackbar.Add(e.Message, Severity.Error);
+            return false;
         }
+
+        return true;
     }
 
     private void Spectate(GameInstance game)
@@ -106,6 +134,7 @@
             {
                 Logger.LogError(e, e.Message);
             }
+
             Snackbar.Add(e.Message, Severity.Error);
         }
     }

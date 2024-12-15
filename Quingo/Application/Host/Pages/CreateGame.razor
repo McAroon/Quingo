@@ -41,27 +41,42 @@
         </MudCard>
     }
 </MudStack>
-@if (_pack != null && _preset != null)
-{
-    <MudText Typo="Typo.h6" GutterBottom>
-        Pack Preset
-        @if (!_isPresetEdit)
+
+<MudContainer MaxWidth="MaxWidth.Small" Gutters="false" Class="ml-0 pb-3">
+    <MudStack>
+        @if (_pack != null)
         {
-            <MudTooltip Text="Edit Preset">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => _isPresetEdit = true"></MudIconButton>
-            </MudTooltip>
+            @if (_preset != null)
+            {
+                <div>
+                    <MudText Typo="Typo.h6" GutterBottom>
+                        Pack Preset
+                        @if (!_isPresetEdit)
+                        {
+                            <MudTooltip Text="Edit Preset">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               OnClick="() => _isPresetEdit = true"></MudIconButton>
+                            </MudTooltip>
+                        }
+                    </MudText>
+                    <PresetEdit Preset="_preset" Pack="_pack" IsEdit="_isPresetEdit" OnSave="SetPresetData"
+                                OnCancelEdit="CancelPresetEdit"/>
+                </div>
+            }
+
+            <div>
+                <MudText Typo="Typo.h6">Game Options</MudText>
+                <MudForm>
+                    <MudTextField InputType="InputType.Password" Label="Password" @bind-Value="_gameOptions.Password"/>
+                </MudForm>
+            </div>
         }
-    </MudText>
-    <MudContainer MaxWidth="MaxWidth.Small" Gutters="false" Class="ml-0 pb-2">
-        <PresetEdit Preset="_preset" Pack="_pack" IsEdit="_isPresetEdit" OnSave="SetPresetData"
-                    OnCancelEdit="CancelPresetEdit"/>
-    </MudContainer>
-}
-
+    </MudStack>
+</MudContainer>
 <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayArrow"
-           OnClick="StartGame" Disabled="_pack == null || _isPresetEdit || _isLoading">Start Game
+           OnClick="StartGame" Disabled="!CanStart">
+    Start Game
 </MudButton>
-
 <MudOverlay Visible="_isLoading" DarkBackground ZIndex="9999">
     <MudProgressCircular Size="Size.Large" Color="Color.Primary" Indeterminate StrokeWidth="4"/>
 </MudOverlay>
@@ -82,6 +97,10 @@
     private bool _isLoading;
 
     private string? _userName;
+
+    private readonly GameOptions _gameOptions = new();
+
+    private bool CanStart => _pack != null && !_isPresetEdit && !_isLoading;
 
     protected override async Task OnInitializedAsync()
     {
@@ -119,10 +138,10 @@
             ArgumentNullException.ThrowIfNull(_preset, nameof(_preset));
 
             _isLoading = true;
-            var game = await GameService.StartGame(_pack.Id, _preset.Data, UserId);
+            var game = await GameService.StartGame(_pack.Id, _preset.Data, _gameOptions, UserId);
             if (_preset.Data.JoinOnCreate)
             {
-                var player = GameService.JoinGame(game.GameSessionId, UserId, _userName ?? string.Empty);
+                var player = GameService.JoinGame(game.GameSessionId, UserId, _userName ?? string.Empty, _gameOptions.Password);
                 NavigationManager.NavigateTo($"/game/play/{game.GameSessionId}/{player.PlayerSessionId}");
             }
             else

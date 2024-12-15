@@ -1,0 +1,75 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudTextField InputType="InputType.Password" Label="Password" @bind-Value="_password" Immediate
+                          ErrorText="Incorrect Password" @bind-Error="_passwordError"
+                          @bind-Value:after="() => _passwordError = false"/>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="string.IsNullOrWhiteSpace(_password)">Submit
+        </MudButton>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public Func<string, bool>? OnSubmit { get; set; }
+
+    [Parameter] public Func<Task>? OnCancel { get; set; }
+
+    private string? _password;
+
+    private bool _passwordError;
+
+    private MudForm _form = default!;
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+        if (_form.IsValid && OnSubmit != null)
+        {
+            var success = OnSubmit.Invoke(_password!);
+            if (success)
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                _passwordError = true;
+            }
+        }
+    }
+
+    private async Task Cancel()
+    {
+        if (OnCancel != null)
+        {
+            await OnCancel.Invoke();
+        }
+
+        MudDialog.Cancel();
+    }
+
+    public static async Task<IDialogReference> ShowDialog(IDialogService dialog,
+        Func<string, bool>? onSubmit = null, Func<Task>? onCancel = null)
+    {
+        var parameters = new DialogParameters<JoinDialog>
+        {
+            { x => x.OnSubmit, onSubmit },
+            { x => x.OnCancel, onCancel },
+        };
+
+        var opts = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = false,
+            CloseButton = true
+        };
+
+        return await dialog.ShowAsync<JoinDialog>("Game Password", parameters, opts);
+    }
+
+}

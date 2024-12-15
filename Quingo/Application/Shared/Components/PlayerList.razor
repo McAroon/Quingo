@@ -53,22 +53,6 @@ else
     <MudGrid>
         <MudItem xs="12" lg="8">
             <MudTable Items="Game.Players">
-                <ColGroup>
-                    <col style="width: 40%;"/>
-                    @if (Game.IsStateActive)
-                    {
-                        <col style="width: 25%;"/>
-                    }
-                    @if (ShowLives)
-                    {
-                        <col/>
-                    }
-                    @if (ShowPlayers)
-                    {
-                        <col/>
-                        <col/>
-                    }
-                </ColGroup>
                 <HeaderContent>
                     <MudTh>Name</MudTh>
                     @if (Game.IsStateActive)
