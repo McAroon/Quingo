@@ -67,15 +67,15 @@ public class PlayerInstance : IDisposable
         private set
         {
             if (_status == value) return;
-            
+
             _status = value;
             UpdatedAt = DateTime.UtcNow;
             StatusChanged?.Invoke(value);
         }
     }
-    
+
     public bool IsHost => PlayerUserId == GameInstance.HostUserId;
-    
+
     public int? DoneTimer { get; private set; }
 
     private int _pageConnectionCount;
@@ -88,7 +88,9 @@ public class PlayerInstance : IDisposable
             throw new GameException("Column number and card size don't match");
         }
 
-        var random = Preset.SamePlayerCards ? new Random(GameInstance.GameSessionId.GetHashCode()) : GameInstance.Random;
+        var random = Preset.SamePlayerCards
+            ? new Random(GameInstance.GameSessionId.GetHashCode())
+            : GameInstance.Random;
 
         var allPresetTags = Preset.Columns.SelectMany(x => x.ColAnswerTags).Distinct().ToList();
         var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct()
@@ -251,7 +253,9 @@ public class PlayerInstance : IDisposable
     public void SetStatus(PlayerStatus status)
     {
         Status = status;
-        DoneTimer = status is PlayerStatus.Done ? GameInstance.Timer.Value : null;
+        DoneTimer = status is PlayerStatus.Done && GameInstance.State is not GameStateEnum.FinalCountdown
+            ? GameInstance.Timer.Value
+            : null;
         NotifyStateChanged();
         GameInstance.NotifyStateChanged();
     }
@@ -266,6 +270,7 @@ public class PlayerInstance : IDisposable
         {
             Interlocked.Decrement(ref _pageConnectionCount);
         }
+
         NotifyStateChanged();
     }
 
