@@ -23,11 +23,11 @@ public class UserConnectionTracker(ILogger<UserConnectionTracker> logger) : IDis
 
     public void Disconnected(string userId, string circuitId)
     {
-        _userConnections.AddOrUpdate(userId, _ => new ConcurrentDictionary<string, bool> { [circuitId] = false },
+        _userConnections.AddOrUpdate(userId, _ => [],
             (_, circuits) =>
             {
                 {
-                    circuits[circuitId] = false;
+                    circuits.TryRemove(circuitId, out var _);
                     return circuits;
                 }
             });
