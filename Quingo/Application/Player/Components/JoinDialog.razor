@@ -1,7 +1,7 @@
 ﻿<MudDialog>
     <DialogContent>
         <MudForm @ref="_form">
-            <MudTextField InputType="InputType.Password" Label="Password" @bind-Value="_password" Immediate
+            <MudTextField Label="Password" @bind-Value="_password" Immediate
                           ErrorText="Incorrect Password" @bind-Error="_passwordError"
                           @bind-Value:after="() => _passwordError = false"/>
         </MudForm>
