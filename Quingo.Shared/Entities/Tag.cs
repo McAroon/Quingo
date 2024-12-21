@@ -13,6 +13,9 @@
         }
 
         public string? Name { get; set; }
+
+        public string? Description { get; set; }
+        
         public List<NodeTag> NodeTags { get; } = [];
 
         public int PackId { get; set; }

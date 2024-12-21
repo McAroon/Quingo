@@ -8,6 +8,10 @@
 
         public string? ImageUrl { get; set; }
 
+        public string? Description { get; set; }
+
+        public int Difficulty { get; set; } = 1;
+
         public List<NodeLink> NodeLinksFrom { get; } = [];
 
         public List<NodeLink> NodeLinksTo { get; } = [];

@@ -17,7 +17,7 @@ namespace Quingo.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.8")
+                .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -365,6 +365,14 @@ namespace Quingo.Migrations
                     b.Property<string>("DeletedByUserId")
                         .HasColumnType("text");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Difficulty")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
@@ -389,6 +397,8 @@ namespace Quingo.Migrations
                     b.HasIndex("DeletedAt");
 
                     b.HasIndex("DeletedByUserId");
+
+                    b.HasIndex("Difficulty");
 
                     b.HasIndex("ImageUrl");
 
@@ -663,6 +673,9 @@ namespace Quingo.Migrations
                     b.Property<string>("DeletedByUserId")
                         .HasColumnType("text");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
@@ -854,7 +867,7 @@ namespace Quingo.Migrations
                                     b2.Property<int>("MetaNodeId")
                                         .HasColumnType("integer");
 
-                                    b2.Property<int>("Id")
+                                    b2.Property<int>("__synthesizedOrdinal")
                                         .ValueGeneratedOnAdd()
                                         .HasColumnType("integer");
 
@@ -866,7 +879,7 @@ namespace Quingo.Migrations
                                         .IsRequired()
                                         .HasColumnType("text");
 
-                                    b2.HasKey("MetaNodeId", "Id");
+                                    b2.HasKey("MetaNodeId", "__synthesizedOrdinal");
 
                                     b2.ToTable("Nodes");
 
@@ -940,7 +953,7 @@ namespace Quingo.Migrations
                                     b2.Property<int>("MetaNodeLinkId")
                                         .HasColumnType("integer");
 
-                                    b2.Property<int>("Id")
+                                    b2.Property<int>("__synthesizedOrdinal")
                                         .ValueGeneratedOnAdd()
                                         .HasColumnType("integer");
 
@@ -952,7 +965,7 @@ namespace Quingo.Migrations
                                         .IsRequired()
                                         .HasColumnType("text");
 
-                                    b2.HasKey("MetaNodeLinkId", "Id");
+                                    b2.HasKey("MetaNodeLinkId", "__synthesizedOrdinal");
 
                                     b2.ToTable("NodeLinks");
 
@@ -1091,13 +1104,25 @@ namespace Quingo.Migrations
                             b1.Property<int>("PackPresetId")
                                 .HasColumnType("integer");
 
+                            b1.Property<int>("AutoDrawTimer")
+                                .HasColumnType("integer");
+
                             b1.Property<int>("CardSize")
                                 .HasColumnType("integer");
+
+                            b1.Property<bool>("EnableCall")
+                                .HasColumnType("boolean");
 
                             b1.Property<int>("EndgameTimer")
                                 .HasColumnType("integer");
 
                             b1.Property<bool>("FreeCenter")
+                                .HasColumnType("boolean");
+
+                            b1.Property<int>("GameTimer")
+                                .HasColumnType("integer");
+
+                            b1.Property<bool>("JoinOnCreate")
                                 .HasColumnType("boolean");
 
                             b1.Property<int>("LivesNumber")
@@ -1106,10 +1131,25 @@ namespace Quingo.Migrations
                             b1.Property<int>("MatchRule")
                                 .HasColumnType("integer");
 
+                            b1.Property<int>("MaxPlayers")
+                                .HasColumnType("integer");
+
                             b1.Property<int>("Pattern")
                                 .HasColumnType("integer");
 
+                            b1.Property<bool>("SamePlayerCards")
+                                .HasColumnType("boolean");
+
+                            b1.Property<int>("ScoringRules")
+                                .HasColumnType("integer");
+
+                            b1.Property<bool>("SeparateDrawPerPlayer")
+                                .HasColumnType("boolean");
+
                             b1.Property<bool>("ShowTagBadges")
+                                .HasColumnType("boolean");
+
+                            b1.Property<bool>("SingleColumnConfig")
                                 .HasColumnType("boolean");
 
                             b1.HasKey("PackPresetId");
@@ -1126,15 +1166,11 @@ namespace Quingo.Migrations
                                     b2.Property<int>("PackPresetDataPackPresetId")
                                         .HasColumnType("integer");
 
-                                    b2.Property<int>("Id")
+                                    b2.Property<int>("__synthesizedOrdinal")
                                         .ValueGeneratedOnAdd()
                                         .HasColumnType("integer");
 
-                                    b2.Property<int[]>("AnswerTags")
-                                        .IsRequired()
-                                        .HasColumnType("integer[]");
-
-                                    b2.Property<int[]>("ExcludeTags")
+                                    b2.PrimitiveCollection<int[]>("ExcludeTags")
                                         .IsRequired()
                                         .HasColumnType("integer[]");
 
@@ -1142,16 +1178,47 @@ namespace Quingo.Migrations
                                         .IsRequired()
                                         .HasColumnType("text");
 
-                                    b2.Property<int[]>("QuestionTags")
+                                    b2.PrimitiveCollection<int[]>("QuestionTags")
                                         .IsRequired()
                                         .HasColumnType("integer[]");
 
-                                    b2.HasKey("PackPresetDataPackPresetId", "Id");
+                                    b2.HasKey("PackPresetDataPackPresetId", "__synthesizedOrdinal");
 
                                     b2.ToTable("PackPresets");
 
                                     b2.WithOwner()
                                         .HasForeignKey("PackPresetDataPackPresetId");
+
+                                    b2.OwnsMany("Quingo.Shared.Entities.PackPresetTag", "ColAnswerTags", b3 =>
+                                        {
+                                            b3.Property<int>("PackPresetColumnPackPresetDataPackPresetId")
+                                                .HasColumnType("integer");
+
+                                            b3.Property<int>("PackPresetColumn__synthesizedOrdinal")
+                                                .HasColumnType("integer");
+
+                                            b3.Property<int>("__synthesizedOrdinal")
+                                                .ValueGeneratedOnAdd()
+                                                .HasColumnType("integer");
+
+                                            b3.Property<int?>("ItemsMax")
+                                                .HasColumnType("integer");
+
+                                            b3.Property<int?>("ItemsMin")
+                                                .HasColumnType("integer");
+
+                                            b3.Property<int>("TagId")
+                                                .HasColumnType("integer");
+
+                                            b3.HasKey("PackPresetColumnPackPresetDataPackPresetId", "PackPresetColumn__synthesizedOrdinal", "__synthesizedOrdinal");
+
+                                            b3.ToTable("PackPresets");
+
+                                            b3.WithOwner()
+                                                .HasForeignKey("PackPresetColumnPackPresetDataPackPresetId", "PackPresetColumn__synthesizedOrdinal");
+                                        });
+
+                                    b2.Navigation("ColAnswerTags");
                                 });
 
                             b1.Navigation("Columns");

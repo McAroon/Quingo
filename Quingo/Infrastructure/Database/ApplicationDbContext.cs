@@ -56,6 +56,8 @@ namespace Quingo.Infrastructure.Database
             builder.Entity<Node>().HasIndex(e => e.Name);
             builder.Entity<Node>().HasIndex(e => e.CreatedAt);
             builder.Entity<Node>().HasIndex(e => e.ImageUrl);
+            builder.Entity<Node>().HasIndex(e => e.Difficulty);
+            builder.Entity<Node>().Property(x => x.Difficulty).HasDefaultValue(1);
 
             builder.Entity<Tag>().Ignore(e => e.IndirectLinks);
 
