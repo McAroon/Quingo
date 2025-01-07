@@ -29,9 +29,13 @@ public class PlayerScore(PlayerInstance player)
 
     public void Calculate()
     {
-        if (Preset.ScoringRules.HasFlag(PackPresetScoringRules.CellScore))
+        if (Preset.ScoringRules.HasFlag(PackPresetScoringRules.CustomCellScore))
         {
-            ScoreCells = CalculateCellScore() * CellMultiplier;
+            ScoreCells = CalculateCustomCellScore();
+        }
+        else if (Preset.ScoringRules.HasFlag(PackPresetScoringRules.CellScore))
+        {
+            ScoreCells = CalculateCellScore();
         }
 
         if (Preset.ScoringRules.HasFlag(PackPresetScoringRules.PatternBonus))
@@ -57,7 +61,15 @@ public class PlayerScore(PlayerInstance player)
 
     private int CalculateCellScore()
     {
-        return AllCells.Count(x => x.IsMarked && x.IsValid);
+        return AllCells.Count(x => x.IsMarked && x.IsValid) * CellMultiplier;
+    }
+    
+    private int CalculateCustomCellScore()
+    {
+        var cells =  AllCells.Where(x => x.IsMarked && x.IsValid).ToList();
+        var defaultCells = cells.Where(x => x.Node?.CellScore is null).ToList();
+        var customCells = cells.Except(defaultCells);
+        return defaultCells.Count * CellMultiplier + customCells.Sum(x => x.Node?.CellScore ?? 0);
     }
 
     private int CalculatePatternBonuses()

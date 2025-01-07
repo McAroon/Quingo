@@ -26,6 +26,8 @@ public class PackPresetDataModel
         Pattern = data.Pattern;
         MatchRule = data.MatchRule;
         ScoringRules = data.ScoringRules.ToEnumerable();
+        MinDifficulty = data.MinDifficulty;
+        MaxDifficulty = data.MaxDifficulty;
         SingleColumnConfig = data.SingleColumnConfig;
 
         Columns.MatchListSize(data.CardSize, i => new PackPresetColumnModel(i));
@@ -50,6 +52,8 @@ public class PackPresetDataModel
             Pattern = Pattern,
             MatchRule = MatchRule,
             ScoringRules = ScoringRules.ToFlagsEnum(),
+            MinDifficulty = MinDifficulty,
+            MaxDifficulty = MaxDifficulty,
             SingleColumnConfig = SingleColumnConfig,
             Columns = Columns.Select(c => new PackPresetColumn
             {
@@ -96,7 +100,11 @@ public class PackPresetDataModel
 
     public PackPresetMatchRule MatchRule { get; set; } = PackPresetMatchRule.Default;
 
-    public IEnumerable<PackPresetScoringRules> ScoringRules { get; set; }
+    public IEnumerable<PackPresetScoringRules> ScoringRules { get; set; } = [];
+    
+    public int? MinDifficulty { get; set; }
+    
+    public int? MaxDifficulty { get; set; }
 
     public bool SingleColumnConfig { get; set; }
 

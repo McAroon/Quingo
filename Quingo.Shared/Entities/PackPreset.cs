@@ -40,6 +40,10 @@ public record PackPresetData
     public PackPresetMatchRule MatchRule { get; set; }
 
     public PackPresetScoringRules ScoringRules { get; set; }
+
+    public int? MinDifficulty { get; set; }
+    
+    public int? MaxDifficulty { get; set; }
     
     public bool SingleColumnConfig { get; set; }
     
@@ -86,7 +90,8 @@ public enum PackPresetScoringRules
     PatternBonus = 1 << 1,
     TimeBonus = 1 << 2,
     ErrorPenalty = 1 << 3,
-    DrawPenalty = 1 << 4
+    DrawPenalty = 1 << 4,
+    CustomCellScore = 1 << 5,
 }
 
 public static class ScoringRulesExtensions

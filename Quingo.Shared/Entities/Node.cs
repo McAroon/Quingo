@@ -12,6 +12,8 @@
 
         public int Difficulty { get; set; } = 1;
 
+        public int? CellScore { get; set; }
+
         public List<NodeLink> NodeLinksFrom { get; } = [];
 
         public List<NodeLink> NodeLinksTo { get; } = [];

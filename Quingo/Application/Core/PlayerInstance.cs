@@ -95,8 +95,21 @@ public class PlayerInstance : IDisposable
         var allPresetTags = Preset.Columns.SelectMany(x => x.ColAnswerTags).Distinct().ToList();
         var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct()
             .ToList();
-        var nodes = Pack.Nodes
-            .Where(x => allPresetTags.Any(t => x.HasTag(t.TagId)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
+        
+        var nodesF = Pack.Nodes
+            .Where(x => allPresetTags.Any(t => x.HasTag(t.TagId)) && exclTagIds.All(t => !x.HasTag(t)));
+        if (Preset.MinDifficulty > 0)
+        {
+            nodesF = nodesF.Where(x => x.Difficulty >= Preset.MinDifficulty);
+        }
+
+        if (Preset.MaxDifficulty > 0 && Preset.MaxDifficulty >= (Preset.MinDifficulty ?? 0))
+        {
+            nodesF = nodesF.Where(x => x.Difficulty <= Preset.MaxDifficulty);
+        }
+
+        var nodes = nodesF.ToList();
+        
         var tagsCounter = allPresetTags.ToDictionary(x => x.TagId, _ => 0);
 
         for (var col = 0; col < Card.Cells.GetLength(0); col++)
