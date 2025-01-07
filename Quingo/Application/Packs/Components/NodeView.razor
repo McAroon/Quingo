@@ -11,7 +11,8 @@
             @if (_model.Meta != null)
             {
                 <MudTooltip Text="Show Metadata" ShowOnFocus="false">
-                    <MudIconButton OnClick="ShowNodeMetaDialog" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
+                    <MudIconButton OnClick="ShowNodeMetaDialog"
+                                   Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
                 </MudTooltip>
             }
             <MudTooltip Text="Edit Item" ShowOnFocus="false">
@@ -28,7 +29,7 @@
                 <NodeSquare Node="_model" ShowTagBadge ShowTagBadgeTooltip/>
             </MudItem>
             <MudItem xs="12">
-                <MudText Typo="Typo.h6" GutterBottom>Tags</MudText>
+                <MudText Typo="Typo.body1" GutterBottom>Tags</MudText>
                 @if (_model.TagIds.Any())
                 {
                     @foreach (var tag in GetTagNames(_model.TagIds))
@@ -42,11 +43,26 @@
                 }
             </MudItem>
             <MudItem xs="12">
+                <MudList T="string" ReadOnly Gutters="false">
+                    @if (!string.IsNullOrEmpty(_model.Description))
+                    {
+                        <MudListItem Gutters="false" Text="Description" SecondaryText="@_model.Description"/>
+                    }
+                    @if (_model.CellScore.HasValue)
+                    {
+                        <MudListItem Gutters="false" Text="Cell Score" SecondaryText="@_model.CellScore.Value.ToString()"/>
+                    }
+                    <MudListItem Gutters="false" Text="Difficulty" SecondaryText="@_model.Difficulty.ToString()"/>
+                </MudList>
+            </MudItem>
+            <MudItem xs="12">
                 <MudTable Items="_model.NodeLinks" Filter="FilterFunc" Dense>
                     <ToolBarContent>
                         <MudText Typo="Typo.h6" GutterBottom>Linked Items</MudText>
                         <MudSpacer/>
-                        <MudTextField @bind-Value="_searchFilter" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" DebounceInterval="200" Clearable></MudTextField>
+                        <MudTextField @bind-Value="_searchFilter" Placeholder="Search..." Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"
+                                      DebounceInterval="200" Clearable></MudTextField>
                     </ToolBarContent>
                     <HeaderContent>
                         <MudTh>Direction</MudTh>
@@ -59,7 +75,8 @@
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd DataLabel="Direction">
-                            <MudIcon Icon="@context.LinkDirection.MudIcon()" Class="icon-inline"/> <span>@context.LinkDirection</span>
+                            <MudIcon Icon="@context.LinkDirection.MudIcon()" Class="icon-inline"/>
+                            <span>@context.LinkDirection</span>
                         </MudTd>
                         <MudTd DataLabel="Item">@context.LinkedNode?.Name</MudTd>
                         <MudTd DataLabel="Type">@GetLinkTypeName(context.LinkTypeId)</MudTd>
@@ -67,7 +84,8 @@
                         {
                             <MudTd DataLabel="Actions">
                                 <MudTooltip Text="Show Metadata" ShowOnFocus="false">
-                                    <MudIconButton OnClick="() => ShowLinkMetaDialog(context)" Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
+                                    <MudIconButton OnClick="() => ShowLinkMetaDialog(context)"
+                                                   Icon="@Icons.Material.Filled.DataObject"></MudIconButton>
                                 </MudTooltip>
                             </MudTd>
                         }

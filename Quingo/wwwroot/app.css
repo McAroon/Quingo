@@ -242,3 +242,9 @@
     mask: url(favicon.svg) no-repeat 50% 50%;
     mask-size: 80%;
 }
+
+.unpadx-4 {
+    max-width: initial;
+    width: calc(100% + 32px);
+    margin-left: -16px;
+}

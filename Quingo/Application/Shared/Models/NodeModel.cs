@@ -39,6 +39,9 @@ public class NodeViewModel
 
         Id = node.Id;
         Name = node.Name;
+        Description = node.Description;
+        Difficulty = node.Difficulty;
+        CellScore = node.CellScore;
         NodeLinks = [.. linksFrom, .. linksTo, .. linksBoth];
         NodeLinks = NodeLinks.OrderBy(x => x.LinkDirection).ThenBy(x => x.LinkType.Name).ToList();
         ImageUrl = node.ImageUrl;
@@ -93,6 +96,12 @@ public class NodeViewModel
     public int Id { get; set; }
 
     public string? Name { get; set; }
+
+    public string? Description { get; set; }
+
+    public int Difficulty { get; set; } = 1;
+
+    public int? CellScore { get; set; }
 
     public List<NodeLinkModel> NodeLinks { get; set; } = [];
 

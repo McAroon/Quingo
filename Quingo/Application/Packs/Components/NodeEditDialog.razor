@@ -5,12 +5,16 @@
                 <MudForm @ref="@_form">
                     <MudText Typo="Typo.h6">Item info</MudText>
                     <MudTextField Label="Name" @bind-Value="@_model.Name" Required/>
-                    <MudSelect T="int" MultiSelection Label="Tags" @bind-SelectedValues="@_model.TagIds" MultiSelectionTextFunc="GetTagsSelectText">
+                    <MudSelect T="int" MultiSelection Label="Tags" @bind-SelectedValues="@_model.TagIds"
+                               MultiSelectionTextFunc="GetTagsSelectText">
                         @foreach (var tag in Node.Pack.Tags)
                         {
                             <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
                         }
                     </MudSelect>
+                    <MudTextField Label="Description" @bind-Value="_model.Description" AutoGrow/>
+                    <MudNumericField T="int?" Min="1" Label="Cell Score" @bind-Value="_model.CellScore"/>
+                    <MudNumericField Label="Difficulty" Min="1" @bind-Value="_model.Difficulty"/>
                     <ImageUpload @ref="_uploadRef"/>
 
                     <MudText Typo="Typo.h6">
@@ -24,14 +28,32 @@
                         <MudPaper Class="pa-4 mb-2">
                             <MudGrid>
                                 <MudItem xs="12">
-                                    <MudSelect T="NodeLinkDirection" Label="Link Direction" @bind-Value="@link.LinkDirection" @bind-Value:after="() => OnLinkChange(link)">
-                                        <MudSelectItem Value="NodeLinkDirection.To"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.To.MudIcon()" Class="icon-inline-select"/> To</MudSelectItem>
-                                        <MudSelectItem Value="NodeLinkDirection.From"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.From.MudIcon()" Class="icon-inline-select"/> From</MudSelectItem>
-                                        <MudSelectItem Value="NodeLinkDirection.Both"><MudIcon Size="Size.Small" Icon="@NodeLinkDirection.Both.MudIcon()" Class="icon-inline-select"/> Both</MudSelectItem>
+                                    <MudSelect T="NodeLinkDirection" Label="Link Direction"
+                                               @bind-Value="@link.LinkDirection"
+                                               @bind-Value:after="() => OnLinkChange(link)">
+                                        <MudSelectItem Value="NodeLinkDirection.To">
+                                            <MudIcon Size="Size.Small" Icon="@NodeLinkDirection.To.MudIcon()"
+                                                     Class="icon-inline-select"/>
+                                            To
+                                        </MudSelectItem>
+                                        <MudSelectItem Value="NodeLinkDirection.From">
+                                            <MudIcon Size="Size.Small" Icon="@NodeLinkDirection.From.MudIcon()"
+                                                     Class="icon-inline-select"/>
+                                            From
+                                        </MudSelectItem>
+                                        <MudSelectItem Value="NodeLinkDirection.Both">
+                                            <MudIcon Size="Size.Small" Icon="@NodeLinkDirection.Both.MudIcon()"
+                                                     Class="icon-inline-select"/>
+                                            Both
+                                        </MudSelectItem>
                                     </MudSelect>
-                                    <MudAutocomplete T="LinkedNodeInfoModel" Label="Link Item" @bind-Value="@link.LinkedNode" @bind-Value:after="() => OnLinkChange(link)"
-                                                     SearchFunc="SearchNode" ToStringFunc="x => x?.Name ?? string.Empty" ResetValueOnEmptyText Clearable Required/>
-                                    <MudSelect T="int?" Label="Link Type" @bind-Value="@link.LinkTypeId" @bind-Value:after="() => OnLinkChange(link)" Required>
+                                    <MudAutocomplete T="LinkedNodeInfoModel" Label="Link Item"
+                                                     @bind-Value="@link.LinkedNode"
+                                                     @bind-Value:after="() => OnLinkChange(link)"
+                                                     SearchFunc="SearchNode" ToStringFunc="x => x?.Name ?? string.Empty"
+                                                     ResetValueOnEmptyText Clearable Required/>
+                                    <MudSelect T="int?" Label="Link Type" @bind-Value="@link.LinkTypeId"
+                                               @bind-Value:after="() => OnLinkChange(link)" Required>
                                         @foreach (var linkType in Node.Pack.NodeLinkTypes)
                                         {
                                             <MudSelectItem T="int?" Value="@linkType.Id">@linkType.Name</MudSelectItem>
@@ -41,7 +63,8 @@
                                 <MudItem xs="12" Class="d-flex">
                                     <div class="ml-auto">
                                         <MudTooltip Text="Remove Link">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => DeleteLink(link)"/>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                           OnClick="() => DeleteLink(link)"/>
                                         </MudTooltip>
                                     </div>
                                 </MudItem>
@@ -52,8 +75,11 @@
             </MudCardContent>
             <MudCardActions>
                 <div class="ml-auto">
-                    <MudButton Color="Color.Primary" OnClick="Save" StartIcon="@Icons.Material.Filled.Save">Save</MudButton>
-                    <MudButton Color="Color.Secondary" OnClick="CancelEdit" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+                    <MudButton Color="Color.Primary" OnClick="Save" StartIcon="@Icons.Material.Filled.Save">Save
+                    </MudButton>
+                    <MudButton Color="Color.Secondary" OnClick="CancelEdit" StartIcon="@Icons.Material.Filled.Cancel">
+                        Cancel
+                    </MudButton>
                 </div>
             </MudCardActions>
         </MudCard>

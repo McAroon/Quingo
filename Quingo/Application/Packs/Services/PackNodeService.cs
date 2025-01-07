@@ -52,7 +52,24 @@ public class PackNodeService
             }
 
             if (node.Name != model.Name)
+            {
                 node.Name = model.Name;
+            }
+
+            if (node.Description != model.Description)
+            {
+                node.Description = model.Description?.Trim();
+            }
+
+            if (node.CellScore != model.CellScore)
+            {
+                node.CellScore = model.CellScore;
+            }
+
+            if (node.Difficulty != model.Difficulty)
+            {
+                node.Difficulty = model.Difficulty;
+            }
 
             foreach (var tagId in model.TagIds)
             {
