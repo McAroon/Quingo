@@ -43,7 +43,7 @@ public class PlayerScore(PlayerInstance player)
             ScorePatternBonus = CalculatePatternBonuses() * CellMultiplier;
         }
 
-        if (Preset.ScoringRules.HasFlag(PackPresetScoringRules.TimeBonus) && Preset.GameTimer > 0)
+        if (Preset.ScoringRules.HasFlag(PackPresetScoringRules.TimeBonus) && Preset.GameTimer > 0 && !player.GameInstance.IsStateActive)
         {
             ScoreRemainingTime = CalculateTimeBonus();
         }
@@ -84,9 +84,14 @@ public class PlayerScore(PlayerInstance player)
     
     private int CalculateTimeBonus()
     {
+        var allCells = AllCells.ToList();
+        if (!allCells.All(x => x.IsMarked))
+        {
+            return 0;
+        }
+        
         var timer = player.DoneTimer ??
                (player.GameInstance.State is GameStateEnum.FinalCountdown ? 0 : player.GameInstance.Timer.Value);
-        var allCells = AllCells.ToList();
         var cellPercentage = allCells.Count(x => x.IsMarked && x.IsValid) / (decimal)allCells.Count;
         var result = timer * TimeMultiplier * cellPercentage;
         if (result < 0) result = 0;
