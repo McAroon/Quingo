@@ -109,6 +109,7 @@ public static class ScoringRulesExtensions
         PackPresetScoringRules.TimeBonus => "Time Bonus",
         PackPresetScoringRules.ErrorPenalty => "Error Penalty",
         PackPresetScoringRules.DrawPenalty => "Draw Penalty",
+        PackPresetScoringRules.CustomCellScore => "Difficulty Bonus",
         _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
     };
 
