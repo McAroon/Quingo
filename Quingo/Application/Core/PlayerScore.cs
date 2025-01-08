@@ -7,6 +7,8 @@ public class PlayerScore(PlayerInstance player)
     private const int CellMultiplier = 10;
     private const decimal TimeMultiplier = 1;
     private const decimal DrawMultiplier = 1;
+    private const decimal PatternRowColMultiplier = 1;
+    private const decimal PatternDiagonalMultiplier = 1.5m;
     public PackPresetData Preset => player.GameInstance.Preset;
 
     private readonly CardPattern _bonusPattern =
@@ -78,8 +80,8 @@ public class PlayerScore(PlayerInstance player)
             .Where(x => x != null).Select(x => x!.Value).ToList();
         var rowsCols = validPatterns.Count(x => !IsDiagonal(x));
         var diagonals = validPatterns.Count(x => IsDiagonal(x));
-
-        return rowsCols * 2 + diagonals * 3;
+        var result = rowsCols * PatternRowColMultiplier + diagonals * PatternDiagonalMultiplier;
+        return (int)Math.Round(result);
     }
     
     private int CalculateTimeBonus()

@@ -13,7 +13,7 @@
                         }
                     </MudSelect>
                     <MudTextField Label="Description" @bind-Value="_model.Description" AutoGrow/>
-                    <MudNumericField T="int?" Min="1" Label="Cell Score" @bind-Value="_model.CellScore"/>
+                    <MudNumericField T="int?" Min="1" Label="Cell Score" @bind-Value="_model.CellScore" HelperText="Score used when 'Difficulty Bonus' scoring rule is set"/>
                     <MudNumericField Label="Difficulty" Min="1" @bind-Value="_model.Difficulty"/>
                     <ImageUpload @ref="_uploadRef"/>
 
