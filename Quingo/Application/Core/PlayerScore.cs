@@ -42,7 +42,7 @@ public class PlayerScore(PlayerInstance player)
 
         if (Preset.ScoringRules.HasFlag(PackPresetScoringRules.PatternBonus))
         {
-            ScorePatternBonus = CalculatePatternBonuses() * CellMultiplier;
+            ScorePatternBonus = CalculatePatternBonuses();
         }
 
         if (Preset.ScoringRules.HasFlag(PackPresetScoringRules.TimeBonus) && Preset.GameTimer > 0 && !player.GameInstance.IsStateActive)
@@ -80,7 +80,7 @@ public class PlayerScore(PlayerInstance player)
             .Where(x => x != null).Select(x => x!.Value).ToList();
         var rowsCols = validPatterns.Count(x => !IsDiagonal(x));
         var diagonals = validPatterns.Count(x => IsDiagonal(x));
-        var result = rowsCols * PatternRowColMultiplier + diagonals * PatternDiagonalMultiplier;
+        var result = (rowsCols * PatternRowColMultiplier + diagonals * PatternDiagonalMultiplier) * CellMultiplier;
         return (int)Math.Round(result);
     }
     
