@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Globalization;
+using Microsoft.AspNetCore.Identity;
 using TimeZoneConverter;
 
 namespace Quingo;
@@ -57,7 +58,8 @@ public static class Extensions
                   && TZConvert.TryGetTimeZoneInfo(timeZone, out var tzInfo)
             ? TimeZoneInfo.ConvertTimeFromUtc(date, tzInfo) 
             : date;
-        return $"{result:d} {result:t}";
+        
+        return $"{result.ToString("d", CultureInfo.CurrentUICulture)} {result:t}";
     }
     
     public static Action<T> Debounce<T>(this Action<T> func, int milliseconds = 300)
