@@ -101,6 +101,7 @@ else
             : new Pack();
         pack.Name = _model.Name;
         pack.Description = _model.Description;
+        pack.IsPublished = _model.IsPublished;
 
         await UploadImage(pack);
 

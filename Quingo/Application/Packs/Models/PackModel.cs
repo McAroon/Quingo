@@ -14,6 +14,7 @@ public class PackModel
     {
         Name = pack?.Name ?? "";
         Description = pack?.Description ?? "";
+        IsPublished = pack?.IsPublished ?? false;
     }
 
     [Required]
