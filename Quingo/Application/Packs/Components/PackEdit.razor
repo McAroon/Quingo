@@ -3,7 +3,8 @@
 @inject FileStoreService Files
 
 <MudText Typo="Typo.h4" GutterBottom>
-    Pack Info @if (!_isEdit)
+    Pack Info
+    @if (!_isEdit)
     {
         <MudTooltip Text="Edit Pack info">
             <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => _isEdit = true"></MudIconButton>
@@ -18,17 +19,21 @@
             <MudCard>
                 <MudCardContent>
                     <MudForm @ref="@_form">
-                        <MudTextField Label="Pack Name" @bind-Value="_model.Name" Required />
-                        <MudTextField Label="Description" @bind-Value="_model.Description" />
-                        <ImageUpload @ref="_upload" />
+                        <MudTextField Label="Pack Name" @bind-Value="_model.Name" Required/>
+                        <MudTextField Label="Description" @bind-Value="_model.Description"/>
+                        <MudCheckBox @bind-Value="_model.IsPublished" Label="Publish"/>
+                        <ImageUpload @ref="_upload"/>
                     </MudForm>
                 </MudCardContent>
                 <MudCardActions>
                     <div class="ml-auto">
-                        <MudButton Color="Color.Primary" OnClick="Save" StartIcon="@Icons.Material.Filled.Save">Save</MudButton>
+                        <MudButton Color="Color.Primary" OnClick="Save" StartIcon="@Icons.Material.Filled.Save">Save
+                        </MudButton>
                         @if (!IsCreate)
                         {
-                            <MudButton Color="Color.Secondary" OnClick="CancelEdit" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+                            <MudButton Color="Color.Secondary" OnClick="CancelEdit"
+                                       StartIcon="@Icons.Material.Filled.Cancel">Cancel
+                            </MudButton>
                         }
                     </div>
                 </MudCardActions>
@@ -49,21 +54,24 @@ else
                     <th>Description</th>
                     <td>@(!string.IsNullOrEmpty(Pack?.Description) ? Pack.Description : "-")</td>
                 </tr>
+                <tr>
+                    <th>Published</th>
+                    <td>@(Pack?.IsPublished == true ? "Yes" : "No")</td>
+                </tr>
             </table>
             @if (!string.IsNullOrEmpty(Pack?.ImageUrl))
             {
-                <MudImage ObjectFit="ObjectFit.ScaleDown" Src="@Files.GetFileUrl(Pack.ImageUrl)" Class="rounded-lg" Height="200" />
+                <MudImage ObjectFit="ObjectFit.ScaleDown" Src="@Files.GetFileUrl(Pack.ImageUrl)" Class="rounded-lg"
+                          Height="200"/>
             }
         </MudItem>
     </MudGrid>
 }
 
 @code {
-    [Parameter]
-    public int? PackId { get; set; }
+    [Parameter] public int? PackId { get; set; }
 
-    [Parameter]
-    public Pack? Pack { get; set; }
+    [Parameter] public Pack? Pack { get; set; }
 
     private bool _isEdit;
 
@@ -85,17 +93,17 @@ else
     {
         await _form.Validate();
         if (!_form.IsValid) return;
-        
+
         await using var context = await Repo.CreateDbContext();
 
-        var pack = Pack = PackId != null 
-            ? await context.Packs.FirstAsync(x => x.Id == PackId) 
+        var pack = Pack = PackId != null
+            ? await context.Packs.FirstAsync(x => x.Id == PackId)
             : new Pack();
         pack.Name = _model.Name;
         pack.Description = _model.Description;
 
         await UploadImage(pack);
-        
+
         context.Update(pack);
         await context.SaveChangesAsync();
 
@@ -121,4 +129,5 @@ else
         _model = new PackModel(Pack);
         StateHasChanged();
     }
+
 }

@@ -22,4 +22,6 @@ public class PackModel
 
     [Display(Name = "Description")]
     public string? Description { get; set; }
+
+    public bool IsPublished { get; set; }
 }

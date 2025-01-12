@@ -8,6 +8,8 @@
 
         public string? ImageUrl { get; set; }
 
+        public bool IsPublished { get; set; }
+
         public List<Node> Nodes { get; set; } = [];
 
         public List<NodeLinkType> NodeLinkTypes { get; set; } = [];

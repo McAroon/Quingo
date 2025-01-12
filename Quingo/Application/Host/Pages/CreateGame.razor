@@ -28,7 +28,7 @@
             }
             else
             {
-                <div class="pack-default-image"/>
+                <div class="pack-default-image"></div>
             }
             <MudCardHeader>
                 <CardHeaderContent>
@@ -36,6 +36,10 @@
                 </CardHeaderContent>
             </MudCardHeader>
             <MudCardContent>
+                @if (!pack.IsPublished)
+                {
+                    <MudText Typo="Typo.body2"><i>Draft</i></MudText>
+                }
                 <MudText>@pack.Description</MudText>
             </MudCardContent>
         </MudCard>
@@ -119,6 +123,10 @@
         {
             var auth = await AuthenticationState;
             _userName = auth.User.FindFirstValue(ClaimTypes.Name);
+            if (!auth.User.IsInRole("admin") && !auth.User.IsInRole("editor"))
+            {
+                _packs = _packs.Where(x => x.IsPublished).ToList();
+            }
         }
     }
 
