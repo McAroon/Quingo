@@ -16,10 +16,10 @@
                             <MudNumericField T="int?" Label="Max Difficulty" @bind-Value="_model.MaxDifficulty" Min="@(_model.MinDifficulty ?? 1)" Max="5"/>
                         </MudStack>
                         <MudNumericField @bind-Value="_model.GameTimer" Label="Game Timer"
-                                         HelperText="Game timer in seconds, 0 for no timer" Min="0"/>
-                        <MudNumericField @bind-Value="_model.EndgameTimer" Label="Endgame Timer" Min="0"/>
+                                         HelperText="Game timer in seconds, 0 for no timer" Min="0" Max="60*10"/>
+                        <MudNumericField @bind-Value="_model.EndgameTimer" Label="Endgame Timer" Min="0" Max="60*5"/>
                         <MudNumericField @bind-Value="_model.AutoDrawTimer" Label="Auto Draw Timer"
-                                         HelperText="Auto draw every n seconds, 0 to disable" Min="0"/>
+                                         HelperText="Auto draw every n seconds, 0 to disable" Min="0" Max="60"/>
                         <MudCheckBox @bind-Value="_model.SeparateDrawPerPlayer" Label="Players draw separately"/>
                         <MudCheckBox @bind-Value="_model.SamePlayerCards" Label="Players have same Cards"/>
                         <MudSelect T="PackPresetPattern" Label="Winning Pattern" @bind-Value="@_model.Pattern">
