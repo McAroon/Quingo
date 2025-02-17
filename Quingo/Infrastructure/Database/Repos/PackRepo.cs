@@ -144,6 +144,9 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory, 
             PackNodesOrderBy.CreatedAt => direction == OrderDirection.Ascending
                 ? nodes.OrderBy(x => x.CreatedAt)
                 : nodes.OrderByDescending(x => x.CreatedAt),
+            PackNodesOrderBy.UpdatedAt => direction == OrderDirection.Ascending
+                ? nodes.OrderBy(x => x.UpdatedAt)
+                : nodes.OrderByDescending(x => x.UpdatedAt),
             PackNodesOrderBy.Name => direction == OrderDirection.Ascending
                 ? nodes.OrderBy(x => x.Name)
                 : nodes.OrderByDescending(x => x.Name),
@@ -222,6 +225,7 @@ public class PackRepo(IDbContextFactory<ApplicationDbContext> dbContextFactory, 
 public enum PackNodesOrderBy
 {
     CreatedAt,
+    UpdatedAt,
     Name,
     Image,
     Links,

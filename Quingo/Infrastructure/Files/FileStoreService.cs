@@ -24,19 +24,24 @@ public partial class FileStoreService
 
     public async Task<string> UploadBrowserFile(IBrowserFile file)
     {
-        var filename = $"{Guid.NewGuid():N}_{file.Name}";
-        using var data = file.OpenReadStream();
+        await using var data = file.OpenReadStream();
+        return await UploadFile(file.Name, file.ContentType, data);
+    }
 
+    public async Task<string> UploadFile(string fileName, string contentType, Stream data, string? prefix = null)
+    {
+        var keyPrefix = prefix ?? Guid.NewGuid().ToString("N");
+        var prefixedFileName = $"{keyPrefix}_{fileName}";
         var req = new PutObjectRequest
         {
             BucketName = _fileSettings.Bucket,
-            Key = filename,
+            Key = prefixedFileName,
             InputStream = data,
-            ContentType = file.ContentType,
+            ContentType = contentType,
         };
 
-        var res = await _client.PutObjectAsync(req);
-        return filename;
+        await _client.PutObjectAsync(req);
+        return prefixedFileName;
     }
 
     public string GetFileUrl(string? filename)

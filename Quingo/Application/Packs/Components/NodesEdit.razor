@@ -20,6 +20,7 @@
             <MudSelect T="int?" Label="Order By" @bind-Value="OrderBy" @bind-Value:after="() => OnQueryChange(true)"
                        Adornment="Adornment.End" AdornmentIcon="@OrderDirectionIcon" OnAdornmentClick="OnOrderDirectionClick">
                 <MudSelectItem T="int?" Value="(int)PackNodesOrderBy.CreatedAt">Created Date</MudSelectItem>
+                <MudSelectItem T="int?" Value="(int)PackNodesOrderBy.UpdatedAt">Updated Date</MudSelectItem>
                 <MudSelectItem T="int?" Value="(int)PackNodesOrderBy.Name">Name</MudSelectItem>
                 <MudSelectItem T="int?" Value="(int)PackNodesOrderBy.Image">Image</MudSelectItem>
                 <MudSelectItem T="int?" Value="(int)PackNodesOrderBy.Links">Number of Links</MudSelectItem>
