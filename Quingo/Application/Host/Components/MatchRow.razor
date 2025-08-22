@@ -1,0 +1,82 @@
+﻿<div class="d-flex items-center justify-center gap-2"
+     style="cursor: pointer;"
+     @onclick="Toggle">
+
+
+    <MudText Typo="Typo.body1" Class="d-flex align-items-center gap-2">
+        <MudText Class="font-mono" Color="@GetWinnerColor(P1, P2)">@P1.UserName</MudText>
+
+        <b class="d-flex align-items-center gap-1">
+            <MudText Class="font-mono">@P1.Score</MudText>
+            <span>:</span>
+            <MudText Class="font-mono">@P2.Score</MudText>
+        </b>
+
+        <MudText Class="font-mono" Color="@GetWinnerColor(P2, P1)">@P2.UserName</MudText>
+    </MudText>
+</div>
+
+<MudCollapse Expanded="_open">
+    <MudPaper Class="p-1 mt-1 rounded-2xl" Elevation="2">
+        <MudSimpleTable Dense="true" Class="w-100">
+            <tbody>
+                <tr>
+                    <td colspan="3" class="text-center">
+                        <MudText Class="font-mono d-flex justify-center gap-2">
+                            <MudText Color="@PositiveColor(P1.CellScore)">@P1.CellScore</MudText>
+                            <MudText>Cell Score</MudText>
+                            <MudText Color="@PositiveColor(P2.CellScore)">@P2.CellScore</MudText>
+                        </MudText>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="3" class="text-center">
+                        <MudText Class="font-mono d-flex justify-center gap-2">
+                            <MudText Color="@PenaltyColor(P1.ErrorPenalty)">@P1.ErrorPenalty</MudText>
+                            <MudText>Error Penalty</MudText>
+                            <MudText Color="@PenaltyColor(P2.ErrorPenalty)">@P2.ErrorPenalty</MudText>
+                        </MudText>
+                    </td>
+                </tr>
+
+
+                <tr>
+                    <td colspan="3" class="text-center">
+                        <MudText Class="font-mono d-flex justify-center gap-2">
+                            <MudText Color="@NeutralColor(P1.DrawHistory)">@P1.DrawHistory</MudText>
+                            <MudText>Draw History</MudText>
+                            <MudText Color="@NeutralColor(P2.DrawHistory)">@P2.DrawHistory</MudText>
+                        </MudText>
+                    </td>
+                </tr>
+
+            </tbody>
+        </MudSimpleTable>
+    </MudPaper>
+</MudCollapse>
+
+@code {
+    [Parameter] public TournamentResult P1 { get; set; } = default!;
+    [Parameter] public TournamentResult P2 { get; set; } = default!;
+
+    private bool _open;
+    private void Toggle() => _open = !_open;
+
+    private static int ComparePlayers(TournamentResult a, TournamentResult b)
+    {
+        if (a.CellScore != b.CellScore) return a.CellScore > b.CellScore ? 1 : -1;
+        if (a.ErrorPenalty != b.ErrorPenalty) return a.ErrorPenalty < b.ErrorPenalty ? 1 : -1;
+        if (a.DrawHistory != b.DrawHistory) return a.DrawHistory < b.DrawHistory ? 1 : -1;
+        return 0;
+    }
+
+    private static Color GetWinnerColor(TournamentResult a, TournamentResult b)
+    {
+        return ComparePlayers(a, b) > 0 ? Color.Success : Color.Default;
+    }
+
+    private static Color PositiveColor(int v) => v > 0 ? Color.Success : Color.Default;
+    private static Color PenaltyColor(int v) => v > 0 ? Color.Error : Color.Default;
+    private static Color NeutralColor(int v) => v > 0 ? Color.Info : Color.Default;
+}

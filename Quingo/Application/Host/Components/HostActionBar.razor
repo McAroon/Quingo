@@ -45,12 +45,24 @@
             </MudButton>
         }
     }
-    @if (IsHost && !Game.IsStateActive)
+    @if (!Game.IsStateActive)
     {
-        <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
-                   StartIcon="@Icons.Material.Outlined.Refresh" OnClick="PlayAgain"
-                   Disabled="IsLoading">Play Again
-        </MudButton>
+        if (Game.IsTournament)
+        {
+            <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Outlined.Group" OnClick="GoToLobby"
+                       Disabled="IsLoading">
+                Back to Lobby
+            </MudButton>
+        }
+        else if (IsHost)
+        {
+            <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Outlined.Refresh" OnClick="PlayAgain"
+                       Disabled="IsLoading">
+                Play Again
+            </MudButton>
+        }
     }
 </MudStack>
 
@@ -62,4 +74,12 @@
     [Parameter] public bool IsHost { get; set; }
 
     protected override bool DisableDraw => !IsHost || !Game.HostCanDraw || Game.State is not GameStateEnum.Active;
+
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private void GoToLobby()
+    {
+        if (Game.LobbyId != 0)
+            Navigation.NavigateTo($"/game/tournament/lobby/{Game.LobbyId}");
+    }
 }

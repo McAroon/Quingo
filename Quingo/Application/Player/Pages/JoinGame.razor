@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
 @using Quingo.Shared
+@using System.Text.Json
 
 @inject GameService GameService
 @inject NavigationManager NavigationManager
@@ -10,6 +11,7 @@
 @inject ILogger<JoinGame> Logger
 @inject TempUserStorage Store
 @inject IDialogService DialogService
+@inject TournamentLobbyService LobbyService
 
 @attribute [Authorize]
 
@@ -18,32 +20,64 @@
 <MudText Typo="Typo.h3" GutterBottom>
     Join Game
     <MudTooltip Text="Refresh">
-        <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="StateHasChanged"></MudIconButton>
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="LoadAll" />
     </MudTooltip>
 </MudText>
 
-<MudTable Items="GameService.Games.Where(x => x.IsStateActive)">
+<MudTable Items="_lobbies" Dense="true" Hover="true">
     <HeaderContent>
+        <MudTh>Type</MudTh>
         <MudTh>Pack</MudTh>
         <MudTh>Host</MudTh>
-        <MudTh>Started</MudTh>
         <MudTh>Players</MudTh>
+        <MudTh>Time</MudTh>
         <MudTh>Password</MudTh>
         <MudTh>Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Pack">@context.Pack.Name</MudTd>
-        <MudTd DataLabel="Host">@context.HostName</MudTd>
-        <MudTd DataLabel="Started">@context.StartedAt.FormatWithTimeZone(_timeZone)</MudTd>
-        <MudTd DataLabel="Players">@PlayersFormat(context)</MudTd>
-        <MudTd DataLabel="Password">@(!string.IsNullOrEmpty(context.Options.Password) ? "Yes" : "No")</MudTd>
-        <MudTd DataLabel="Actions">
-            <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => OnJoin(context)"
-                       Disabled="!context.CanJoin(_userId)">Join
-            </MudButton>
-            <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => Spectate(context)"
-                       Disabled="!context.CanSpectate(_userId)">Spectate
-            </MudButton>
+        <MudTd>@(context.IsTournament ? "🏆 Турнир" : "🕹 Игра")</MudTd>
+        <MudTd>@(context.IsTournament? context.Tournament!.PackName : context.Game!.Pack.Name)</MudTd>
+        <MudTd>@(context.IsTournament? context.Tournament!.HostUserName : context.Game!.HostName)</MudTd>
+        <MudTd>
+            @(context.IsTournament
+                        ? $"{context.Tournament!.Participants.Count}/{GetMaxPlayersFromJson(context.Tournament!.PresetJson)}"
+                        : PlayersFormat(context.Game!))
+        </MudTd>
+        <MudTd>
+            @(context.IsTournament
+                        ? context.Tournament!.CreatedAt.ToLocalTime().ToString("g")
+                        : context.Game!.StartedAt.FormatWithTimeZone(_timeZone))
+        </MudTd>
+        <MudTd>
+            @(context.IsTournament
+                        ? "—"
+                        : (!string.IsNullOrWhiteSpace(context.Game!.Options.Password) ? "Yes" : "No"))
+        </MudTd>
+        <MudTd>
+            @if (context.IsTournament)
+            {
+                <MudTooltip Text="Lobby is full or you are already in" Disabled="@CanJoinTournament(context.Tournament!)">
+                    <MudButton Size="Size.Small"
+                               Color="Color.Primary"
+                               Disabled="@(!CanJoinTournament(context.Tournament!))"
+                               OnClick="@(() => JoinTournamentLobby(context.Tournament!.Id))">
+                        Join
+                    </MudButton>
+                </MudTooltip>
+            }
+            else
+            {
+                <MudButton Size="Size.Small" Color="Color.Primary"
+                           Disabled="!context.Game!.CanJoin(_userId)"
+                           OnClick="@(() => OnJoin(context.Game!))">
+                    Join
+                </MudButton>
+                <MudButton Size="Size.Small" Color="Color.Secondary"
+                           Disabled="!context.Game!.CanSpectate(_userId)"
+                           OnClick="@(() => Spectate(context.Game!))">
+                    Spectate
+                </MudButton>
+            }
         </MudTd>
     </RowTemplate>
 </MudTable>
@@ -52,12 +86,18 @@
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
     private string? _userId;
-
     private string? _userName;
-
-    private string PlayersFormat(GameInstance instance) => instance.Preset.MaxPlayers <= 0 ? instance.Players.Count.ToString() : $"{instance.Players.Count}/{instance.Preset.MaxPlayers}";
-
     private string? _timeZone;
+
+    private List<TournamentLobby> _tournamentLobbies = [];
+    private List<LobbyRow> _lobbies = [];
+
+    private record LobbyRow
+    {
+        public bool IsTournament { get; init; }
+        public GameInstance? Game { get; init; }
+        public TournamentLobby? Tournament { get; init; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -71,7 +111,46 @@
             {
                 _timeZone = Store.TryGet(_userId, TempUserStorage.TimeZone, out var tz) ? tz : null;
             }
+
+            await LoadAll();
         }
+    }
+
+    private string PlayersFormat(GameInstance instance) =>
+        instance.Preset.MaxPlayers <= 0
+            ? instance.Players.Count.ToString()
+            : $"{instance.Players.Count}/{instance.Preset.MaxPlayers}";
+
+    private async Task LoadAll()
+    {
+        _tournamentLobbies = await LobbyService.GetActiveLobbies();
+
+        _lobbies = GameService.Games
+            .Where(x => x.IsStateActive)
+            .Select(g => new LobbyRow { Game = g, IsTournament = false })
+            .Concat(_tournamentLobbies
+                .Where(t => t.Participants.Count > 0)
+                .Select(t => new LobbyRow { Tournament = t, IsTournament = true }))
+            .OrderByDescending(x => x.IsTournament)
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    private bool CanJoinTournament(TournamentLobby tournament)
+    {
+        if (_userId is null) return false;
+
+        var presetData = JsonSerializer.Deserialize<PackPresetData>(tournament.PresetJson);
+        bool isAlreadyParticipant = tournament.Participants.Any(p => p.UserId == _userId);
+        bool hasFreeSlots = tournament.Participants.Count < presetData.MaxPlayers;
+
+        return isAlreadyParticipant || hasFreeSlots;
+    }
+
+    private void JoinTournamentLobby(int lobbyId)
+    {
+        NavigationManager.NavigateTo($"/game/tournament/lobby/{lobbyId}");
     }
 
     private async Task OnJoin(GameInstance game)
@@ -139,4 +218,19 @@
         }
     }
 
+    private int GetMaxPlayersFromJson(string? presetJson)
+    {
+        if (string.IsNullOrWhiteSpace(presetJson))
+            return 0;
+
+        try
+        {
+            var preset = JsonSerializer.Deserialize<PackPresetData>(presetJson);
+            return preset?.MaxPlayers ?? 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
 }

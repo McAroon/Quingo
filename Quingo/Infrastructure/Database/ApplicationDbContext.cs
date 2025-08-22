@@ -29,6 +29,9 @@ namespace Quingo.Infrastructure.Database
         public DbSet<IndirectLink> IndirectLinks { get; set; }
         public DbSet<IndirectLinkStep> IndirectLinkSteps { get; set; }
         public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
+        public DbSet<TournamentLobby> TournamentLobbies { get; set; } = default!;
+        public DbSet<LobbyParticipant> LobbyParticipants { get; set; } = default!;
+        public DbSet<TournamentResult> TournamentResults { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -43,6 +46,20 @@ namespace Quingo.Infrastructure.Database
             new EntityBaseConfiguration<PackPreset>().Configure(builder.Entity<PackPreset>());
             new EntityBaseConfiguration<IndirectLink>().Configure(builder.Entity<IndirectLink>());
             new EntityBaseConfiguration<IndirectLinkStep>().Configure(builder.Entity<IndirectLinkStep>());
+            new EntityBaseConfiguration<TournamentLobby>().Configure(builder.Entity<TournamentLobby>());
+            new EntityBaseConfiguration<LobbyParticipant>().Configure(builder.Entity<LobbyParticipant>());
+            new EntityBaseConfiguration<TournamentResult>().Configure(builder.Entity<TournamentResult>());
+
+            builder.Entity<TournamentLobby>()
+                .HasMany(x => x.Participants)
+                .WithOne(x => x.Lobby)
+                .HasForeignKey(x => x.TournamentLobbyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<LobbyParticipant>()
+                .HasOne(x => x.Lobby)
+                .WithMany(x => x.Participants)
+                .HasForeignKey(x => x.TournamentLobbyId);
 
             builder.Entity<Node>().Ignore(e => e.NodeLinks);
             builder.Entity<Node>().Ignore(e => e.LinkedNodes);
@@ -142,6 +159,9 @@ namespace Quingo.Infrastructure.Database
                     }
                     else if (entry.State == EntityState.Deleted && entity.Id > 0)
                     {
+                        if (entry.Entity is LobbyParticipant)
+                            return;
+
                         entity.DeletedAt = DateTime.UtcNow;
                         if (userId != null)
                         {

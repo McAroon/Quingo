@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Quingo.Infrastructure.Database;
@@ -11,9 +12,11 @@ using Quingo.Infrastructure.Database;
 namespace Quingo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250814200856_AddTournamentResults")]
+    partial class AddTournamentResults
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -651,6 +654,9 @@ namespace Quingo.Migrations
                     b.Property<bool>("IsPublished")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsTournament")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
@@ -775,9 +781,6 @@ namespace Quingo.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CellScore")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -790,26 +793,26 @@ namespace Quingo.Migrations
                     b.Property<string>("DeletedByUserId")
                         .HasColumnType("text");
 
-                    b.Property<int>("DrawHistory")
+                    b.Property<int?>("DoneTimer")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ErrorPenalty")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Game")
-                        .HasColumnType("integer");
+                    b.Property<DateTime>("FinishedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("GameSessionId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("LobbyId")
+                    b.Property<int>("LivesLeft")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("Result")
+                    b.Property<int>("LobbyId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Score")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -866,6 +869,9 @@ namespace Quingo.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("MaxPlayers")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PackId")
                         .HasColumnType("integer");
 
@@ -875,12 +881,6 @@ namespace Quingo.Migrations
 
                     b.Property<string>("Password")
                         .HasColumnType("text");
-
-                    b.Property<string>("PresetJson")
-                        .HasColumnType("text");
-
-                    b.Property<int>("TournamentMode")
-                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

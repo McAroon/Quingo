@@ -9,6 +9,7 @@ using MudBlazor.Services;
 using Quingo;
 using Quingo.Application.Core;
 using Quingo.Application.Packs.Services;
+using Quingo.Application.SignalR;
 using Quingo.Components;
 using Quingo.Components.Account;
 using Quingo.Infrastructure;
@@ -17,6 +18,7 @@ using Quingo.Infrastructure.Database.Repos;
 using Quingo.Infrastructure.Files;
 using Quingo.Scripts;
 using Quingo.Shared;
+using Quingo.Shared.Constants;
 using Quingo.Shared.Entities;
 using Serilog;
 
@@ -81,8 +83,11 @@ builder.Services.AddDataProtection()
         .PersistKeysToDbContext<ApplicationDbContext>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddSignalR();
 
 builder.Services.AddSingleton<GameService>();
+builder.Services.AddScoped<TournamentLobbyService>();
+builder.Services.AddScoped<PlayoffService>();
 builder.Services.AddScoped<GenerateStandardBingo>();
 builder.Services.AddSingleton<TempUserStorage>();
 builder.Services.AddScoped<PackRepo>();
@@ -127,7 +132,7 @@ else
 
 app.UseStaticFiles();
 app.UseAntiforgery();
-
+app.MapHub<LobbyHub>(SignalRConstants.LobbyHubPath);
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 //.AddInteractiveWebAssemblyRenderMode()

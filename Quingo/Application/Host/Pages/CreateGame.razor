@@ -3,6 +3,7 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
 @using Quingo.Infrastructure.Database.Repos
+@using Quingo.Shared.Constants
 
 @inject ILogger<CreateGame> Logger
 @inject PackRepo Repo
@@ -10,6 +11,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 @inject FileStoreService Files
+@inject TournamentLobbyService LobbyService
 
 @attribute [Authorize]
 
@@ -63,9 +65,16 @@
                             </MudTooltip>
                         }
                     </MudText>
-                    <PresetEdit Preset="_preset" Pack="_pack" IsEdit="_isPresetEdit" OnSave="SetPresetData"
-                                OnCancelEdit="CancelPresetEdit"/>
+                    <PresetEdit Preset="_preset" Pack="_pack" IsEdit="_isPresetEdit" SelectedTournamentMode="_selectedTournamentMode"
+                        OnSave="SetPresetData"
+                        OnCancelEdit="CancelPresetEdit"/>
                 </div>
+
+                <MudSelect T="TournamentMode" Label="Режим турнира"
+                           @bind-Value="_selectedTournamentMode">
+                    <MudSelectItem Value="TournamentMode.None">Без турнира</MudSelectItem>
+                    <MudSelectItem Value="TournamentMode.Classic">Плей-офф</MudSelectItem>
+                </MudSelect>
             }
 
             <div>
@@ -105,6 +114,8 @@
     private readonly GameOptions _gameOptions = new();
 
     private bool CanStart => _pack != null && !_isPresetEdit && !_isLoading;
+
+    private TournamentMode _selectedTournamentMode = TournamentMode.None;
 
     protected override async Task OnInitializedAsync()
     {
@@ -146,6 +157,25 @@
             ArgumentNullException.ThrowIfNull(_preset, nameof(_preset));
 
             _isLoading = true;
+
+            if (_selectedTournamentMode != TournamentMode.None)
+            {
+                _preset.Data.MaxPlayers = _preset.Data.MaxPlayers != 1 ? _preset.Data.MaxPlayers : 4;
+
+                var lobby = await LobbyService.CreateLobby(
+                    _pack.Id,
+                    _pack.Name,
+                    UserId,
+                    _userName ?? "Unknown",
+                    _gameOptions.Password,
+                    _preset.Data, 
+                    _selectedTournamentMode
+                );
+
+                NavigationManager.NavigateTo($"/game/tournament/lobby/{lobby.Id}");
+                return;
+            }
+            
             var game = await GameService.StartGame(_pack.Id, _preset.Data, _gameOptions, UserId);
             if (_preset.Data.JoinOnCreate)
             {
@@ -182,5 +212,4 @@
         _isPresetEdit = false;
         StateHasChanged();
     }
-
 }
