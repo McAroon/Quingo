@@ -1,0 +1,165 @@
+﻿@using Quingo.Shared.Constants
+<MudGrid>
+    <MudItem xs="12">
+        @if (IsEdit)
+        {
+            <MudCard>
+                <MudCardContent>
+                    <MudForm @ref="@_form">
+                        <MudNumericField @bind-Value="_model.CardSize" @bind-Value:after="OnCardSizeUpdated"
+                                         Label="Card Size" Min="3" Max="5" Required />
+                        @if (SelectedTournamentMode == TournamentMode.Classic)
+                        {
+                            <MudSelect T="int" Label="Number of Players"
+                                       @bind-Value="_model.MaxPlayers"
+                                       Immediate="true"
+                                       Dense="true">
+                                @foreach (var value in new[] { 4, 8, 16, 32, 64, 128 })
+                                {
+                                    <MudSelectItem Value="@value">@value</MudSelectItem>
+                                }
+                            </MudSelect>
+                        }
+                        else
+                        {
+                            <MudNumericField @bind-Value="_model.MaxPlayers" Label="Number of Players"
+                                             HelperText="Max number of players, 0 for unlimited" Min="0" />
+                        }
+                        <MudStack Row>
+                            <MudNumericField T="int?" Label="Min Difficulty" @bind-Value="_model.MinDifficulty" Min="1" Max="@(_model.MaxDifficulty ?? 5)" />
+                            <MudNumericField T="int?" Label="Max Difficulty" @bind-Value="_model.MaxDifficulty" Min="@(_model.MinDifficulty ?? 1)" Max="5" />
+                        </MudStack>
+                        <MudNumericField @bind-Value="_model.GameTimer" Label="Game Timer"
+                                         HelperText="Game timer in seconds, 0 for no timer" Min="0" Max="60 * 10" />
+                        <MudCheckBox @bind-Value="_model.SamePlayerCards" Label="Players have same Cards" />
+                        <MudSelect T="PackPresetScoringRules" MultiSelection Label="Scoring Rules"
+                                   @bind-SelectedValues="@_model.ScoringRules" ToStringFunc="x => x.GetName()">
+                            @foreach (var rule in (PackPresetScoringRules[])
+                                                    [
+                                                    PackPresetScoringRules.CellScore,
+                                                PackPresetScoringRules.PatternBonus,
+                                                PackPresetScoringRules.TimeBonus,
+                                                PackPresetScoringRules.CustomCellScore,
+                                                PackPresetScoringRules.ErrorPenalty,
+                                                PackPresetScoringRules.DrawPenalty,
+                                                ])
+                            {
+                                <MudSelectItem T="PackPresetScoringRules" Value="rule">@rule.GetName()</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudForm>
+                </MudCardContent>
+                <MudCardActions>
+                    <div class="ml-auto">
+                        <MudButton Color="Color.Primary" OnClick="Save" StartIcon="@Icons.Material.Filled.Save">
+                            Save
+                        </MudButton>
+                        <MudButton Color="Color.Secondary" OnClick="CancelEdit"
+                                   StartIcon="@Icons.Material.Filled.Cancel">
+                            Cancel
+                        </MudButton>
+                    </div>
+                </MudCardActions>
+            </MudCard>
+        }
+        else
+        {
+            <MudList T="string" ReadOnly>
+                <MudListItem Text="Card Size" SecondaryText="@_model.CardSize.ToString()"/>
+                <MudListItem Text="Number of Players" SecondaryText="@_model.MaxPlayers.ToString()" />
+                <MudListItem Text="Min Difficulty" SecondaryText="@((_model.MinDifficulty ?? 1).ToString())" />
+                <MudListItem Text="Max Difficulty" SecondaryText="@((_model.MaxDifficulty ?? 5).ToString())" />
+                <MudListItem Text="Game Timer" SecondaryText="@(_model.GameTimer > 0 ? $"{_model.GameTimer} sec" : "-")" />
+                <MudListItem Text="Players have same Cards" SecondaryText="@(_model.SamePlayerCards ? "Yes" : "No")" />
+                <MudListItem Text="Scoring Rules" SecondaryText="@GetScoringRuleNames(_model.ScoringRules)" />
+            </MudList>
+        }
+    </MudItem>
+</MudGrid>
+
+
+@code {
+    [Parameter, EditorRequired] public PackPreset Preset { get; set; } = default!;
+
+    [Parameter] public bool IsEdit { get; set; }
+
+    [Parameter] public Func<PackPresetData, Task>? OnSave { get; set; }
+
+    [Parameter] public Action? OnCancelEdit { get; set; }
+
+    [Parameter, EditorRequired] public Pack Pack { get; set; } = default!;
+
+    [Parameter] public TournamentMode SelectedTournamentMode { get; set; }
+
+    private MudForm _form = default!;
+
+    private PackPresetDataModel _model = default!;
+
+    private readonly int[] _allowedTournamentSizes = [4, 8, 16, 32, 64, 128];
+
+    protected override void OnParametersSet()
+    {
+        _model = new PackPresetDataModel(Preset.Data);
+
+        if (SelectedTournamentMode == TournamentMode.Classic &&
+            !_allowedTournamentSizes.Contains(_model.MaxPlayers))
+        {
+            _model.MaxPlayers = 4;
+        }
+    }
+
+    private void OnCardSizeUpdated()
+    {
+        if (!_model.IsFreeCenterEnabled)
+        {
+            _model.FreeCenter = false;
+        }
+
+        _model.Columns.MatchListSize(_model.CardSize, i => new PackPresetColumnModel(i));
+    }
+
+    private string GetTagsSelectText(IList<string> selected)
+    {
+        return GetTagsSelectText(selected.Select(int.Parse));
+    }
+
+    private string GetTagsSelectText(IEnumerable<int> selected)
+    {
+        var selectedList = selected.ToList();
+        var tags = Pack.Tags.Where(x => selectedList.Contains(x.Id)).Select(x => x.Name).ToList();
+        return tags.Count > 0 ? string.Join(", ", tags) : "-";
+    }
+
+    private string? GetTagName(int tagId) => Pack.Tags.FirstOrDefault(x => x.Id == tagId)?.Name;
+
+    private string GetScoringRuleNames(IEnumerable<PackPresetScoringRules> rules) => string.Join(", ", rules.Select(x => x.GetName()));
+
+    private void OnColumnConfigUpdated(PackPresetColumnModel col)
+    {
+        if (!_model.SingleColumnConfig || _model.Columns.IndexOf(col) != 0) return;
+        foreach (var pCol in _model.Columns.Skip(1))
+        {
+            pCol.QuestionTags = [..col.QuestionTags];
+            pCol.AnswerTags = [..col.AnswerTags];
+            pCol.ExcludeTags = [..col.ExcludeTags];
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task Save()
+    {
+        await _form.Validate();
+        if (_form.IsValid && OnSave != null)
+        {
+            await OnSave(_model.ToData());
+        }
+    }
+
+    private void CancelEdit()
+    {
+        OnCancelEdit?.Invoke();
+        _model = new PackPresetDataModel(Preset.Data);
+        StateHasChanged();
+    }
+}

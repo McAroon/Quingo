@@ -8,8 +8,8 @@
                     <MudForm @ref="@_form">
                         <MudNumericField @bind-Value="_model.CardSize" @bind-Value:after="OnCardSizeUpdated"
                                          Label="Card Size" Min="3" Max="5" Required />
-                        @*<MudCheckBox @bind-Value="_model.FreeCenter" Label="Free Center"
-                                     Disabled="!_model.IsFreeCenterEnabled"/> *@
+                        <MudCheckBox @bind-Value="_model.FreeCenter" Label="Free Center"
+                                     Disabled="!_model.IsFreeCenterEnabled"/> 
                         @if (SelectedTournamentMode == TournamentMode.Classic)
                         {
                             <MudSelect T="int" Label="Number of Players"
@@ -33,19 +33,19 @@
                         </MudStack>
                         <MudNumericField @bind-Value="_model.GameTimer" Label="Game Timer"
                                          HelperText="Game timer in seconds, 0 for no timer" Min="0" Max="60 * 10" />
-                        @* <MudNumericField @bind-Value="_model.EndgameTimer" Label="Endgame Timer" Min="0" Max="60*5"/>
+                         <MudNumericField @bind-Value="_model.EndgameTimer" Label="Endgame Timer" Min="0" Max="60*5"/>
                         <MudNumericField @bind-Value="_model.AutoDrawTimer" Label="Auto Draw Timer"
                                          HelperText="Auto draw every n seconds, 0 to disable" Min="0" Max="60"/>
-                        <MudCheckBox @bind-Value="_model.SeparateDrawPerPlayer" Label="Players draw separately"/> *@
+                        <MudCheckBox @bind-Value="_model.SeparateDrawPerPlayer" Label="Players draw separately"/> 
                         <MudCheckBox @bind-Value="_model.SamePlayerCards" Label="Players have same Cards" />
-                        @* <MudSelect T="PackPresetPattern" Label="Winning Pattern" @bind-Value="@_model.Pattern">
+                         <MudSelect T="PackPresetPattern" Label="Winning Pattern" @bind-Value="@_model.Pattern">
                             <MudSelectItem Value="PackPresetPattern.Lines">Line</MudSelectItem>
                             <MudSelectItem Value="PackPresetPattern.FullCard">Full Card</MudSelectItem>
                         </MudSelect>
                         <MudSelect T="PackPresetMatchRule" Label="Match Rule" @bind-Value="@_model.MatchRule">
                             <MudSelectItem Value="PackPresetMatchRule.Default">Default</MudSelectItem>
                             <MudSelectItem Value="PackPresetMatchRule.LastDrawn">Last Drawn Only</MudSelectItem>
-                        </MudSelect> *@
+                        </MudSelect> 
                         <MudSelect T="PackPresetScoringRules" MultiSelection Label="Scoring Rules"
                                    @bind-SelectedValues="@_model.ScoringRules" ToStringFunc="x => x.GetName()">
                             @foreach (var rule in (PackPresetScoringRules[])
@@ -61,7 +61,7 @@
                                 <MudSelectItem T="PackPresetScoringRules" Value="rule">@rule.GetName()</MudSelectItem>
                             }
                         </MudSelect>
-                        @* <MudCheckBox @bind-Value="_model.EnableCall" Label="Enable Call"/>
+                         <MudCheckBox @bind-Value="_model.EnableCall" Label="Enable Call"/>
                         <MudNumericField @bind-Value="_model.LivesNumber" Label="Number of Lives" Min="0"
                                          Disabled="!_model.EnableCall"/>
                         <MudCheckBox @bind-Value="_model.JoinOnCreate" Label="Host joins Game"/>
@@ -150,7 +150,7 @@
                                     </MudGrid>
                                 </MudExpansionPanel>
                             }
-                        </MudExpansionPanels> *@
+                        </MudExpansionPanels> 
                     </MudForm>
                 </MudCardContent>
                 <MudCardActions>
@@ -170,21 +170,21 @@
         {
             <MudList T="string" ReadOnly>
                 <MudListItem Text="Card Size" SecondaryText="@_model.CardSize.ToString()"/>
-                @*<MudListItem Text="Free Center" SecondaryText="@(_model.FreeCenter ? "Yes" : "No")"/> *@
+                <MudListItem Text="Free Center" SecondaryText="@(_model.FreeCenter ? "Yes" : "No")"/> 
                 <MudListItem Text="Number of Players" SecondaryText="@_model.MaxPlayers.ToString()" />
                 <MudListItem Text="Min Difficulty" SecondaryText="@((_model.MinDifficulty ?? 1).ToString())" />
                 <MudListItem Text="Max Difficulty" SecondaryText="@((_model.MaxDifficulty ?? 5).ToString())" />
                 <MudListItem Text="Game Timer" SecondaryText="@(_model.GameTimer > 0 ? $"{_model.GameTimer} sec" : "-")" />
-                @*                 <MudListItem Text="Endgame Timer" SecondaryText="@(_model.EndgameTimer > 0 ? $"{_model.EndgameTimer} sec" : "-")"/>
+                                 <MudListItem Text="Endgame Timer" SecondaryText="@(_model.EndgameTimer > 0 ? $"{_model.EndgameTimer} sec" : "-")"/>
                 <MudListItem Text="Auto Draw" SecondaryText="@(_model.AutoDrawTimer > 0 ? $"{_model.AutoDrawTimer} sec" : "-")"/>
-                <MudListItem Text="Players draw separately" SecondaryText="@(_model.SeparateDrawPerPlayer ? "Yes" : "No")"/> *@
+                <MudListItem Text="Players draw separately" SecondaryText="@(_model.SeparateDrawPerPlayer ? "Yes" : "No")"/> 
                 <MudListItem Text="Players have same Cards" SecondaryText="@(_model.SamePlayerCards ? "Yes" : "No")" />
-                @* <MudListItem Text="Winning Pattern"
+                 <MudListItem Text="Winning Pattern"
                              SecondaryText="@(_model.Pattern == PackPresetPattern.Lines ? "Line" : "Full Card")"/>
                 <MudListItem Text="Match Rule"
-                             SecondaryText="@(_model.MatchRule == PackPresetMatchRule.Default ? "Default" : "Last Drawn Only")"/> *@
+                             SecondaryText="@(_model.MatchRule == PackPresetMatchRule.Default ? "Default" : "Last Drawn Only")"/> 
                 <MudListItem Text="Scoring Rules" SecondaryText="@GetScoringRuleNames(_model.ScoringRules)" />
-                @* <MudListItem Text="Enable Call" SecondaryText="@(_model.EnableCall ? "Yes" : "No")"/>
+                 <MudListItem Text="Enable Call" SecondaryText="@(_model.EnableCall ? "Yes" : "No")"/>
                 <MudListItem Text="Number of Lives"
                              SecondaryText="@(_model.EnableCall ? _model.LivesNumber.ToString() : "-")"/>
                 <MudListItem Text="Host joins Game" SecondaryText="@(_model.JoinOnCreate ? "Yes" : "No")"/>
@@ -210,7 +210,7 @@
                             </MudListItem>
                         </NestedList>
                     </MudListItem>
-                } *@
+                } 
             </MudList>
         }
     </MudItem>
