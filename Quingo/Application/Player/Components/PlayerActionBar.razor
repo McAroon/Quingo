@@ -98,12 +98,24 @@
             </MudHidden>
         </MudBreakpointProvider>
     }
-    @if (ShowHostControls && !Game.IsStateActive)
+    @if (!Game.IsStateActive)
     {
-        <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
-                   StartIcon="@Icons.Material.Outlined.Refresh" OnClick="PlayAgain"
-                   Disabled="IsLoading">Play Again
-        </MudButton>
+        if (Game.IsTournament)
+        {
+            <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Outlined.Group" OnClick="GoToLobby"
+                       Disabled="IsLoading">
+                Back to Lobby
+            </MudButton>
+        }
+        else if (ShowHostControls)
+        {
+            <MudButton Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Outlined.Refresh" OnClick="PlayAgain"
+                       Disabled="IsLoading">
+                Play Again
+            </MudButton>
+        }
     }
 </MudStack>
 
@@ -127,6 +139,14 @@
     private bool ShowHostControls => Player.IsHost || _user?.IsInRole("admin") == true;
 
     private ClaimsPrincipal? _user;
+
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private void GoToLobby()
+    {
+        if (Game.LobbyId != 0)
+            Navigation.NavigateTo($"/game/tournament/lobby/{Game.LobbyId}");
+    }
 
     protected override async Task OnInitializedAsync()
     {

@@ -35,7 +35,8 @@ public class GameService : IDisposable
         _userTracker = userTracker;
     }
 
-    public async Task<GameInstance> StartGame(int packId, PackPresetData preset, GameOptions options, string userId)
+    public async Task<GameInstance> StartGame(int packId, PackPresetData preset, GameOptions options, string userId,
+        int? lobbyId = null, bool isTournament = false)
     {
         try
         {
@@ -66,7 +67,7 @@ public class GameService : IDisposable
 
             var sessionId = Guid.NewGuid();
 
-            var game = new GameInstance(sessionId, pack, preset, userId, user.UserName, _userTracker, options);
+            var game = new GameInstance(sessionId, pack, preset, userId, user.UserName, _userTracker, options, lobbyId, isTournament);
             if (!_state.TryAdd(sessionId, game))
             {
                 throw new GameException("Error creating game");

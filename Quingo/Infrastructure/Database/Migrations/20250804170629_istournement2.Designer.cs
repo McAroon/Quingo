@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Quingo.Infrastructure.Database;
@@ -11,9 +12,11 @@ using Quingo.Infrastructure.Database;
 namespace Quingo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250804170629_istournement2")]
+    partial class istournement2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,64 +24,6 @@ namespace Quingo.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("LobbyParticipant", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsReady")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TournamentLobbyId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("DeletedAt");
-
-                    b.HasIndex("DeletedByUserId");
-
-                    b.HasIndex("TournamentLobbyId");
-
-                    b.HasIndex("UpdatedByUserId");
-
-                    b.ToTable("LobbyParticipants");
-                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
@@ -651,6 +596,9 @@ namespace Quingo.Migrations
                     b.Property<bool>("IsPublished")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsTournament")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
@@ -765,169 +713,6 @@ namespace Quingo.Migrations
                     b.HasIndex("UpdatedByUserId");
 
                     b.ToTable("Tags");
-                });
-
-            modelBuilder.Entity("Quingo.Shared.Entities.TournamentResult", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CellScore")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<int>("DrawHistory")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ErrorPenalty")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Game")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("GameSessionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("LobbyId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("Result")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Score")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("DeletedAt");
-
-                    b.HasIndex("DeletedByUserId");
-
-                    b.HasIndex("UpdatedByUserId");
-
-                    b.ToTable("TournamentResults");
-                });
-
-            modelBuilder.Entity("TournamentLobby", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("HostUserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("HostUserName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("PackId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("PackName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Password")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PresetJson")
-                        .HasColumnType("text");
-
-                    b.Property<int>("TournamentMode")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedByUserId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("DeletedAt");
-
-                    b.HasIndex("DeletedByUserId");
-
-                    b.HasIndex("UpdatedByUserId");
-
-                    b.ToTable("TournamentLobbies");
-                });
-
-            modelBuilder.Entity("LobbyParticipant", b =>
-                {
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId");
-
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedByUserId");
-
-                    b.HasOne("TournamentLobby", "Lobby")
-                        .WithMany("Participants")
-                        .HasForeignKey("TournamentLobbyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedByUserId");
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("Lobby");
-
-                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1498,48 +1283,6 @@ namespace Quingo.Migrations
                     b.Navigation("UpdatedByUser");
                 });
 
-            modelBuilder.Entity("Quingo.Shared.Entities.TournamentResult", b =>
-                {
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId");
-
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedByUserId");
-
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedByUserId");
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("UpdatedByUser");
-                });
-
-            modelBuilder.Entity("TournamentLobby", b =>
-                {
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId");
-
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedByUserId");
-
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedByUserId");
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("UpdatedByUser");
-                });
-
             modelBuilder.Entity("Quingo.Shared.Entities.IndirectLink", b =>
                 {
                     b.Navigation("Steps");
@@ -1579,11 +1322,6 @@ namespace Quingo.Migrations
                     b.Navigation("IndirectLinksTo");
 
                     b.Navigation("NodeTags");
-                });
-
-            modelBuilder.Entity("TournamentLobby", b =>
-                {
-                    b.Navigation("Participants");
                 });
 #pragma warning restore 612, 618
         }

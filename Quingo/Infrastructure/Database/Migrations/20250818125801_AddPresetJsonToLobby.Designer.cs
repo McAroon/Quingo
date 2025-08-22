@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Quingo.Infrastructure.Database;
@@ -11,9 +12,11 @@ using Quingo.Infrastructure.Database;
 namespace Quingo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250818125801_AddPresetJsonToLobby")]
+    partial class AddPresetJsonToLobby
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -775,9 +778,6 @@ namespace Quingo.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CellScore")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -789,12 +789,6 @@ namespace Quingo.Migrations
 
                     b.Property<string>("DeletedByUserId")
                         .HasColumnType("text");
-
-                    b.Property<int>("DrawHistory")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ErrorPenalty")
-                        .HasColumnType("integer");
 
                     b.Property<int>("Game")
                         .HasColumnType("integer");
@@ -866,6 +860,9 @@ namespace Quingo.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("MaxPlayers")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PackId")
                         .HasColumnType("integer");
 
@@ -878,9 +875,6 @@ namespace Quingo.Migrations
 
                     b.Property<string>("PresetJson")
                         .HasColumnType("text");
-
-                    b.Property<int>("TournamentMode")
-                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

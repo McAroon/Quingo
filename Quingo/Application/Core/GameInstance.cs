@@ -1,14 +1,15 @@
-﻿using System.Collections.ObjectModel;
-using Quingo.Infrastructure;
+﻿using Quingo.Infrastructure;
 using Quingo.Shared.Entities;
 using Quingo.Shared.Models;
+using System.Collections.ObjectModel;
 
 namespace Quingo.Application.Core;
 
 public class GameInstance : IDisposable
 {
     public GameInstance(Guid gameSessionId, Pack pack, PackPresetData preset, string hostUserId,
-        string? hostName, UserConnectionTracker userTracker, GameOptions options)
+        string? hostName, UserConnectionTracker userTracker, GameOptions options,
+        int? lobbyId = null, bool isTournament = false)
     {
         GameSessionId = gameSessionId;
         PackId = pack.Id;
@@ -18,6 +19,8 @@ public class GameInstance : IDisposable
         HostName = hostName;
         UserTracker = userTracker;
         Options = options;
+        LobbyId = lobbyId;
+        IsTournament = isTournament;
 
         StartedAt = UpdatedAt = DateTime.UtcNow;
         State = GameStateEnum.Init;
@@ -69,6 +72,9 @@ public class GameInstance : IDisposable
     private CardPattern _bingoPattern = default!;
 
     private GameStateEnum _state;
+
+    public int? LobbyId { get; private set; }
+    public bool IsTournament { get; private set; }
 
     public GameStateEnum State
     {
