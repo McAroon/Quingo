@@ -116,6 +116,7 @@
         }
 
         _model.Columns.MatchListSize(_model.CardSize, i => new PackPresetColumnModel(i));
+        OnColumnConfigUpdated(_model.Columns.First());
     }
 
     private string GetTagsSelectText(IList<string> selected)
