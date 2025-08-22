@@ -9,6 +9,7 @@ using Quingo.Components.Account.Pages.Manage;
 using Quingo.Shared.Entities;
 using System.Security.Claims;
 using System.Text.Json;
+using Quingo.Components.Account;
 
 namespace Microsoft.AspNetCore.Routing
 {
@@ -41,10 +42,15 @@ namespace Microsoft.AspNetCore.Routing
             });
 
             accountGroup.MapPost("/Logout", async (
+                HttpContext context,
                 ClaimsPrincipal user,
                 SignInManager<ApplicationUser> signInManager,
                 [FromForm] string returnUrl) =>
             {
+                if (user.Identity?.AuthenticationType == GuestSignInManager.AuthenticationScheme)
+                {
+                    await context.SignOutAsync(GuestSignInManager.AuthenticationScheme);
+                }
                 await signInManager.SignOutAsync();
                 return TypedResults.LocalRedirect($"~/{returnUrl}");
             });
