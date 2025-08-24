@@ -1,4 +1,5 @@
-﻿using Quingo.Infrastructure.Database;
+﻿using Microsoft.EntityFrameworkCore;
+using Quingo.Infrastructure.Database;
 using Quingo.Shared.Entities;
 
 namespace Quingo.Scripts;
@@ -14,6 +15,9 @@ public class GenerateStandardBingo
 
     public async Task Execute()
     {
+        var existing = await _context.Packs.FirstOrDefaultAsync(x => x.Name == "Bingo 75");
+        if (existing != null) return;
+        
         var pack = new Pack
         {
             Name = "Bingo 75",
@@ -31,10 +35,46 @@ public class GenerateStandardBingo
                 new("AG"),
                 new("AO"),
             ],
-            NodeLinkTypes = [new() {Name = "default"}]
+            NodeLinkTypes = [new() {Name = "default"}],
+            IsPublished = true,
         };
 
         _context.Add(pack);
+        await _context.SaveChangesAsync();
+
+        var preset = new PackPreset
+        {
+            Data = new PackPresetData
+            {
+                CardSize = 5,
+                FreeCenter = true,
+                LivesNumber = 3,
+                MaxPlayers = 0,
+                GameTimer = 0,
+                EndgameTimer = 20,
+                AutoDrawTimer = 0,
+                SeparateDrawPerPlayer = false,
+                SamePlayerCards = false,
+                ShowTagBadges = false,
+                EnableCall = true,
+                Pattern = PackPresetPattern.Lines,
+                MatchRule = PackPresetMatchRule.Default,
+                ScoringRules = PackPresetScoringRules.CellScore | PackPresetScoringRules.PatternBonus | PackPresetScoringRules.ErrorPenalty,
+                JoinOnCreate = true,
+                SingleColumnConfig = false,
+                Columns =
+                [
+                    CreatePresetColumn("B", pack),
+                    CreatePresetColumn("I", pack),
+                    CreatePresetColumn("N", pack),
+                    CreatePresetColumn("G", pack),
+                    CreatePresetColumn("O", pack),
+                ]
+            }
+        };
+        
+        pack.Presets = [preset];
+        await _context.SaveChangesAsync();
 
         for (int i = 1; i <= 75; i++)
         {
@@ -93,6 +133,22 @@ public class GenerateStandardBingo
             var n when n >= 46 && n <= 60 => "G",
             var n when n >= 61 && n <= 75 => "O",
             _ => throw new ArgumentOutOfRangeException(nameof(num))
+        };
+    }
+
+    private PackPresetColumn CreatePresetColumn(string name, Pack pack)
+    {
+        return new PackPresetColumn
+        {
+            Name = name,
+            QuestionTags = [pack.Tags.First(x => x.Name == name).Id],
+            ColAnswerTags =
+            [
+                new PackPresetTag
+                {
+                    TagId = pack.Tags.First(x => x.Name == $"A{name}").Id
+                }
+            ]
         };
     }
 }

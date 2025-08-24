@@ -5,6 +5,8 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.AspNetCore.Hosting;
+@using Microsoft.Extensions.Hosting;
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
@@ -13,6 +15,7 @@
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject IWebHostEnvironment Env
 
 <PageTitle>Register</PageTitle>
 
@@ -83,6 +86,15 @@
         {
             identityErrors = result.Errors;
             return;
+        }
+        
+        if (Env.IsDevelopment())
+        {
+            var count = await UserManager.Users.CountAsync();
+            if (count <= 1)
+            {
+                await UserManager.AddToRoleAsync(user, "admin");
+            }
         }
 
         Logger.LogInformation("User created a new account with password.");

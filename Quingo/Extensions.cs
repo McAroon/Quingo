@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using Microsoft.AspNetCore.Identity;
+using Quingo.Scripts;
 using TimeZoneConverter;
 
 namespace Quingo;
@@ -18,21 +19,34 @@ public static class Extensions
         }
     }
 
-    public static async Task EnsureRolesCreated(this WebApplication app)
+    public static async Task SeedData(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
-
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        await EnsureRoleCreated("admin");
-        await EnsureRoleCreated("editor");
+        
+        await EnsureRolesCreated(scope);
+        await GenerateStandardBingo(scope);
         return;
 
-        async Task EnsureRoleCreated(string role)
+        async Task EnsureRolesCreated(IServiceScope serviceScope)
         {
-            var exRole = await roleManager.FindByNameAsync(role);
-            if (exRole != null) return;
+            var roleManager = serviceScope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            await EnsureRoleCreated("admin");
+            await EnsureRoleCreated("editor");
+            return;
 
-            await roleManager.CreateAsync(new IdentityRole { Name = role });
+            async Task EnsureRoleCreated(string role)
+            {
+                var exRole = await roleManager.FindByNameAsync(role);
+                if (exRole != null) return;
+
+                await roleManager.CreateAsync(new IdentityRole { Name = role });
+            }
+        }
+
+        async Task GenerateStandardBingo(IServiceScope serviceScope)
+        {
+            var script = serviceScope.ServiceProvider.GetRequiredService<GenerateStandardBingo>();
+            await script.Execute();
         }
     }
 

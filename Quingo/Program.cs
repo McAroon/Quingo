@@ -54,7 +54,7 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("QuingoDB") ?? throw new InvalidOperationException("Connection string 'QuingoDB' not found.");
 builder.Services.AddPooledDbContextFactory<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(connectionString);
@@ -67,6 +67,7 @@ builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+builder.EnrichNpgsqlDbContext<ApplicationDbContext>();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
 {
@@ -118,8 +119,11 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseWebAssemblyDebugging();
     app.UseMigrationsEndPoint();
+    
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    context.Database.Migrate();
 }
 else
 {
@@ -140,12 +144,6 @@ app.MapRazorComponents<App>()
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
 
-app.MapGet("/scripts/generate-bingo", async (GenerateStandardBingo script) =>
-{
-    await script.Execute();
-    return Results.Ok();
-});
-
-await app.EnsureRolesCreated();
+await app.SeedData();
 
 app.Run();

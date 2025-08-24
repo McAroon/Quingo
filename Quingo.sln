@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Quingo", "Quingo\Quingo.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Quingo.Shared", "Quingo.Shared\Quingo.Shared.csproj", "{ADFB9AF1-A645-4762-A4C5-F9B682B4F233}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quingo.AppHost", "Quingo.AppHost\Quingo.AppHost.csproj", "{0B9832EA-7194-4822-98F3-8B8726AD85C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{ADFB9AF1-A645-4762-A4C5-F9B682B4F233}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ADFB9AF1-A645-4762-A4C5-F9B682B4F233}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ADFB9AF1-A645-4762-A4C5-F9B682B4F233}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B9832EA-7194-4822-98F3-8B8726AD85C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B9832EA-7194-4822-98F3-8B8726AD85C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B9832EA-7194-4822-98F3-8B8726AD85C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B9832EA-7194-4822-98F3-8B8726AD85C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
