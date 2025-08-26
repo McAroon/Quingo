@@ -8,4 +8,5 @@ public class SignalRConstants
     public const string LeaveLobbyGroup = "LeaveLobbyGroup";
     public const string LobbyUpdated = "LobbyUpdated";
     public const string LobbyClosed = "LobbyClosed";
+    public const string LobbyRestarted = "LobbyRestarted";
 }
