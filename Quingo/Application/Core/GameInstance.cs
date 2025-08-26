@@ -160,10 +160,14 @@ public class GameInstance : IDisposable
         SetState(GameStateEnum.Active);
     }
 
-    public bool CanJoin(string? playerId) => Preset.MaxPlayers <= 0
-                                             || Players.Count < Preset.MaxPlayers
-                                             || (!string.IsNullOrEmpty(playerId) &&
-                                                 Players.FirstOrDefault(x => x.PlayerUserId == playerId) != null);
+    public bool CanJoin(string? playerId)
+    {
+        var s = Preset.MaxPlayers <= 0 || Players.Count < Preset.MaxPlayers 
+            || (!string.IsNullOrEmpty(playerId)
+            && Players.FirstOrDefault(x => x.PlayerUserId == playerId) != null);
+
+        return s;
+    }
 
     private void Setup()
     {
@@ -216,7 +220,8 @@ public class GameInstance : IDisposable
 
     public bool CanSpectate(string? userId)
     {
-        return !string.IsNullOrEmpty(userId) && Players.FirstOrDefault(x => x.PlayerUserId == userId) == null;
+        var s = !string.IsNullOrEmpty(userId) && Players.FirstOrDefault(x => x.PlayerUserId == userId) == null;
+        return s;
     }
 
     public void Spectate(ApplicationUserInfo user)

@@ -1,6 +1,7 @@
 ﻿@page "/game/tournament/lobby/{LobbyId:int}"
 
 @using Microsoft.AspNetCore.SignalR.Client
+@using Quingo.Application.Player.Components
 @using Quingo.Infrastructure.Database.Repos
 @using Quingo.Shared.Constants
 @using System.Security.Claims
@@ -13,6 +14,7 @@
 @inject AuthenticationStateProvider AuthProvider
 @inject GameService GameService
 @inject PackRepo Repo
+@inject IDialogService DialogService
 
 <MudText Typo="Typo.h4">Турнирное Лобби #@LobbyId</MudText>
 
@@ -24,7 +26,7 @@ else
 {
     <MudText Typo="Typo.h6">Пак: @_lobby.PackName</MudText>
 
-    @if (GetFinalWinnerByMaxGame() is TournamentResult winner)
+    @if (GetPodium() is var podium && podium.First is not null)
     {
         @if (_isHost)
         {
@@ -32,6 +34,11 @@ else
                        Color="Color.Error"
                        Class="mt-2 mb-2">
                 Закрыть лобби
+            </MudButton>
+            <MudButton Color="Color.Warning"
+                       Class="mt-2 mb-2"
+                       OnClick="RestartTournament">
+                🔁 Начать заново
             </MudButton>
         }
         else
@@ -42,9 +49,21 @@ else
                 Покинуть лобби
             </MudButton>
         }
+
         <MudText Typo="Typo.h5" Color="Color.Success" Align="Align.Center">
-            🏆 Победитель турнира: <b>@winner.UserName</b>
+            🏆 Победитель турнира: <b>@podium.First!.UserName</b>
         </MudText>
+
+        <MudStack Class="mt-2" Spacing="1">
+            @if (podium.Second is not null)
+            {
+                <MudText Typo="Typo.subtitle1">🥈 2 место — @podium.Second!.UserName</MudText>
+            }
+            @if (podium.Third is not null)
+            {
+                <MudText Typo="Typo.subtitle1">🥉 3 место — @podium.Third!.UserName</MudText>
+            }
+        </MudStack>
     }
     else
     {
@@ -90,8 +109,21 @@ else
                    Class="mt-2 mb-2">
             @(CurrentUserIsReady ? "Я не готов" : "Я готов")
         </MudButton>
+        if (_currentGame is not null)
+        {
+            <MudButton Size="Size.Small" Color="Color.Primary"
+                       Disabled="!_currentGame!.CanJoin(_userId)"
+                       OnClick="@(() => OnJoin(_currentGame!))">
+                Join
+            </MudButton>
+            <MudButton Size="Size.Small" Color="Color.Secondary"
+                       Disabled="!_currentGame!.CanSpectate(_userId)"
+                       OnClick="@(() => Spectate(_currentGame!))">
+                Spectate
+            </MudButton>
+        }
 
-        @if (_isHost)
+        if (_isHost)
         {
             <MudButton OnClick="CloseLobby"
                        Color="Color.Error"
@@ -113,6 +145,14 @@ else
                        OnClick="OnStartGame">
                 Начать игру
             </MudButton>
+            <MudTooltip Text="Ожидаем нужное количество участников" Disabled="EnoughPlayers">
+                <MudButton Color="Color.Warning"
+                           Class="mt-2 mb-2"
+                           Disabled="@(!EnoughPlayers)"
+                           OnClick="OnStartGame">
+                    Принудительно начать игру
+                </MudButton>
+            </MudTooltip>
         }
         else
         {
@@ -124,7 +164,7 @@ else
         }
     }
 
-    @if (!_historyByGame.Any())
+    if (!_historyByGame.Any())
     {
         <MudText Typo="Typo.h6" Class="mt-4">
             Участников: @_lobby.Participants.Count / @_preset.Data.MaxPlayers
@@ -170,15 +210,36 @@ else
         </MudTable>
     }
 
-    @if (_historyByGame.Any())
+    if (_historyByGame.Any())
     {
         <MudText Typo="Typo.h6" Class="mt-4">История матчей</MudText>
 
-        foreach (var group in _historyByGame)
+        var semiKey = _historyByGame.Keys
+            .Where(k => k > 0)
+            .OrderByDescending(k => k)
+            .FirstOrDefault(k => _historyByGame[k].Count == 4);
+
+        int Rank(KeyValuePair<int, List<TournamentResult>> g)
+        {
+            if (semiKey == 0)
+                return g.Key == 0 ? int.MaxValue : g.Key;
+
+            if (g.Key > 0 && g.Key <= semiKey)
+                return g.Key;
+
+            if (g.Key == 0)
+                return semiKey + 1;
+
+            return semiKey + 2 + (g.Key - semiKey);
+        }
+
+        var orderedGroups = _historyByGame.OrderBy(Rank);
+
+        @foreach (var group in orderedGroups)
         {
             <MudTable T="TournamentResult" Items="group.Value" Dense="true" Hover="true" Class="mb-4">
                 <HeaderContent>
-                    <MudTh Style="width: 100px; text-align: center;">@GetRoundLabel(group.Value.Count)</MudTh>
+                    <MudTh Style="width: 100px; text-align: center;">@GetRoundLabel(group.Value.Count, isThirdPlace: group.Key == 0)</MudTh>
                     <MudTh Style="width: 100px; text-align: center;">Примечание</MudTh>
                 </HeaderContent>
                 <RowTemplate>
@@ -203,8 +264,64 @@ else
         }
     }
 
-    @if (GetDrawPairs().Count == 0 && GetNextRoundPairs().Any())
+    @if (GetThirdPlacePairs().Any())
     {
+        <MudText Typo="Typo.h6" Class="mt-4">Матч за 3-е место</MudText>
+
+        <MudTable T="TournamentResult" Dense="true" Hover="true" Class="mb-4"
+                  Items="GetThirdPlacePairs().SelectMany(p => new[] { p.Player1, p.Player2 })">
+            <HeaderContent>
+                <MudTh Style="width: 100px; text-align: center;"></MudTh>
+                <MudTh Style="width: 100px; text-align: center;">
+                    Раунд: @GetRoundLabel(2, isThirdPlace: true)
+                </MudTh>
+                <MudTh Style="width: 100px; text-align: center;"></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                @{
+                    var flat = GetThirdPlacePairs().SelectMany(p => new[] { p.Player1, p.Player2 }).ToList();
+                    var index = flat.IndexOf(context);
+                    var p1 = context;
+                    var p2 = flat.ElementAtOrDefault(index + 1);
+                }
+                @if (index % 2 == 0 && p2 is not null)
+                {
+                    var lp1 = _lobby.Participants.FirstOrDefault(p => p.UserId == p1.UserId);
+                    var lp2 = _lobby.Participants.FirstOrDefault(p => p.UserId == (p2?.UserId ?? string.Empty));
+
+                    <MudTd Style="text-align: center;">
+                        @if (lp1 is not null)
+                        {
+                            var icon1 = GetIconStatus(lp1);
+                            <MudIcon Icon="@Icons.Material.Filled.Circle"
+                                     Size="Size.Small"
+                                     Color="@icon1.Color"
+                                     Class="@(icon1.Blinking ? "blinking-icon" : null)" />
+                        }
+                    </MudTd>
+
+                    <MudTd Style="text-align: center;">
+                        <MudText Typo="Typo.body1">@p1.UserName <b>vs</b> @p2.UserName</MudText>
+                    </MudTd>
+
+                    <MudTd Style="text-align: center;">
+                        @if (lp2 is not null)
+                        {
+                            var icon2 = GetIconStatus(lp2);
+                            <MudIcon Icon="@Icons.Material.Filled.Circle"
+                                     Size="Size.Small"
+                                     Color="@icon2.Color"
+                                     Class="@(icon2.Blinking ? "blinking-icon" : null)" />
+                        }
+                    </MudTd>
+                }
+            </RowTemplate>
+        </MudTable>
+    }
+
+    if (GetDrawPairs().Count == 0 && GetNextRoundPairs().Any() && !GetThirdPlacePairs().Any())
+    {
+        var game = GameService.Games.Where(x => x.IsStateActive);
         <MudText Typo="Typo.h6" Class="mt-4">Следующий раунд</MudText>
 
         <MudTable T="TournamentResult" Dense="true" Hover="true" Class="mb-4" 
@@ -223,7 +340,6 @@ else
                     var p1 = context;
                     var p2 = list.ElementAtOrDefault(index + 1);
                 }
-
                 @if (index % 2 == 0 && p2 is not null)
                 {
                     var lp1 = _lobby.Participants.FirstOrDefault(p => p.UserId == p1.UserId);
@@ -262,7 +378,7 @@ else
         </MudTable>
     }
 
-    @if (GetDrawPairs().Any())
+    if (GetDrawPairs().Any())
     {
     <MudText Typo="Typo.h6" Class="mt-4">Переигровка (Ничья)</MudText>
 
@@ -284,7 +400,6 @@ else
             {
                 var lp1 = _lobby.Participants.FirstOrDefault(p => p.UserId == p1.UserId);
                 var lp2 = _lobby.Participants.FirstOrDefault(p => p.UserId == (p2?.UserId ?? string.Empty));
-
                 <MudTd Style="text-align: center;">
                     @if (lp1 is not null)
                     {
@@ -322,19 +437,21 @@ else
     [Parameter] public int LobbyId { get; set; }
     private TournamentLobby? _lobby;
     private PackPreset? _preset = new PackPreset();
-    private string? _currentUserId;
-    private string? _currentUserName;
+    private string? _userId;
+    private string? _userName;
     private HubConnection? _hubConnection;
     private bool _loading = true;
-    private bool _isHost => _lobby?.HostUserId == _currentUserId;
+    private bool _isHost => _lobby?.HostUserId == _userId;
     private Dictionary<string, int> _playerScores = new();
     private List<MatchHistoryVm> MatchHistory = new();
-    public record IconStatus(Color Color, bool Blinking);
+    private record IconStatus(Color Color, bool Blinking);
     private Dictionary<int, List<TournamentResult>> _historyByGame = new();
     private bool _isPresetEdit;
     private bool _showPresetBlock = false;
+    private Guid? _sessionId;
+    private GameInstance? _currentGame;
 
-    public class PlayerPair
+    private class PlayerPair
     {
         public LobbyParticipant? Player1 { get; set; }
         public LobbyParticipant? Player2 { get; set; }
@@ -399,7 +516,7 @@ else
     {
         get
         {
-            if (_lobby is null || string.IsNullOrWhiteSpace(_currentUserId))
+            if (_lobby is null || string.IsNullOrWhiteSpace(_userId))
                 return false;
 
             if (_historyByGame.Count == 0)
@@ -414,14 +531,14 @@ else
                 .ToHashSet();
 
             if (drawPlayers.Count > 0)
-                return drawPlayers.Contains(_currentUserId);
+                return drawPlayers.Contains(_userId);
 
             var winners = results
                 .Where(r => r.Result == GameResult.Win)
                 .Select(r => r.UserId)
                 .ToHashSet();
 
-            return winners.Contains(_currentUserId);
+            return winners.Contains(_userId);
         }
     }
 
@@ -431,7 +548,7 @@ else
             .ToList() ?? new List<LobbyParticipant>();
 
     private bool CurrentUserIsReady => _lobby?.Participants
-        .FirstOrDefault(p => p.UserId == _currentUserId)?.IsReady == true;
+        .FirstOrDefault(p => p.UserId == _userId)?.IsReady == true;
 
     private List<PlayerPair> PairedParticipants
     {
@@ -460,10 +577,10 @@ else
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthProvider.GetAuthenticationStateAsync();
-        _currentUserId = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        _currentUserName = auth.User.Identity?.Name ?? "Unknown";
+        _userId = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        _userName = auth.User.FindFirstValue(ClaimTypes.Name);
 
-        if (string.IsNullOrWhiteSpace(_currentUserId))
+        if (string.IsNullOrWhiteSpace(_userId))
         {
             Snackbar.Add("Ошибка авторизации. Пожалуйста, перезайдите.", Severity.Error);
             NavigationManager.NavigateTo("/game/play");
@@ -485,8 +602,16 @@ else
         _hubConnection.On("TournamentUpdated", async () =>
         {
             _historyByGame = await PlayoffService.GetTournamentHistoryAsync(LobbyId);
+            _sessionId = await PlayoffService.GetSessionIdAsync(LobbyId);
+            _currentGame = GameService.Games.FirstOrDefault(g => g.GameSessionId == _sessionId);
             _lobby = await LobbyService.GetLobbyById(LobbyId);
             await InvokeAsync(StateHasChanged);
+        });
+
+        _hubConnection.On<int>("LobbyRestarted", async (newLobbyId) =>
+        {
+            Snackbar.Add("Турнир был перезапущен. Перенаправляем в новое лобби...", Severity.Info);
+            NavigationManager.NavigateTo($"/game/tournament/lobby/{newLobbyId}", forceLoad: true);
         });
 
 
@@ -494,34 +619,48 @@ else
         {
             try
             {
-                var drawPlayers = await PlayoffService.GetDrawPlayersOfLastRoundAsync(LobbyId);
-
                 List<TournamentResult> nextRoundPlayers;
 
-                if (drawPlayers.Any())
+                var thirdPairs = GetThirdPlacePairs();
+                if (thirdPairs.Any())
                 {
-                    nextRoundPlayers = drawPlayers;
+                    var (p1, p2) = thirdPairs.First();
+                    nextRoundPlayers = new() { p1, p2 };
 
-                    if (!nextRoundPlayers.Any(p => p.UserId == _currentUserId))
+                    if (!nextRoundPlayers.Any(p => p.UserId == _userId))
                     {
-                        Snackbar.Add("Начались дополнительные матчи для ничьих. Ожидайте следующий раунд.", Severity.Info);
+                        Snackbar.Add("Идёт матч за 3-е место. Ожидайте завершения.", Severity.Info);
                         return;
                     }
                 }
                 else
                 {
-                    nextRoundPlayers = await PlayoffService.GetWinnersOfLastRoundAsync(LobbyId);
+                    var drawPlayers = await PlayoffService.GetDrawPlayersOfLastRoundAsync(LobbyId);
+
+                    if (drawPlayers.Any())
+                    {
+                        nextRoundPlayers = drawPlayers;
+
+                        if (!nextRoundPlayers.Any(p => p.UserId == _userId))
+                        {
+                            Snackbar.Add("Начались дополнительные матчи для ничьих. Ожидайте следующий раунд.", Severity.Info);
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        nextRoundPlayers = await PlayoffService.GetWinnersOfLastRoundAsync(LobbyId);
+
+                        if (nextRoundPlayers.Any() && !nextRoundPlayers.Any(p => p.UserId == _userId))
+                        {
+                            Snackbar.Add("Вы не прошли в следующий раунд турнира.", Severity.Warning);
+                            return;
+                        }
+                    }
                 }
 
-                if (nextRoundPlayers.Any() && !nextRoundPlayers.Any(p => p.UserId == _currentUserId))
-                {
-                    Snackbar.Add("Вы не прошли в следующий раунд турнира.", Severity.Warning);
-                }
-                else
-                {
-                    var player = GameService.JoinGame(gameSessionId, _currentUserId!, _currentUserName!, password);
-                    NavigationManager.NavigateTo($"/game/play/{gameSessionId}/{player.PlayerSessionId}");
-                }
+                var player = GameService.JoinGame(gameSessionId, _userId!, _userName!, password);
+                NavigationManager.NavigateTo($"/game/play/{gameSessionId}/{player.PlayerSessionId}");
             }
             catch (Exception ex)
             {
@@ -535,12 +674,12 @@ else
 
         try
         {
-            var canJoin = await LobbyService.CanJoinLobbyAsync(LobbyId, _currentUserId!);
+            var canJoin = await LobbyService.CanJoinLobbyAsync(LobbyId, _userId!);
 
             if (!canJoin)
                 Snackbar.Add("Лобби уже заполнено.", Severity.Warning);
             else
-                await LobbyService.JoinLobby(LobbyId, _currentUserId!, _currentUserName!);
+                await LobbyService.JoinLobby(LobbyId, _userId!, _userName!);
         }
         catch (InvalidOperationException ex) when (ex.Message == "Lobby not found")
         {
@@ -557,10 +696,6 @@ else
         }
 
         await LoadLobby();
-
-        _playerScores = await PlayoffService.GetLatestScoresAsync(_lobby.Id);
-
-        _historyByGame = await PlayoffService.GetTournamentHistoryAsync(LobbyId);
     }
 
     private async Task Shuffle()
@@ -602,10 +737,8 @@ else
             var options = new GameOptions { Password = _lobby!.Password };
 
             List<(string UserId, string UserName)> players;
-
-            bool anyDraws = false;
-
-            string host = _currentUserId;
+            bool isThirdPlace = false;
+            string host = _userId;
 
             if (_historyByGame.Count == 0)
             {
@@ -616,36 +749,56 @@ else
             }
             else
             {
-                var lastGame = _historyByGame.Keys.Max();
-
-                var draws = _historyByGame[lastGame]
-                    .Where(r => r.Result == GameResult.Draw)
-                    .OrderBy(r => r.Id)
-                    .ToList();
-
-                if (draws.Any())
+                var thirdPairs = GetThirdPlacePairs();
+                if (thirdPairs.Any())
                 {
-                    anyDraws = true;
-
-                    players = draws
-                        .Select(r => (r.UserId, r.UserName))
-                        .ToList();
+                    var (p1, p2) = thirdPairs.First();
+                    players = new()
+                    {
+                        (p1.UserId, p1.UserName),
+                        (p2.UserId, p2.UserName)
+                    };
+                    isThirdPlace = true;
+                    _preset.Data.MaxPlayers = 2;
                 }
                 else
                 {
-                    var lastWinners = _historyByGame[lastGame]
-                        .Where(r => r.Result == GameResult.Win)
+                    var lastGame = _historyByGame.Keys.Max();
+
+                    var draws = _historyByGame[lastGame]
+                        .Where(r => r.Result == GameResult.Draw)
                         .OrderBy(r => r.Id)
                         .ToList();
 
-                    players = lastWinners
-                        .Select(r => (r.UserId, r.UserName))
-                        .ToList();
+                    if (draws.Any())
+                    {
+                        players = draws
+                            .Select(r => (r.UserId, r.UserName))
+                            .ToList();
+                        _preset.Data.MaxPlayers = players.Count;
+                    }
+                    else
+                    {
+                        var lastWinners = _historyByGame[lastGame]
+                            .Where(r => r.Result == GameResult.Win)
+                            .OrderBy(r => r.Id)
+                            .ToList();
+
+                        players = lastWinners
+                            .Select(r => (r.UserId, r.UserName))
+                            .ToList();
+
+                        _preset.Data.MaxPlayers = players.Count;
+                    }
                 }
 
-                host = players.FirstOrDefault().UserId;
+                if (players.Count == 0)
+                {
+                    Snackbar.Add("Нет доступной пары для запуска матча.", Severity.Warning);
+                    return;
+                }
 
-                _preset.Data.MaxPlayers = players.Count;
+                host = players[0].UserId;
             }
 
             var game = await GameService.StartGame(_lobby.PackId, _preset.Data, options, host, _lobby.Id, true);
@@ -657,8 +810,7 @@ else
 
             await _hubConnection.SendAsync("NotifyGameStarted", LobbyId, game.GameSessionId, options.Password);
 
-            if (!anyDraws)
-                await PlayoffService.CreateInitialTournamentResultsAsync(_lobby.Id, game.GameSessionId);
+            await PlayoffService.CreateInitialTournamentResultsAsync(_lobby.Id, game.GameSessionId);
         }
         catch (Exception ex)
         {
@@ -674,9 +826,9 @@ else
     private async Task ToggleReady()
     {
         if (CurrentUserIsReady)
-            await LobbyService.MarkNotReady(LobbyId, _currentUserId!);
+            await LobbyService.MarkNotReady(LobbyId, _userId!);
         else
-            await LobbyService.MarkReady(LobbyId, _currentUserId!);
+            await LobbyService.MarkReady(LobbyId, _userId!);
 
         await UpdateParticipants();
     }
@@ -699,19 +851,24 @@ else
         _preset.Data = JsonSerializer.Deserialize<PackPresetData>(_lobby.PresetJson);
         _preset.Pack = await Repo.GetPack(_lobby.PackId);
         _preset.PackId = _lobby.PackId;
+        _sessionId = await PlayoffService.GetSessionIdAsync(LobbyId);
+        _currentGame = GameService.Games.FirstOrDefault(g => g.GameSessionId == _sessionId && g.IsStateActive);
+        _playerScores = await PlayoffService.GetLatestScoresAsync(_lobby.Id);
+        _historyByGame = await PlayoffService.GetTournamentHistoryAsync(LobbyId);
         _loading = false;
+
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task LeaveLobby()
     {
-        await LobbyService.LeaveLobby(LobbyId, _currentUserId!);
+        await LobbyService.LeaveLobby(LobbyId, _userId!);
         NavigationManager.NavigateTo("/game/play");
     }
 
     private async Task CloseLobby()
     {
-        await LobbyService.CloseLobby(LobbyId, _currentUserId!);
+        await LobbyService.CloseLobby(LobbyId, _userId!);
     }
 
     public async ValueTask DisposeAsync()
@@ -723,8 +880,11 @@ else
         }
     }
 
-    private string GetRoundLabel(int playersInGame)
+    private string GetRoundLabel(int playersInGame, bool isThirdPlace = false)
     {
+        if (isThirdPlace)
+            return "Матч за 3-е место";
+
         return playersInGame switch
         {
             2 => "Финал",
@@ -766,19 +926,26 @@ else
         return pairs;
     }
 
-    private TournamentResult? GetFinalWinnerByMaxGame()
+    private (TournamentResult? First, TournamentResult? Second, TournamentResult? Third) GetPodium()
     {
         if (_historyByGame is null || _historyByGame.Count == 0)
-            return null;
+            return (null, null, null);
 
-        var maxGame = _historyByGame.Keys.Max();
-
-        var finalResults = _historyByGame[maxGame];
+        var finalKey = _historyByGame.Keys.Where(k => k > 0).DefaultIfEmpty(0).Max();
+        if (finalKey == 0 || !_historyByGame.TryGetValue(finalKey, out var finalResults))
+            return (null, null, null);
 
         if (finalResults.Count != 2)
-            return null;
+            return (null, null, null);
 
-        return finalResults.FirstOrDefault(r => r.Result == GameResult.Win);
+        var first = finalResults.FirstOrDefault(r => r.Result == GameResult.Win);
+        var second = finalResults.FirstOrDefault(r => r.Result == GameResult.Loss);
+
+        TournamentResult? third = null;
+        if (_historyByGame.TryGetValue(0, out var thirdPlaceResults) && thirdPlaceResults.Count == 2)
+            third = thirdPlaceResults.FirstOrDefault(r => r.Result == GameResult.Win);
+
+        return (first, second, third);
     }
 
     private async Task SetPresetData(PackPresetData data)
@@ -839,5 +1006,133 @@ else
             return "По Draw History";
 
         return "Ничья";
+    }
+
+    private async Task RestartTournament()
+    {
+        try
+        {
+            await LobbyService.RestartTournamentAsync(_lobby!.Id);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Ошибка при перезапуске турнира", Severity.Error);
+            Console.WriteLine(ex);
+        }
+    }
+
+    private bool EnoughPlayers
+    {
+        get
+        {
+            return _lobby is not null &&
+                   _lobby.Participants.Count == _preset.Data.MaxPlayers;
+        }
+    }
+
+    private void Spectate(GameInstance game)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(_userId, nameof(_userId));
+            ArgumentNullException.ThrowIfNull(_userName, nameof(_userName));
+            GameService.SpectateGame(game.GameSessionId, _userId, _userName);
+            NavigationManager.NavigateTo($"/game/spectate/{game.GameSessionId}");
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add(e.Message, Severity.Error);
+        }
+    }
+
+    private async Task OnJoin(GameInstance game)
+    {
+        ArgumentNullException.ThrowIfNull(_userId, nameof(_userId));
+
+        if (game.HostUserId == _userId
+            || game.Players.FirstOrDefault(x => x.PlayerUserId == _userId) != null
+            || string.IsNullOrWhiteSpace(game.Options.Password))
+        {
+            Join(game);
+        }
+        else
+        {
+            bool OnSubmit(string password)
+            {
+                return password == game.Options.Password && Join(game, password);
+            }
+
+            await JoinDialog.ShowDialog(DialogService, OnSubmit);
+        }
+    }
+
+    private bool Join(GameInstance game, string? password = null)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(_userId, nameof(_userId));
+            ArgumentNullException.ThrowIfNull(_userName, nameof(_userName));
+
+            var player = GameService.JoinGame(game.GameSessionId, _userId, _userName, password);
+            NavigationManager.NavigateTo($"/game/play/{game.GameSessionId}/{player.PlayerSessionId}");
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add(e.Message, Severity.Error);
+            return false;
+        }
+
+        return true;
+    }
+
+    private List<(TournamentResult Player1, TournamentResult Player2)> GetThirdPlacePairs()
+    {
+        if (_historyByGame.Count == 0)
+            return new();
+
+        if (_historyByGame.TryGetValue(0, out var thirdRound))
+        {
+            var third = thirdRound
+                .Where(r => r != null)
+                .OrderBy(r => r.Id)
+                .ToList();
+
+            if (third.Count == 2)
+            {
+                var hasWinner = third.Any(r => r.Result == GameResult.Win) &&
+                                third.Any(r => r.Result == GameResult.Loss);
+
+                if (hasWinner)
+                    return new();
+
+                var needReplay = third.Any(r => r.Result == GameResult.Draw) ||
+                                 third.Any(r => r.Result == null);
+
+                if (needReplay)
+                    return new() { (third[0], third[1]) };
+            }
+        }
+        var semiKey = _historyByGame
+            .Where(kv => kv.Key > 0 && kv.Value.Count == 4 && kv.Value.All(r => r.Result != null))
+            .Select(kv => kv.Key)
+            .DefaultIfEmpty(-1)
+            .Max();
+
+        if (semiKey == -1)
+            return new();
+
+        var semiResults = _historyByGame[semiKey]
+            .OrderBy(r => r.Id)
+            .ToList();
+
+        var losers = semiResults
+            .Where(r => r.Result == GameResult.Loss)
+            .OrderBy(r => r.Id)
+            .ToList();
+
+        if (losers.Count != 2)
+            return new();
+
+        return new() { (losers[0], losers[1]) };
     }
 }

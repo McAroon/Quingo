@@ -22,26 +22,37 @@ public class PlayoffService
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        var existing = await db.TournamentResults
-            .Where(r => r.LobbyId == lobbyId && r.Result == null)
-            .ToListAsync();
-
-        if (existing.Any())
-            return;
-
         var games = await db.TournamentResults
             .Where(r => r.LobbyId == lobbyId)
             .Select(r => r.Game)
             .ToListAsync();
 
         var maxGame = games.DefaultIfEmpty(0).Max();
+        var nextGame = maxGame + 1;
 
-        var winners = await db.TournamentResults
+        var existingResults = await db.TournamentResults
+            .Where(r => r.LobbyId == lobbyId && (r.Result == null || r.Result == GameResult.Draw))
+            .ToListAsync();
+
+        if (existingResults.Any())
+        {
+            foreach (var result in existingResults)
+                result.GameSessionId = gameSessionId;
+
+            await db.SaveChangesAsync();
+
+            await _hubContext.Clients.Group(SignalRConstants.LobbyGroup(lobbyId))
+                .SendAsync(SignalRConstants.LobbyUpdated);
+
+            return;
+        }
+
+        var players = await db.TournamentResults
             .Where(r => r.LobbyId == lobbyId && r.Game == maxGame && r.Result == GameResult.Win)
             .OrderBy(r => r.Id)
             .ToListAsync();
 
-        if (!winners.Any())
+        if (!players.Any())
         {
             var lobby = await db.TournamentLobbies
                 .Include(l => l.Participants)
@@ -49,7 +60,7 @@ public class PlayoffService
 
             if (lobby is null) return;
 
-            winners = lobby.Participants
+            players = lobby.Participants
                 .OrderBy(p => p.Order)
                 .Select(p => new TournamentResult
                 {
@@ -60,17 +71,28 @@ public class PlayoffService
                 .ToList();
         }
 
-        if (winners.Count < 2)
-            return;
+        var hasThirdPlaceGame = await db.TournamentResults
+            .AnyAsync(r => r.LobbyId == lobbyId && r.Game == 0);
 
-        var nextGame = maxGame + 1;
+        if (!hasThirdPlaceGame)
+        {
+            var losers = await db.TournamentResults
+                .Where(r => r.LobbyId == lobbyId && r.Game == maxGame && r.Result == GameResult.Loss)
+                .ToListAsync();
+
+            if (losers.Count == 2)
+                players = losers;
+        }
+
+        if (players.Count < 2)
+            return;
 
         var results = new List<TournamentResult>();
 
-        for (int i = 0; i < winners.Count; i += 2)
+        for (int i = 0; i < players.Count; i += 2)
         {
-            var p1 = winners.ElementAtOrDefault(i);
-            var p2 = winners.ElementAtOrDefault(i + 1);
+            var p1 = players.ElementAtOrDefault(i);
+            var p2 = players.ElementAtOrDefault(i + 1);
 
             if (p1 == null || p2 == null)
                 continue;
@@ -83,7 +105,7 @@ public class PlayoffService
                 UserId = p1.UserId,
                 UserName = p1.UserName,
                 Score = 0,
-                Game = nextGame
+                Game = !hasThirdPlaceGame && players.Count == 2 ? 0 : nextGame
             },
             new TournamentResult
             {
@@ -92,7 +114,7 @@ public class PlayoffService
                 UserId = p2.UserId,
                 UserName = p2.UserName,
                 Score = 0,
-                Game = nextGame
+                Game = !hasThirdPlaceGame && players.Count == 2 ? 0 : nextGame
             }
             ]);
         }
@@ -100,6 +122,9 @@ public class PlayoffService
         db.TournamentResults.AddRange(results);
 
         await db.SaveChangesAsync();
+
+        await _hubContext.Clients.Group(SignalRConstants.LobbyGroup(lobbyId))
+            .SendAsync(SignalRConstants.LobbyUpdated);
     }
 
     public async Task SaveTournamentResultAsync(int lobbyId, Guid gameId, IEnumerable<PlayerInstance> players)
@@ -119,16 +144,44 @@ public class PlayoffService
             .OrderBy(p => participantMap[p.PlayerUserId].Order)
             .ToList();
 
-        var allGames = await db.TournamentResults
-            .Where(r => r.LobbyId == lobbyId)
-            .Select(r => r.Game)
-            .ToListAsync();
-
-        var currentGame = allGames.DefaultIfEmpty(0).Max();
-
         var existingResults = await db.TournamentResults
-            .Where(r => r.LobbyId == lobbyId && r.Game == currentGame)
+            .Where(r => r.LobbyId == lobbyId
+                        && r.Game == 0
+                        && r.GameSessionId == gameId)
+            .OrderBy(r => r.Id)
             .ToListAsync();
+
+        if (existingResults.Count == 0)
+        {
+            existingResults = await db.TournamentResults
+                .Where(r => r.LobbyId == lobbyId && r.GameSessionId == gameId)
+                .OrderBy(r => r.Id)
+                .ToListAsync();
+        }
+
+        if (existingResults.Count == 0)
+        {
+            var allGames = await db.TournamentResults
+                .Where(r => r.LobbyId == lobbyId)
+                .Select(r => r.Game)
+                .ToListAsync();
+
+            var currentGame = allGames.DefaultIfEmpty(0).Max();
+
+            existingResults = await db.TournamentResults
+                .Where(r => r.LobbyId == lobbyId && r.Game == currentGame)
+                .OrderBy(r => r.Id)
+                .ToListAsync();
+
+            if (currentGame == 0 && existingResults.Count > 0 && existingResults.Any(r => r.GameSessionId == Guid.Empty))
+            {
+                foreach (var tr in existingResults)
+                    tr.GameSessionId = gameId;
+            }
+        }
+
+        if (existingResults.Count == 0)
+            return;
 
         foreach (var player in orderedPlayers)
         {
@@ -139,7 +192,9 @@ public class PlayoffService
                 result.CellScore = player.Score.ScoreCells;
                 result.ErrorPenalty = player.Score.ScoreErrorPenalties;
                 result.DrawHistory = player.DrawState?.DrawnNodes?.Count ?? 0;
+                result.TimeBonus = player.Score.ScoreRemainingTime;
                 result.Result = null;
+                result.GameSessionId = gameId;
             }
         }
 
@@ -147,12 +202,10 @@ public class PlayoffService
         {
             var p1 = orderedPlayers[i];
             var p2 = (i + 1 < orderedPlayers.Count) ? orderedPlayers[i + 1] : null;
-
             if (p2 is null) continue;
 
             var r1 = existingResults.FirstOrDefault(r => r.UserId == p1.PlayerUserId);
             var r2 = existingResults.FirstOrDefault(r => r.UserId == p2.PlayerUserId);
-
             if (r1 == null || r2 == null) continue;
 
             DetermineWinner(r1, r2);
@@ -178,6 +231,19 @@ public class PlayoffService
             .ThenBy(r => r.Id)
             .GroupBy(r => r.Game)
             .ToDictionaryAsync(g => g.Key, g => g.ToList());
+    }
+
+    public async Task<Guid?> GetSessionIdAsync(int lobbyId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var sessionId = await db.TournamentResults
+            .Where(r => r.LobbyId == lobbyId && (r.Result == null || r.Result == GameResult.Draw))
+            .OrderByDescending(r => r.Game)
+            .Select(r => (Guid?)r.GameSessionId)
+            .FirstOrDefaultAsync();
+
+        return sessionId;
     }
 
     public async Task<List<TournamentResult>> GetWinnersOfLastRoundAsync(int lobbyId)
@@ -231,6 +297,37 @@ public class PlayoffService
                 LatestScore = g.OrderByDescending(r => r.Id).First().Score
             })
             .ToDictionaryAsync(x => x.UserId, x => x.LatestScore);
+    }
+
+    public async Task<List<TournamentResult>> GetThirdPlaceCandidatesAsync(int lobbyId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var gameNumbers = await db.TournamentResults
+            .Where(r => r.LobbyId == lobbyId && r.Result != null)
+            .Select(r => r.Game)
+            .ToListAsync();
+
+        var maxGame = gameNumbers.DefaultIfEmpty(0).Max();
+
+        var lastResults = await db.TournamentResults
+            .Where(r => r.LobbyId == lobbyId && r.Game == maxGame)
+            .ToListAsync();
+
+        if (lastResults.Count != 4)
+            return new();
+
+        var hasNextGame = await db.TournamentResults
+            .AnyAsync(r => r.LobbyId == lobbyId && r.Game == maxGame + 1);
+
+        if (hasNextGame)
+            return new();
+
+        var losers = lastResults
+            .Where(r => r.Result == GameResult.Loss)
+            .ToList();
+
+        return losers.Count == 2 ? losers : new();
     }
 
     private void DetermineWinner(TournamentResult r1, TournamentResult r2)

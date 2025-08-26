@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor;
+using Quingo.Application.Host.Pages;
 using Quingo.Application.SignalR;
 using Quingo.Infrastructure.Database;
 using Quingo.Shared.Constants;
@@ -232,5 +235,45 @@ public class TournamentLobbyService
 
         await _hubContext.Clients.Group(SignalRConstants.LobbyGroup(lobbyId))
             .SendAsync(SignalRConstants.LobbyUpdated);
+    }
+
+    public async Task<int> RestartTournamentAsync(int lobbyId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var oldLobby = await db.TournamentLobbies
+            .Include(x => x.Participants)
+            .FirstOrDefaultAsync(x => x.Id == lobbyId);
+
+        if (oldLobby is null)
+            throw new Exception("Лобби не найдено");
+
+        var newLobby = new TournamentLobby
+        {
+            HostUserId = oldLobby.HostUserId,
+            HostUserName = oldLobby.HostUserName,
+            PackId = oldLobby.PackId,
+            PackName = oldLobby.PackName,
+            Password = oldLobby.Password,
+            PresetJson = oldLobby.PresetJson,
+            TournamentMode = oldLobby.TournamentMode,
+            Participants = oldLobby.Participants.Select(p => new LobbyParticipant
+            {
+                UserId = p.UserId,
+                UserName = p.UserName,
+                IsReady = false,
+                Order = p.Order
+            }).ToList()
+        };
+
+        db.TournamentLobbies.Add(newLobby);
+        db.TournamentLobbies.Remove(oldLobby);
+        await db.SaveChangesAsync();
+
+        await _hubContext.Clients
+            .Group(SignalRConstants.LobbyGroup(lobbyId))
+            .SendAsync(SignalRConstants.LobbyRestarted, newLobby.Id);
+
+        return newLobby.Id;
     }
 }

@@ -10,6 +10,7 @@ public class TournamentResult : EntityBase
     public string UserName { get; set; } = default!;
     public int Score { get; set; }
     public int CellScore { get; set; }
+    public int TimeBonus { get; set; }
     public int ErrorPenalty { get; set; }
     public int DrawHistory { get; set; }
     public int Game { get; set; } = 0;
