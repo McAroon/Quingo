@@ -3,7 +3,6 @@
 public enum TournamentMode
 {
     None = 0,
-    Classic = 1,
-    GroupStage = 2,
-    Swiss = 3
+    ClassicPlayoff = 1,
+    QualificationAndPlayoff = 2
 }

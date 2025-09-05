@@ -73,7 +73,8 @@
                 <MudSelect T="TournamentMode" Label="Режим турнира"
                            @bind-Value="_selectedTournamentMode">
                     <MudSelectItem Value="TournamentMode.None">Обычный</MudSelectItem>
-                    <MudSelectItem Value="TournamentMode.Classic">Плей-офф</MudSelectItem>
+                    <MudSelectItem Value="TournamentMode.ClassicPlayoff">Плей-офф</MudSelectItem>
+                    <MudSelectItem Value="TournamentMode.QualificationAndPlayoff">Квалификация и Плей-офф</MudSelectItem>
                 </MudSelect>
             }
 
@@ -160,7 +161,10 @@
 
             if (_selectedTournamentMode != TournamentMode.None)
             {
-                _preset.Data.MaxPlayers = _preset.Data.MaxPlayers != 1 ? _preset.Data.MaxPlayers : 4;
+                if (_selectedTournamentMode == TournamentMode.ClassicPlayoff)
+                {
+                    _preset.Data.MaxPlayers = _preset.Data.MaxPlayers != 1 ? _preset.Data.MaxPlayers : 4;
+                }
 
                 var lobby = await LobbyService.CreateLobby(
                     _pack.Id,

@@ -9,4 +9,6 @@ public class SignalRConstants
     public const string LobbyUpdated = "LobbyUpdated";
     public const string LobbyClosed = "LobbyClosed";
     public const string LobbyRestarted = "LobbyRestarted";
+    public const string GameStarted = "GameStarted";
+    public const string TournamentUpdated = "TournamentUpdated";
 }

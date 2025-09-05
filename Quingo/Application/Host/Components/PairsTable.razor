@@ -1,0 +1,69 @@
+﻿@using MudBlazor
+@using Quingo.Shared.Entities
+
+<MudTable T="PairVm" Dense="true" Hover="true" Class="mb-4" Items="Pairs">
+    <HeaderContent>
+        <MudTh Style="width: 100px; text-align: center;"></MudTh>
+        <MudTh Style="width: 100px; text-align: center;">@Title</MudTh>
+        <MudTh Style="width: 100px; text-align: center;"></MudTh>
+    </HeaderContent>
+
+    <RowTemplate>
+        @{
+            var p1 = context.P1;
+            var p2 = context.P2;
+
+            var lp1 = Participants?.FirstOrDefault(p => p.UserId == p1.UserId);
+            var lp2 = Participants?.FirstOrDefault(p => p.UserId == p2.UserId);
+
+            var icon1 = GetIcon(lp1);
+            var icon2 = GetIcon(lp2);
+        }
+
+        <MudTd Style="text-align: center;">
+            @if (lp1 is not null)
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Circle"
+                         Size="Size.Small"
+                         Color="@icon1.Color"
+                         Class="@(icon1.Blinking ? "blinking-icon" : null)" />
+            }
+        </MudTd>
+
+        <MudTd Style="text-align: center;">
+            <MudText Typo="Typo.body1">@p1.UserName <b>vs</b> @p2.UserName</MudText>
+        </MudTd>
+
+        <MudTd Style="text-align: center;">
+            @if (lp2 is not null)
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Circle"
+                         Size="Size.Small"
+                         Color="@icon2.Color"
+                         Class="@(icon2.Blinking ? "blinking-icon" : null)" />
+            }
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    [Parameter] public IEnumerable<PairVm> Pairs { get; set; } = Enumerable.Empty<PairVm>();
+    [Parameter] public IEnumerable<LobbyParticipant>? Participants { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+
+    public class PairVm
+    {
+        public TournamentResult P1 { get; set; } = default!;
+        public TournamentResult P2 { get; set; } = default!;
+    }
+
+    private (Color Color, bool Blinking) GetIcon(LobbyParticipant? participant)
+    {
+        if (participant is null || string.IsNullOrEmpty(participant.UserId))
+            return (Color.Default, false);
+
+        return participant.IsReady
+            ? (Color.Success, true)
+            : (Color.Warning, true);
+    }
+}

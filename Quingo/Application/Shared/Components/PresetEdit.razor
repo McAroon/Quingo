@@ -10,7 +10,7 @@
                                          Label="Card Size" Min="3" Max="5" Required />
                         <MudCheckBox @bind-Value="_model.FreeCenter" Label="Free Center"
                                      Disabled="!_model.IsFreeCenterEnabled"/> 
-                        @if (SelectedTournamentMode == TournamentMode.Classic)
+                        @if (SelectedTournamentMode == TournamentMode.ClassicPlayoff)
                         {
                             <MudSelect T="int" Label="Number of Players"
                                        @bind-Value="_model.MaxPlayers"
@@ -240,7 +240,7 @@
     {
         _model = new PackPresetDataModel(Preset.Data);
 
-        if (SelectedTournamentMode == TournamentMode.Classic &&
+        if (SelectedTournamentMode == TournamentMode.ClassicPlayoff &&
             !_allowedTournamentSizes.Contains(_model.MaxPlayers))
         {
             _model.MaxPlayers = 4;
