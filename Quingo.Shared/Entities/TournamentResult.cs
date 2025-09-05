@@ -14,5 +14,7 @@ public class TournamentResult : EntityBase
     public int ErrorPenalty { get; set; }
     public int DrawHistory { get; set; }
     public int Game { get; set; } = 0;
+    public int Position { get; set; } = 0;
+    public bool IsRandom { get; set; } = false;
     public GameResult? Result { get; set; } = null!;
 }

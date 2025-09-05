@@ -8,7 +8,7 @@
                     <MudForm @ref="@_form">
                         <MudNumericField @bind-Value="_model.CardSize" @bind-Value:after="OnCardSizeUpdated"
                                          Label="Card Size" Min="3" Max="5" Required />
-                        @if (SelectedTournamentMode == TournamentMode.Classic)
+                        @if (SelectedTournamentMode == TournamentMode.ClassicPlayoff)
                         {
                             <MudSelect T="int" Label="Number of Players"
                                        @bind-Value="_model.MaxPlayers"
@@ -20,7 +20,7 @@
                                 }
                             </MudSelect>
                         }
-                        else
+                        else if (SelectedTournamentMode != TournamentMode.QualificationAndPlayoff)
                         {
                             <MudNumericField @bind-Value="_model.MaxPlayers" Label="Number of Players"
                                              HelperText="Max number of players, 0 for unlimited" Min="0" />
@@ -66,7 +66,10 @@
         {
             <MudList T="string" ReadOnly>
                 <MudListItem Text="Card Size" SecondaryText="@_model.CardSize.ToString()"/>
-                <MudListItem Text="Number of Players" SecondaryText="@_model.MaxPlayers.ToString()" />
+                @if (SelectedTournamentMode != TournamentMode.QualificationAndPlayoff)
+                {
+                    <MudListItem Text="Number of Players" SecondaryText="@_model.MaxPlayers.ToString()" />
+                }
                 <MudListItem Text="Min Difficulty" SecondaryText="@((_model.MinDifficulty ?? 1).ToString())" />
                 <MudListItem Text="Max Difficulty" SecondaryText="@((_model.MaxDifficulty ?? 5).ToString())" />
                 <MudListItem Text="Game Timer" SecondaryText="@(_model.GameTimer > 0 ? $"{_model.GameTimer} sec" : "-")" />
@@ -101,10 +104,15 @@
     {
         _model = new PackPresetDataModel(Preset.Data);
 
-        if (SelectedTournamentMode == TournamentMode.Classic &&
+        if (SelectedTournamentMode == TournamentMode.ClassicPlayoff &&
             !_allowedTournamentSizes.Contains(_model.MaxPlayers))
         {
             _model.MaxPlayers = 4;
+        }
+        else if (SelectedTournamentMode == TournamentMode.QualificationAndPlayoff &&
+            !_allowedTournamentSizes.Contains(_model.MaxPlayers))
+        {
+            _model.MaxPlayers = 128;
         }
     }
 

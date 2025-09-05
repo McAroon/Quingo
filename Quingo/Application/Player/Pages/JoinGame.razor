@@ -4,6 +4,7 @@
 @using System.Security.Claims
 @using Quingo.Shared
 @using System.Text.Json
+@using Quingo.Shared.Constants
 
 @inject GameService GameService
 @inject NavigationManager NavigationManager
@@ -40,8 +41,10 @@
         <MudTd>@(context.IsTournament? context.Tournament!.HostUserName : context.Game!.HostName)</MudTd>
         <MudTd>
             @(context.IsTournament
-                        ? $"{context.Tournament!.Participants.Count}/{GetMaxPlayersFromJson(context.Tournament!.PresetJson)}"
-                        : PlayersFormat(context.Game!))
+                        ? (context.Tournament!.TournamentMode == TournamentMode.QualificationAndPlayoff
+                        ? $"{context.Tournament!.Participants.Count}" 
+                        : $"{context.Tournament!.Participants.Count}/{GetMaxPlayersFromJson(context.Tournament!.PresetJson)}")
+                        : PlayersFormat(context.Game!) )
         </MudTd>
         <MudTd>
             @(context.IsTournament
@@ -56,10 +59,9 @@
         <MudTd>
             @if (context.IsTournament)
             {
-                <MudTooltip Text="Lobby is full or you are already in" Disabled="@CanJoinTournament(context.Tournament!)">
+                <MudTooltip Text="Lobby is full or you are already in">
                     <MudButton Size="Size.Small"
                                Color="Color.Primary"
-                               Disabled="@(!CanJoinTournament(context.Tournament!))"
                                OnClick="@(() => JoinTournamentLobby(context.Tournament!.Id))">
                         Join
                     </MudButton>
@@ -135,17 +137,6 @@
             .ToList();
 
         StateHasChanged();
-    }
-
-    private bool CanJoinTournament(TournamentLobby tournament)
-    {
-        if (_userId is null) return false;
-
-        var presetData = JsonSerializer.Deserialize<PackPresetData>(tournament.PresetJson);
-        bool isAlreadyParticipant = tournament.Participants.Any(p => p.UserId == _userId);
-        bool hasFreeSlots = tournament.Participants.Count < presetData.MaxPlayers;
-
-        return isAlreadyParticipant || hasFreeSlots;
     }
 
     private void JoinTournamentLobby(int lobbyId)
