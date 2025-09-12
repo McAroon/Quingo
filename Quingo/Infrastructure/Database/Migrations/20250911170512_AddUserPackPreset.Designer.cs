@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Quingo.Infrastructure.Database;
@@ -11,9 +12,11 @@ using Quingo.Infrastructure.Database;
 namespace Quingo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250911170512_AddUserPackPreset")]
+    partial class AddUserPackPreset
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -401,59 +404,6 @@ namespace Quingo.Migrations
                     b.HasIndex("UpdatedByUserId");
 
                     b.ToTable("IndirectLinkSteps");
-                });
-
-            modelBuilder.Entity("Quingo.Shared.Entities.LobbyBan", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<int>("TournamentLobbyId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("DeletedAt");
-
-                    b.HasIndex("DeletedByUserId");
-
-                    b.HasIndex("UpdatedByUserId");
-
-                    b.HasIndex("TournamentLobbyId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("LobbyBans");
                 });
 
             modelBuilder.Entity("Quingo.Shared.Entities.Node", b =>
@@ -923,9 +873,6 @@ namespace Quingo.Migrations
                     b.Property<int>("PackId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("TournamentMode")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -946,7 +893,7 @@ namespace Quingo.Migrations
 
                     b.HasIndex("UpdatedByUserId");
 
-                    b.HasIndex("UserId", "PackId", "TournamentMode")
+                    b.HasIndex("UserId", "PackId")
                         .IsUnique();
 
                     b.ToTable("UserPackPresets");
@@ -988,6 +935,9 @@ namespace Quingo.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Password")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PresetJson")
                         .HasColumnType("text");
 
                     b.Property<int>("TournamentMode")
@@ -1162,35 +1112,6 @@ namespace Quingo.Migrations
                     b.Navigation("TagFrom");
 
                     b.Navigation("TagTo");
-
-                    b.Navigation("UpdatedByUser");
-                });
-
-            modelBuilder.Entity("Quingo.Shared.Entities.LobbyBan", b =>
-                {
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId");
-
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedByUserId");
-
-                    b.HasOne("TournamentLobby", "Lobby")
-                        .WithMany("Bans")
-                        .HasForeignKey("TournamentLobbyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedByUserId");
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("Lobby");
 
                     b.Navigation("UpdatedByUser");
                 });
@@ -1828,143 +1749,9 @@ namespace Quingo.Migrations
                         .WithMany()
                         .HasForeignKey("UpdatedByUserId");
 
-                    b.OwnsOne("Quingo.Shared.Entities.PackPresetData", "PresetData", b1 =>
-                        {
-                            b1.Property<int>("TournamentLobbyId")
-                                .HasColumnType("integer");
-
-                            b1.Property<int>("AutoDrawTimer")
-                                .HasColumnType("integer");
-
-                            b1.Property<int>("CardSize")
-                                .HasColumnType("integer");
-
-                            b1.Property<bool>("EnableCall")
-                                .HasColumnType("boolean");
-
-                            b1.Property<int>("EndgameTimer")
-                                .HasColumnType("integer");
-
-                            b1.Property<bool>("FreeCenter")
-                                .HasColumnType("boolean");
-
-                            b1.Property<int>("GameTimer")
-                                .HasColumnType("integer");
-
-                            b1.Property<bool>("JoinOnCreate")
-                                .HasColumnType("boolean");
-
-                            b1.Property<int>("LivesNumber")
-                                .HasColumnType("integer");
-
-                            b1.Property<int>("MatchRule")
-                                .HasColumnType("integer");
-
-                            b1.Property<int?>("MaxDifficulty")
-                                .HasColumnType("integer");
-
-                            b1.Property<int>("MaxPlayers")
-                                .HasColumnType("integer");
-
-                            b1.Property<int?>("MinDifficulty")
-                                .HasColumnType("integer");
-
-                            b1.Property<int>("Pattern")
-                                .HasColumnType("integer");
-
-                            b1.Property<bool>("SamePlayerCards")
-                                .HasColumnType("boolean");
-
-                            b1.Property<int>("ScoringRules")
-                                .HasColumnType("integer");
-
-                            b1.Property<bool>("SeparateDrawPerPlayer")
-                                .HasColumnType("boolean");
-
-                            b1.Property<bool>("ShowTagBadges")
-                                .HasColumnType("boolean");
-
-                            b1.Property<bool>("SingleColumnConfig")
-                                .HasColumnType("boolean");
-
-                            b1.HasKey("TournamentLobbyId");
-
-                            b1.ToTable("TournamentLobbies");
-
-                            b1.ToJson("PresetData");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TournamentLobbyId");
-
-                            b1.OwnsMany("Quingo.Shared.Entities.PackPresetColumn", "Columns", b2 =>
-                                {
-                                    b2.Property<int>("PackPresetDataTournamentLobbyId")
-                                        .HasColumnType("integer");
-
-                                    b2.Property<int>("__synthesizedOrdinal")
-                                        .ValueGeneratedOnAdd()
-                                        .HasColumnType("integer");
-
-                                    b2.PrimitiveCollection<int[]>("ExcludeTags")
-                                        .IsRequired()
-                                        .HasColumnType("integer[]");
-
-                                    b2.Property<string>("Name")
-                                        .IsRequired()
-                                        .HasColumnType("text");
-
-                                    b2.PrimitiveCollection<int[]>("QuestionTags")
-                                        .IsRequired()
-                                        .HasColumnType("integer[]");
-
-                                    b2.HasKey("PackPresetDataTournamentLobbyId", "__synthesizedOrdinal");
-
-                                    b2.ToTable("TournamentLobbies");
-
-                                    b2.WithOwner()
-                                        .HasForeignKey("PackPresetDataTournamentLobbyId");
-
-                                    b2.OwnsMany("Quingo.Shared.Entities.PackPresetTag", "ColAnswerTags", b3 =>
-                                        {
-                                            b3.Property<int>("PackPresetColumnPackPresetDataTournamentLobbyId")
-                                                .HasColumnType("integer");
-
-                                            b3.Property<int>("PackPresetColumn__synthesizedOrdinal")
-                                                .HasColumnType("integer");
-
-                                            b3.Property<int>("__synthesizedOrdinal")
-                                                .ValueGeneratedOnAdd()
-                                                .HasColumnType("integer");
-
-                                            b3.Property<int?>("ItemsMax")
-                                                .HasColumnType("integer");
-
-                                            b3.Property<int?>("ItemsMin")
-                                                .HasColumnType("integer");
-
-                                            b3.Property<int>("TagId")
-                                                .HasColumnType("integer");
-
-                                            b3.HasKey("PackPresetColumnPackPresetDataTournamentLobbyId", "PackPresetColumn__synthesizedOrdinal", "__synthesizedOrdinal");
-
-                                            b3.ToTable("TournamentLobbies");
-
-                                            b3.WithOwner()
-                                                .HasForeignKey("PackPresetColumnPackPresetDataTournamentLobbyId", "PackPresetColumn__synthesizedOrdinal");
-                                        });
-
-                                    b2.Navigation("ColAnswerTags");
-                                });
-
-                            b1.Navigation("Columns");
-                        });
-
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("DeletedByUser");
-
-                    b.Navigation("PresetData")
-                        .IsRequired();
 
                     b.Navigation("UpdatedByUser");
                 });
@@ -2012,8 +1799,6 @@ namespace Quingo.Migrations
 
             modelBuilder.Entity("TournamentLobby", b =>
                 {
-                    b.Navigation("Bans");
-
                     b.Navigation("Participants");
                 });
 #pragma warning restore 612, 618

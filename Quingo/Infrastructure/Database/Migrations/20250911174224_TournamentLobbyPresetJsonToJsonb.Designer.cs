@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Quingo.Infrastructure.Database;
@@ -11,9 +12,11 @@ using Quingo.Infrastructure.Database;
 namespace Quingo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250911174224_TournamentLobbyPresetJsonToJsonb")]
+    partial class TournamentLobbyPresetJsonToJsonb
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -401,59 +404,6 @@ namespace Quingo.Migrations
                     b.HasIndex("UpdatedByUserId");
 
                     b.ToTable("IndirectLinkSteps");
-                });
-
-            modelBuilder.Entity("Quingo.Shared.Entities.LobbyBan", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<int>("TournamentLobbyId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedByUserId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("DeletedAt");
-
-                    b.HasIndex("DeletedByUserId");
-
-                    b.HasIndex("UpdatedByUserId");
-
-                    b.HasIndex("TournamentLobbyId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("LobbyBans");
                 });
 
             modelBuilder.Entity("Quingo.Shared.Entities.Node", b =>
@@ -923,9 +873,6 @@ namespace Quingo.Migrations
                     b.Property<int>("PackId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("TournamentMode")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -946,7 +893,7 @@ namespace Quingo.Migrations
 
                     b.HasIndex("UpdatedByUserId");
 
-                    b.HasIndex("UserId", "PackId", "TournamentMode")
+                    b.HasIndex("UserId", "PackId")
                         .IsUnique();
 
                     b.ToTable("UserPackPresets");
@@ -1162,35 +1109,6 @@ namespace Quingo.Migrations
                     b.Navigation("TagFrom");
 
                     b.Navigation("TagTo");
-
-                    b.Navigation("UpdatedByUser");
-                });
-
-            modelBuilder.Entity("Quingo.Shared.Entities.LobbyBan", b =>
-                {
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId");
-
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedByUserId");
-
-                    b.HasOne("TournamentLobby", "Lobby")
-                        .WithMany("Bans")
-                        .HasForeignKey("TournamentLobbyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Quingo.Shared.Entities.ApplicationUser", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedByUserId");
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("DeletedByUser");
-
-                    b.Navigation("Lobby");
 
                     b.Navigation("UpdatedByUser");
                 });
@@ -2012,8 +1930,6 @@ namespace Quingo.Migrations
 
             modelBuilder.Entity("TournamentLobby", b =>
                 {
-                    b.Navigation("Bans");
-
                     b.Navigation("Participants");
                 });
 #pragma warning restore 612, 618

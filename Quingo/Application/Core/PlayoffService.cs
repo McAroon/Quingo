@@ -4,6 +4,7 @@ using Quingo.Application.SignalR;
 using Quingo.Infrastructure.Database;
 using Quingo.Shared.Constants;
 using Quingo.Shared.Entities;
+using Quingo.Shared.Enums;
 
 namespace Quingo.Application.Core;
 

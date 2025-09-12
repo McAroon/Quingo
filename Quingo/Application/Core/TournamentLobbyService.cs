@@ -5,7 +5,7 @@ using Quingo.Application.SignalR;
 using Quingo.Infrastructure.Database;
 using Quingo.Shared.Constants;
 using Quingo.Shared.Entities;
-using System.Text.Json;
+using Quingo.Shared.Enums;
 
 namespace Quingo.Application.Core;
 
@@ -31,7 +31,7 @@ public class TournamentLobbyService
             PackId = packId,
             PackName = packName,
             Password = password,
-            PresetJson = JsonSerializer.Serialize(presetData),
+            PresetData = presetData,
             TournamentMode = tournamentMode,
             Participants = new List<LobbyParticipant>
             {
@@ -63,35 +63,50 @@ public class TournamentLobbyService
     public async Task<TournamentLobby?> GetLobbyById(int lobbyId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
+
         return await db.TournamentLobbies
             .AsNoTracking()
             .Include(x => x.Participants)
+            .Include(x => x.Bans)
             .FirstOrDefaultAsync(x => x.Id == lobbyId);
     }
 
-    public async Task<bool> CanJoinLobbyAsync(int lobbyId, string userId)
+    public async Task<CanJoinLobbyResponse> GetJoinStatusAsync(int lobbyId, string userId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
         var lobby = await db.TournamentLobbies
             .Include(x => x.Participants)
+            .Include(x => x.Bans)
             .FirstOrDefaultAsync(x => x.Id == lobbyId);
 
         if (lobby is null)
-            return false;
+            return new(CanJoinLobbyStatus.NotFound, "Лобби не найдено или было удалено.");
+
+        if (lobby.Bans.Any(b => b.UserId == userId))
+            return new(CanJoinLobbyStatus.Banned, "Вы забанены в этом лобби.");
 
         if (lobby.Participants.Any(p => p.UserId == userId))
-            return true;
+            return new(CanJoinLobbyStatus.AlreadyIn);
+
+        var anyResultsExist = await db.TournamentResults
+            .AnyAsync(r => r.LobbyId == lobbyId);
+        if (anyResultsExist)
+            return new(CanJoinLobbyStatus.Started, "В лобби уже начались игры. Присоединение запрещено.");
 
         if (lobby.TournamentMode == TournamentMode.QualificationAndPlayoff)
-            return lobby.Participants.Count < 128;
+        {
+            if (lobby.Participants.Count >= 128)
+                return new(CanJoinLobbyStatus.Full, "Достигнут лимит участников.");
+        }
+        else
+        {
+            var presetData = lobby.PresetData ?? new PackPresetData();
+            if (presetData.MaxPlayers > 0 && lobby.Participants.Count >= presetData.MaxPlayers)
+                return new(CanJoinLobbyStatus.Full, "Лобби уже заполнено.");
+        }
 
-        var presetData = JsonSerializer.Deserialize<PackPresetData>(lobby.PresetJson) ?? new();
-
-        if (presetData.MaxPlayers > 0 && lobby.Participants.Count >= presetData.MaxPlayers)
-            return false;
-
-        return true;
+        return new(CanJoinLobbyStatus.Ok);
     }
 
 
@@ -101,10 +116,14 @@ public class TournamentLobbyService
 
         var lobby = await db.TournamentLobbies
             .Include(x => x.Participants)
+            .Include(x => x.Bans)
             .FirstOrDefaultAsync(x => x.Id == lobbyId);
 
         if (lobby == null)
             throw new InvalidOperationException("Lobby not found");
+
+        if (lobby.Bans.Any(b => b.UserId == userId))
+            throw new InvalidOperationException("You are banned from this lobby");
 
         if (lobby.Participants.Any(p => p.UserId == userId))
             return;
@@ -132,14 +151,14 @@ public class TournamentLobbyService
 
         if (lobby.TournamentMode == TournamentMode.QualificationAndPlayoff)
         {
-            var preset = JsonSerializer.Deserialize<PackPresetData>(lobby.PresetJson) ?? new();
+            var preset = lobby.PresetData ?? new PackPresetData();
             var count = lobby.Participants.Count;
             var targetMax = Math.Max(3, count);
 
             if (preset.MaxPlayers != targetMax)
             {
                 preset.MaxPlayers = targetMax;
-                lobby.PresetJson = JsonSerializer.Serialize(preset);
+                lobby.PresetData = preset;
             }
         }
 
@@ -182,14 +201,14 @@ public class TournamentLobbyService
 
         if (lobby.TournamentMode == TournamentMode.QualificationAndPlayoff)
         {
-            var preset = JsonSerializer.Deserialize<PackPresetData>(lobby.PresetJson) ?? new();
+            var preset = lobby.PresetData ?? new PackPresetData();
             var count = lobby.Participants.Count;
             var targetMax = Math.Max(3, count);
 
             if (preset.MaxPlayers != targetMax)
             {
                 preset.MaxPlayers = targetMax;
-                lobby.PresetJson = JsonSerializer.Serialize(preset);
+                lobby.PresetData = preset;
             }
         }
 
@@ -253,7 +272,7 @@ public class TournamentLobbyService
         var lobby = await db.TournamentLobbies.FindAsync(lobbyId);
         if (lobby == null) throw new Exception("Lobby not found");
 
-        lobby.PresetJson = JsonSerializer.Serialize(data);
+        lobby.PresetData = data;
         await db.SaveChangesAsync();
 
         await _hubContext.Clients.Group(SignalRConstants.LobbyGroup(lobbyId))
@@ -316,7 +335,7 @@ public class TournamentLobbyService
             PackId = oldLobby.PackId,
             PackName = oldLobby.PackName,
             Password = oldLobby.Password,
-            PresetJson = oldLobby.PresetJson,
+            PresetData = oldLobby.PresetData,
             TournamentMode = oldLobby.TournamentMode,
             Participants = oldLobby.Participants.Select(p => new LobbyParticipant
             {
@@ -336,5 +355,116 @@ public class TournamentLobbyService
             .SendAsync(SignalRConstants.LobbyRestarted, newLobby.Id);
 
         return newLobby.Id;
+    }
+
+    public async Task KickAsync(int lobbyId, string hostUserId, string targetUserId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var lobby = await db.TournamentLobbies
+            .Include(x => x.Participants)
+            .Include(x => x.Bans)
+            .FirstOrDefaultAsync(x => x.Id == lobbyId);
+
+        if (lobby is null) throw new InvalidOperationException("Lobby not found");
+        if (lobby.HostUserId != hostUserId) throw new InvalidOperationException("Only host can kick");
+        if (targetUserId == hostUserId) throw new InvalidOperationException("Host cannot kick themselves");
+
+        var participant = lobby.Participants.FirstOrDefault(p => p.UserId == targetUserId);
+        if (participant is null) return;
+
+        lobby.Participants.Remove(participant);
+
+        if (lobby.TournamentMode == TournamentMode.QualificationAndPlayoff)
+        {
+            var reordered = lobby.Participants.OrderBy(p => p.CreatedAt).ThenBy(p => p.Order).ToList();
+            for (int i = 0; i < reordered.Count; i++)
+                reordered[i].Order = i + 1;
+
+            var preset = lobby.PresetData ?? new PackPresetData();
+            var count = lobby.Participants.Count;
+            var targetMax = Math.Max(3, count);
+            if (preset.MaxPlayers != targetMax)
+            {
+                preset.MaxPlayers = targetMax;
+                lobby.PresetData = preset;
+            }
+        }
+
+        await db.SaveChangesAsync();
+
+        await _hubContext.Clients.Group(SignalRConstants.LobbyGroup(lobbyId))
+            .SendAsync(SignalRConstants.LobbyUpdated);
+    }
+
+    public async Task BanAsync(int lobbyId, string hostUserId, string targetUserId, string targetUserName)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var lobby = await db.TournamentLobbies
+            .Include(x => x.Participants)
+            .Include(x => x.Bans)
+            .FirstOrDefaultAsync(x => x.Id == lobbyId);
+
+        if (lobby is null) throw new InvalidOperationException("Lobby not found");
+        if (lobby.HostUserId != hostUserId) throw new InvalidOperationException("Only host can ban");
+        if (targetUserId == hostUserId) throw new InvalidOperationException("Host cannot ban themselves");
+
+        var participant = lobby.Participants.FirstOrDefault(p => p.UserId == targetUserId);
+        if (participant is not null)
+            lobby.Participants.Remove(participant);
+
+        if (!lobby.Bans.Any(b => b.UserId == targetUserId))
+        {
+            lobby.Bans.Add(new LobbyBan
+            {
+                TournamentLobbyId = lobby.Id,
+                UserId = targetUserId,
+                UserName = targetUserName
+            });
+        }
+
+        if (lobby.TournamentMode == TournamentMode.QualificationAndPlayoff)
+        {
+            var preset = lobby.PresetData ?? new PackPresetData();
+            var count = lobby.Participants.Count;
+            var targetMax = Math.Max(3, count);
+            if (preset.MaxPlayers != targetMax)
+            {
+                preset.MaxPlayers = targetMax;
+                lobby.PresetData = preset;
+            }
+        }
+
+        try { await db.SaveChangesAsync(); }
+        catch (Exception ex)
+        {
+
+        }
+        
+
+        await _hubContext.Clients.Group(SignalRConstants.LobbyGroup(lobbyId))
+            .SendAsync(SignalRConstants.LobbyUpdated);
+    }
+
+    public async Task UnbanAsync(int lobbyId, string hostUserId, string targetUserId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var lobby = await db.TournamentLobbies
+            .Include(x => x.Bans)
+            .FirstOrDefaultAsync(x => x.Id == lobbyId);
+
+        if (lobby is null) throw new InvalidOperationException("Lobby not found");
+        if (lobby.HostUserId != hostUserId) throw new InvalidOperationException("Only host can unban");
+
+        var ban = lobby.Bans.FirstOrDefault(b => b.UserId == targetUserId);
+        if (ban is null) return;
+
+        db.LobbyBans.Remove(ban);
+
+        await db.SaveChangesAsync();
+        await _hubContext.Clients.Group(SignalRConstants.LobbyGroup(lobbyId))
+            .SendAsync(SignalRConstants.LobbyUpdated);
     }
 }
