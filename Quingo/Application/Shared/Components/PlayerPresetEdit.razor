@@ -1,5 +1,7 @@
 ﻿@using Quingo.Shared.Constants
+@using MudBlazor
 @using Quingo.Shared.Enums
+
 <MudGrid>
     <MudItem xs="12">
         @if (IsEdit)
@@ -7,8 +9,18 @@
             <MudCard>
                 <MudCardContent>
                     <MudForm @ref="@_form">
-                        <MudNumericField @bind-Value="_model.CardSize" @bind-Value:after="OnCardSizeUpdated"
-                                         Label="Card Size" Min="3" Max="5" Required />
+                        <MudText Class="mud-input-label">Card Size*</MudText>
+                        <MudStack Row Spacing="1" Class="mb-2">
+                            @foreach (var size in new[] { 3, 4, 5 })
+                            {
+                                var s = size;
+                                <MudButton Variant="@(GetCardSizeVariant(s))"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => SetCardSize(s))">
+                                    @($"{s}x{s}")
+                                </MudButton>
+                            }
+                        </MudStack>
                         @if (SelectedTournamentMode == TournamentMode.ClassicPlayoff)
                         {
                             <MudSelect T="int" Label="Number of Players"
@@ -26,9 +38,33 @@
                             <MudNumericField @bind-Value="_model.MaxPlayers" Label="Number of Players"
                                              HelperText="Max number of players, 0 for unlimited" Min="0" />
                         }
-                        <MudStack Row>
-                            <MudNumericField T="int?" Label="Min Difficulty" @bind-Value="_model.MinDifficulty" Min="1" Max="@(_model.MaxDifficulty ?? 5)" />
-                            <MudNumericField T="int?" Label="Max Difficulty" @bind-Value="_model.MaxDifficulty" Min="@(_model.MinDifficulty ?? 1)" Max="5" />
+                        <MudStack Class="mt-3">
+                            <MudText Class="mud-input-label">Min Difficulty*</MudText>
+                            <MudStack Row Spacing="1" Class="mb-2">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    var v = i;
+                                    <MudButton Variant="@GetVariantForMin(v)"
+                                               Color="Color.Primary"
+                                               OnClick="@(() => SetMinDifficulty(v))">
+                                        @v
+                                    </MudButton>
+                                }
+                            </MudStack>
+                        </MudStack>
+                        <MudStack>
+                            <MudText Class="mud-input-label">Max Difficulty*</MudText>
+                            <MudStack Row Spacing="1" Class="mb-2">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    var v = i;
+                                    <MudButton Variant="@GetVariantForMax(v)"
+                                               Color="Color.Primary"
+                                               OnClick="@(() => SetMaxDifficulty(v))">
+                                        @v
+                                    </MudButton>
+                                }
+                            </MudStack>
                         </MudStack>
                         <MudNumericField @bind-Value="_model.GameTimer" Label="Game Timer"
                                          HelperText="Game timer in seconds, 0 for no timer" Min="0" Max="60 * 10" />
@@ -54,7 +90,7 @@
                     <div class="ml-auto">
                         <MudButton Color="Color.Primary" OnClick="Save" StartIcon="@Icons.Material.Filled.Save">
                             Save
-                        </MudButton>
+                            </MudButton>
                         <MudButton Color="Color.Secondary" OnClick="CancelEdit"
                                    StartIcon="@Icons.Material.Filled.Cancel">
                             Cancel
@@ -66,16 +102,81 @@
         else
         {
             <MudList T="string" ReadOnly>
-                <MudListItem Text="Card Size" SecondaryText="@_model.CardSize.ToString()"/>
+                <MudListItem T="string">
+                    <MudStack>
+                        <MudText Typo="Typo.subtitle2">Card Size</MudText>
+                        <MudStack Row Spacing="1">
+                            @foreach (var s in new[] { 3, 4, 5 })
+                            {
+                                var size = s;
+                                <MudButton Variant="@GetCardSizeVariant(size)"
+                                           Disabled="true"
+                                           Color="Color.Primary"
+                                           Size="Size.Small">
+                                    @($"{size}x{size}")
+                                </MudButton>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudListItem>
+
                 @if (SelectedTournamentMode != TournamentMode.QualificationAndPlayoff)
                 {
-                    <MudListItem Text="Number of Players" SecondaryText="@_model.MaxPlayers.ToString()" />
+                    <MudListItem T="string">
+                        <MudText Typo="Typo.subtitle2">Number of Players</MudText>
+                        <MudText>@_model.MaxPlayers</MudText>
+                    </MudListItem>
                 }
-                <MudListItem Text="Min Difficulty" SecondaryText="@((_model.MinDifficulty ?? 1).ToString())" />
-                <MudListItem Text="Max Difficulty" SecondaryText="@((_model.MaxDifficulty ?? 5).ToString())" />
-                <MudListItem Text="Game Timer" SecondaryText="@(_model.GameTimer > 0 ? $"{_model.GameTimer} sec" : "-")" />
-                <MudListItem Text="Players have same Cards" SecondaryText="@(_model.SamePlayerCards ? "Yes" : "No")" />
-                <MudListItem Text="Scoring Rules" SecondaryText="@GetScoringRuleNames(_model.ScoringRules)" />
+                <MudListItem T="string">
+                    <MudStack>
+                        <MudText Typo="Typo.subtitle2">Min Difficulty</MudText>
+                        <MudStack Row Spacing="1">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                var difficulty = i;
+                                <MudButton Variant="@GetVariantForMin(difficulty)"
+                                           Disabled="true"
+                                           Color="Color.Primary"
+                                           Size="Size.Small">
+                                    @difficulty
+                                </MudButton>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudListItem>
+
+                <MudListItem T="string">
+                    <MudStack>
+                        <MudText Typo="Typo.subtitle2">Max Difficulty</MudText>
+                        <MudStack Row Spacing="1">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                var difficulty = i;
+                                <MudButton Variant="@GetVariantForMax(difficulty)"
+                                           Disabled="true"
+                                           Color="Color.Primary"
+                                           Size="Size.Small">
+                                    @difficulty
+                                </MudButton>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudListItem>
+
+                <MudListItem T="string">
+                    <MudText Typo="Typo.subtitle2">Game Timer</MudText>
+                    <MudText>@(_model.GameTimer > 0 ? $"{_model.GameTimer} sec" : "-")</MudText>
+                </MudListItem>
+
+                <MudListItem T="string">
+                    <MudText Typo="Typo.subtitle2">Players have same Cards</MudText>
+                    <MudText>@(_model.SamePlayerCards ? "Yes" : "No")</MudText>
+                </MudListItem>
+
+                <MudListItem T="string">
+                    <MudText Typo="Typo.subtitle2">Scoring Rules</MudText>
+                    <MudText>@GetScoringRuleNames(_model.ScoringRules)</MudText>
+                </MudListItem>
             </MudList>
         }
     </MudItem>
@@ -104,6 +205,16 @@
     protected override void OnParametersSet()
     {
         _model = new PackPresetDataModel(Preset.Data);
+        if (_model.CardSize is < 3 or > 5)
+            _model.CardSize = 3;
+
+        _model.MinDifficulty ??= 1;
+        _model.MaxDifficulty ??= 5;
+
+        if (_model.MinDifficulty > _model.MaxDifficulty)
+            _model.MaxDifficulty = _model.MinDifficulty;
+        if (_model.MaxDifficulty < _model.MinDifficulty)
+            _model.MinDifficulty = _model.MaxDifficulty;
 
         if (SelectedTournamentMode == TournamentMode.ClassicPlayoff &&
             !_allowedTournamentSizes.Contains(_model.MaxPlayers))
@@ -127,6 +238,36 @@
         _model.Columns.MatchListSize(_model.CardSize, i => new PackPresetColumnModel(i));
         OnColumnConfigUpdated(_model.Columns.First());
     }
+
+    private void SetCardSize(int size)
+    {
+        if (_model.CardSize == size) return;
+        _model.CardSize = size;
+        OnCardSizeUpdated();
+        StateHasChanged();
+    }
+
+    private Variant GetCardSizeVariant(int size) => _model.CardSize == size ? Variant.Filled : Variant.Outlined;
+
+    private void SetMinDifficulty(int value)
+    {
+        _model.MinDifficulty = value;
+        if ((_model.MaxDifficulty ?? 5) < value)
+            _model.MaxDifficulty = value;
+        StateHasChanged();
+    }
+
+    private void SetMaxDifficulty(int value)
+    {
+        _model.MaxDifficulty = value;
+        if ((_model.MinDifficulty ?? 1) > value)
+            _model.MinDifficulty = value;
+        StateHasChanged();
+    }
+
+    private Variant GetVariantForMin(int value) => (_model.MinDifficulty ?? 1) == value ? Variant.Filled : Variant.Outlined;
+
+    private Variant GetVariantForMax(int value) => (_model.MaxDifficulty ?? 5) == value ? Variant.Filled : Variant.Outlined;
 
     private string GetTagsSelectText(IList<string> selected)
     {
