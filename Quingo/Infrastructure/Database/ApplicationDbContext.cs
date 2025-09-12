@@ -32,6 +32,8 @@ namespace Quingo.Infrastructure.Database
         public DbSet<TournamentLobby> TournamentLobbies { get; set; } = default!;
         public DbSet<LobbyParticipant> LobbyParticipants { get; set; } = default!;
         public DbSet<TournamentResult> TournamentResults { get; set; } = null!;
+        public DbSet<UserPackPreset> UserPackPresets { get; set; } = default!;
+        public DbSet<LobbyBan> LobbyBans { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -49,12 +51,48 @@ namespace Quingo.Infrastructure.Database
             new EntityBaseConfiguration<TournamentLobby>().Configure(builder.Entity<TournamentLobby>());
             new EntityBaseConfiguration<LobbyParticipant>().Configure(builder.Entity<LobbyParticipant>());
             new EntityBaseConfiguration<TournamentResult>().Configure(builder.Entity<TournamentResult>());
+            new EntityBaseConfiguration<UserPackPreset>().Configure(builder.Entity<UserPackPreset>());
+            new EntityBaseConfiguration<LobbyBan>().Configure(builder.Entity<LobbyBan>());
+
+            builder.Entity<LobbyBan>()
+                .HasOne(b => b.Lobby)
+                .WithMany(l => l.Bans)
+                .HasForeignKey(b => b.TournamentLobbyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<LobbyBan>()
+                .HasIndex(b => new { b.TournamentLobbyId, b.UserId })
+                .IsUnique();
+
+            builder.Entity<UserPackPreset>()
+                .OwnsOne(e => e.Data, d =>
+                {
+                    d.ToJson();
+                    d.OwnsMany(x => x.Columns, c =>
+                    {
+                        c.OwnsMany(x => x.ColAnswerTags);
+                    });
+                });
+
+            builder.Entity<UserPackPreset>()
+                .HasIndex(x => new { x.UserId, x.PackId, x.TournamentMode })
+                .IsUnique();
 
             builder.Entity<TournamentLobby>()
                 .HasMany(x => x.Participants)
                 .WithOne(x => x.Lobby)
                 .HasForeignKey(x => x.TournamentLobbyId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<TournamentLobby>()
+                .OwnsOne(e => e.PresetData, d =>
+                {
+                    d.ToJson();
+                    d.OwnsMany(x => x.Columns, c =>
+                    {
+                        c.OwnsMany(x => x.ColAnswerTags);
+                    });
+                });
 
             builder.Entity<LobbyParticipant>()
                 .HasOne(x => x.Lobby)
@@ -159,8 +197,10 @@ namespace Quingo.Infrastructure.Database
                     }
                     else if (entry.State == EntityState.Deleted && entity.Id > 0)
                     {
-                        if (entry.Entity is LobbyParticipant)
-                            return;
+                        if (entry.Entity is LobbyParticipant
+                            || entry.Entity is TournamentLobby
+                            || entry.Entity is LobbyBan)
+                            continue;
 
                         entity.DeletedAt = DateTime.UtcNow;
                         if (userId != null)

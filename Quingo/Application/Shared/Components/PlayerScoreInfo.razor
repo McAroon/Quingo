@@ -5,6 +5,13 @@
         <MudMenu Icon="@Icons.Material.Outlined.Info" AriaLabel="Score Info" AnchorOrigin="Origin.BottomCenter"
                  TransformOrigin="Origin.TopCenter">
             <div class="pa-4">
+                @if (!string.IsNullOrWhiteSpace(RankReason))
+                {
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Reason</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">@RankReason</MudText>
+                    <MudDivider Class="mb-3" />
+                }
+
                 <table class="dl-table">
                     @if (RuleEnabled(PackPresetScoringRules.CellScore))
                     {
@@ -47,15 +54,15 @@
     }
 </span>
 
-
-
 @code {
     [Parameter, EditorRequired] public PlayerScore Score { get; set; } = default!;
+    [Parameter] public string? RankReason { get; set; }
 
     private string NumClass(int num) => num < 0 ? "mud-error-text" : string.Empty;
 
     private bool RuleEnabled(PackPresetScoringRules rule) => Score.Preset.ScoringRules.HasFlag(rule);
 
-    private bool ShowInfo => Score.Preset.ScoringRules.ToEnumerable().Any();
-
+    private bool ShowInfo =>
+        !string.IsNullOrWhiteSpace(RankReason) ||
+        Score.Preset.ScoringRules.ToEnumerable().Any();
 }

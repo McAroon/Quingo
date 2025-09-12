@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Quingo.Infrastructure.Database.Repos
 @using Quingo.Shared.Constants
+@using Quingo.Shared.Enums
 
 @inject ILogger<CreateGame> Logger
 @inject PackRepo Repo
@@ -23,7 +24,7 @@
 <MudStack Row Spacing="2" Wrap="Wrap.Wrap" Class="pb-2">
     @foreach (var pack in _packs)
     {
-        <MudCard Class="pack-card clickable mud-ripple" @onclick="() => SelectPack(pack)" Outlined="pack == _pack">
+        <MudCard Class="pack-card clickable mud-ripple" @onclick="() => SelectPackAsync(pack)" Outlined="pack == _pack">
             @if (!string.IsNullOrEmpty(pack.ImageUrl))
             {
                 <MudCardMedia Image="@Files.GetFileUrl(pack.ImageUrl)"/>
@@ -71,7 +72,8 @@
                 </div>
 
                 <MudSelect T="TournamentMode" Label="Режим турнира"
-                           @bind-Value="_selectedTournamentMode">
+                           Value="_selectedTournamentMode"
+                           ValueChanged="OnTournamentModeChanged">
                     <MudSelectItem Value="TournamentMode.None">Обычный</MudSelectItem>
                     <MudSelectItem Value="TournamentMode.ClassicPlayoff">Плей-офф</MudSelectItem>
                     <MudSelectItem Value="TournamentMode.QualificationAndPlayoff">Квалификация и Плей-офф</MudSelectItem>
@@ -142,10 +144,37 @@
         }
     }
 
-    private void SelectPack(Pack pack)
+    private async Task SelectPackAsync(Pack pack)
     {
         _pack = pack;
-        _preset = _pack.Presets.FirstOrDefault();
+        _preset = _pack.Presets.FirstOrDefault() ?? new PackPreset { PackId = pack.Id, Data = new() };
+
+        try
+        {
+            ArgumentNullException.ThrowIfNull(UserId, nameof(UserId));
+
+            await using var context = await Repo.CreateDbContext();
+
+            var saved = await context.UserPackPresets
+                .AsNoTracking()
+                .Where(x => x.UserId == UserId
+                            && x.PackId == _pack.Id
+                            && x.TournamentMode == _selectedTournamentMode)
+                .Select(x => x.Data)
+                .FirstOrDefaultAsync();
+
+            if (saved is not null)
+            {
+                _preset.Data = saved;
+                Snackbar.Add("Загружен ваш сохранённый пресет для этого пака и режима.", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+            Snackbar.Add("Не удалось загрузить сохранённый пресет. Будут использованы параметры по умолчанию.", Severity.Warning);
+        }
+
         StateHasChanged();
     }
 
@@ -202,18 +231,91 @@
         }
     }
 
-    private Task SetPresetData(PackPresetData data)
+    private async Task SetPresetData(PackPresetData data)
     {
-        if (_preset != null)
+        try
+        {
+            ArgumentNullException.ThrowIfNull(_preset, nameof(_preset));
+            ArgumentNullException.ThrowIfNull(_pack, nameof(_pack));
+            ArgumentNullException.ThrowIfNull(UserId, nameof(UserId));
+
             _preset.Data = data;
-        _isPresetEdit = false;
-        StateHasChanged();
-        return Task.CompletedTask;
+
+            await using var context = await Repo.CreateDbContext();
+
+            var existing = await context.UserPackPresets
+                .FirstOrDefaultAsync(x => x.UserId == UserId
+                                          && x.PackId == _pack.Id
+                                          && x.TournamentMode == _selectedTournamentMode);
+
+            if (existing is null)
+            {
+                await context.UserPackPresets.AddAsync(new UserPackPreset
+                {
+                    UserId = UserId,
+                    PackId = _pack.Id,
+                    TournamentMode = _selectedTournamentMode,
+                    Data = data
+                });
+            }
+            else
+            {
+                existing.Data = data;
+            }
+
+            await context.SaveChangesAsync();
+
+            Snackbar.Add("Preset saved", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Failed to save preset", Severity.Error);
+            Console.Error.WriteLine(ex);
+        }
+        finally
+        {
+            _isPresetEdit = false;
+            StateHasChanged();
+        }
     }
 
     private void CancelPresetEdit()
     {
         _isPresetEdit = false;
+        StateHasChanged();
+    }
+
+    private async Task OnTournamentModeChanged(TournamentMode mode)
+    {
+        _selectedTournamentMode = mode;
+
+        if (_pack is null || _preset is null || string.IsNullOrWhiteSpace(UserId))
+            return;
+
+        try
+        {
+            await using var context = await Repo.CreateDbContext();
+
+            var saved = await context.UserPackPresets
+                .AsNoTracking()
+                .Where(x => x.UserId == UserId
+                            && x.PackId == _pack.Id
+                            && x.TournamentMode == _selectedTournamentMode)
+                .Select(x => x.Data)
+                .FirstOrDefaultAsync();
+
+            if (saved is not null)
+            {
+                _preset.Data = saved;
+                Snackbar.Add("Загружен пресет для выбранного режима.", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+            Snackbar.Add("Не удалось загрузить пресет для режима.", Severity.Warning);
+        }
+
         StateHasChanged();
     }
 }

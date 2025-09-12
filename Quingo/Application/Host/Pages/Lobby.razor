@@ -1,11 +1,12 @@
 ﻿@page "/game/tournament/lobby/{LobbyId:int}"
 
+@using System.Security.Claims
+@using System.Text.Json
 @using Microsoft.AspNetCore.SignalR.Client
 @using Quingo.Application.Player.Components
 @using Quingo.Infrastructure.Database.Repos
 @using Quingo.Shared.Constants
-@using System.Security.Claims
-@using System.Text.Json
+@using Quingo.Shared.Enums
 @implements IAsyncDisposable
 @inject TournamentLobbyService LobbyService
 @inject PlayoffService PlayoffService
@@ -100,6 +101,65 @@ else
                                     OnCancelEdit="CancelPresetEdit" />
                     </MudStack>
                 </MudContainer>
+            }
+
+            @if (_isHost)
+            {
+                <MudButton StartIcon="@(_showPlayersPanel? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                           Variant="Variant.Text"
+                           OnClick="() => _showPlayersPanel = !_showPlayersPanel">
+                    @(_showPlayersPanel ? "Скрыть управление участниками" : "Управление участниками")
+                </MudButton>
+
+                @if (_showPlayersPanel)
+                {
+                    <MudTable Items="DisplayParticipants" Dense="true" Hover="true" Class="mb-2">
+                        <HeaderContent>
+                            <MudTh>Игрок</MudTh>
+                            <MudTh Style="width:220px; text-align:center;">Действия</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.UserName</MudTd>
+                            <MudTd Style="text-align:center;">
+                                <MudButton Color="Color.Warning" Size="Size.Small"
+                                           Disabled="@(_lobby.HostUserId == context.UserId)"
+                                           OnClick="@(() => OnKick(context.UserId))">
+                                    Кик
+                                </MudButton>
+                                <MudButton Color="Color.Error" Size="Size.Small" Class="ml-2"
+                                           Disabled="@(_lobby.HostUserId == context.UserId)"
+                                           OnClick="@(() => OnBan(context.UserId, context.UserName))">
+                                    Бан
+                                </MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+
+                <MudButton StartIcon="@(_showBanPanel? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                           Variant="Variant.Text"
+                           OnClick="() => _showBanPanel = !_showBanPanel">
+                    @(_showBanPanel ? "Скрыть бан-лист" : "Показать бан-лист")
+                </MudButton>
+
+                @if (_showBanPanel)
+                {
+                    <MudTable Items="_lobby.Bans" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Игрок</MudTh>
+                            <MudTh Style="width:150px; text-align:center;">Действия</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.UserName</MudTd>
+                            <MudTd Style="text-align:center;">
+                                <MudButton Color="Color.Success" Size="Size.Small"
+                                           OnClick="@(() => OnUnban(context.UserId))">
+                                    Разбанить
+                                </MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
             }
         }
 
@@ -392,6 +452,8 @@ else
     private bool _showPresetBlock = false;
     private Guid? _sessionId;
     private GameInstance? _currentGame;
+    private bool _showPlayersPanel = false;
+    private bool _showBanPanel = false;
 
     private class PlayerPair
     {
@@ -648,8 +710,6 @@ else
         await _hubConnection.StartAsync();
         await _hubConnection.InvokeAsync(SignalRConstants.JoinLobbyGroup, LobbyId);
 
-        await LoadLobby();
-
         var gamesStarted = _playerScores is { Count: > 0 };
         var alreadyIn = _lobby?.Participants.Any(p => p.UserId == _userId) == true;
 
@@ -661,15 +721,44 @@ else
             }
             else
             {
-                var canJoin = await LobbyService.CanJoinLobbyAsync(LobbyId, _userId!);
-                if (!canJoin)
+                var joinResp = await LobbyService.GetJoinStatusAsync(LobbyId, _userId!);
+                switch (joinResp.Status)
                 {
-                    Snackbar.Add("Лобби уже заполнено.", Severity.Warning);
-                }
-                else
-                {
-                    await LobbyService.JoinLobby(LobbyId, _userId!, _userName!);
-                    await LoadLobby();
+                    case CanJoinLobbyStatus.Ok:
+                        await LobbyService.JoinLobby(LobbyId, _userId!, _userName!);
+                        await LoadLobby();
+                        break;
+
+                    case CanJoinLobbyStatus.AlreadyIn:
+                        await LoadLobby();
+                        break;
+
+                    case CanJoinLobbyStatus.Banned:
+                        Snackbar.Add(joinResp.Message ?? "Вы забанены в этом лобби.", Severity.Error);
+                        if (_hubConnection is not null)
+                            await _hubConnection.InvokeAsync(SignalRConstants.LeaveLobbyGroup, LobbyId);
+                        NavigationManager.NavigateTo("/game/play");
+                        break;
+
+                    case CanJoinLobbyStatus.Full:
+                        Snackbar.Add(joinResp.Message ?? "Лобби уже заполнено.", Severity.Warning);
+                        await LoadLobby();
+                        break;
+
+                    case CanJoinLobbyStatus.Started:
+                        Snackbar.Add(joinResp.Message ?? "В лобби уже начались игры.", Severity.Warning);
+                        await LoadLobby();
+                        break;
+
+                    case CanJoinLobbyStatus.NotFound:
+                        Snackbar.Add(joinResp.Message ?? "Лобби не найдено.", Severity.Error);
+                        NavigationManager.NavigateTo("/game/play");
+                        break;
+
+                    default:
+                        Snackbar.Add(joinResp.Message ?? "Нельзя присоединиться к лобби.", Severity.Warning);
+                        NavigationManager.NavigateTo("/game/play");
+                        break;
                 }
             }
         }
@@ -850,10 +939,37 @@ else
     private async Task LoadLobby()
     {
         _loading = true;
-        _lobby = await LobbyService.GetLobbyById(LobbyId);
-        if (_lobby is null)
+        var lobby = await LobbyService.GetLobbyById(LobbyId);
+        if (lobby is null)
+        {
             NavigationManager.NavigateTo("/game/play");
-        _preset.Data = JsonSerializer.Deserialize<PackPresetData>(_lobby.PresetJson) ?? new PackPresetData();
+            _loading = false;
+            return;
+        }
+        _lobby = lobby;
+        if (_lobby.Bans?.Any(b => b.UserId == _userId) == true)
+        {
+            Snackbar.Add("Вы забанены в этом лобби.", Severity.Error);
+            if (_hubConnection is not null)
+                await _hubConnection.InvokeAsync(SignalRConstants.LeaveLobbyGroup, LobbyId);
+
+            NavigationManager.NavigateTo("/game/play");
+            _loading = false;
+            return;
+        }
+
+        if (_lobby.Participants?.Any(p => p.UserId == _userId) != true)
+        {
+            Snackbar.Add("Вы были исключены из лобби.", Severity.Warning);
+            if (_hubConnection is not null)
+                await _hubConnection.InvokeAsync(SignalRConstants.LeaveLobbyGroup, LobbyId);
+
+            NavigationManager.NavigateTo("/game/play");
+            _loading = false;
+            return;
+        }
+        _preset ??= new PackPreset();
+        _preset.Data = _lobby.PresetData ?? new PackPresetData();
         _preset.Pack = await Repo.GetPack(_lobby.PackId);
         _preset.PackId = _lobby.PackId;
         _sessionId = await PlayoffService.GetSessionIdAsync(LobbyId);
@@ -861,7 +977,6 @@ else
         _playerScores = await PlayoffService.GetLatestScoresAsync(_lobby.Id);
         _historyByGame = await PlayoffService.GetTournamentHistoryAsync(LobbyId);
         _loading = false;
-
         await InvokeAsync(StateHasChanged);
     }
 
@@ -1204,5 +1319,38 @@ else
                 return DiffReason(me, ranked[j]);
 
         return me.IsRandom ? "Позиция определена жеребьёвкой" : "Все метрики равны";
+    }
+
+    private async Task OnKick(string targetUserId)
+    {
+        try
+        {
+            await LobbyService.KickAsync(LobbyId, _userId!, targetUserId);
+            Snackbar.Add("Игрок исключён", Severity.Warning);
+            await LoadLobby();
+        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+    }
+
+    private async Task OnBan(string targetUserId, string targetUserName)
+    {
+        try
+        {
+            await LobbyService.BanAsync(LobbyId, _userId!, targetUserId, targetUserName);
+            Snackbar.Add("Игрок забанен", Severity.Error);
+            await LoadLobby();
+        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+    }
+
+    private async Task OnUnban(string targetUserId)
+    {
+        try
+        {
+            await LobbyService.UnbanAsync(LobbyId, _userId!, targetUserId);
+            Snackbar.Add("Игрок разбанен", Severity.Success);
+            await LoadLobby();
+        }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
     }
 }

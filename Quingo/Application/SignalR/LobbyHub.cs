@@ -18,18 +18,21 @@ public class LobbyHub : Hub
     public async Task NotifyGameStarted(int lobbyId, Guid gameSessionId, string password)
     {
         var groupName = SignalRConstants.LobbyGroup(lobbyId);
-        await Clients.Group(groupName).SendAsync("GameStarted", gameSessionId, password);
+        await Clients.Group(groupName)
+            .SendAsync(SignalRConstants.GameStarted, gameSessionId, password);
     }
 
     public async Task NotifyTournamentUpdated(int lobbyId)
     {
         var groupName = SignalRConstants.LobbyGroup(lobbyId);
-        await Clients.Group(groupName).SendAsync("TournamentUpdated");
+        await Clients.Group(groupName)
+            .SendAsync(SignalRConstants.TournamentUpdated);
     }
 
     public async Task NotifyLobbyRestarted(int oldLobbyId, int newLobbyId)
     {
         var groupName = SignalRConstants.LobbyGroup(oldLobbyId);
-        await Clients.Group(groupName).SendAsync("LobbyRestarted", oldLobbyId, newLobbyId);
+        await Clients.Group(groupName)
+            .SendAsync(SignalRConstants.LobbyRestarted, newLobbyId);
     }
 }

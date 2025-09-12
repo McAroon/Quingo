@@ -1,10 +1,11 @@
 ﻿@page "/game/play"
 
-@using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
-@using Quingo.Shared
 @using System.Text.Json
+@using Microsoft.AspNetCore.Authorization
+@using Quingo.Shared
 @using Quingo.Shared.Constants
+@using Quingo.Shared.Enums
 
 @inject GameService GameService
 @inject NavigationManager NavigationManager
@@ -41,10 +42,8 @@
         <MudTd>@(context.IsTournament? context.Tournament!.HostUserName : context.Game!.HostName)</MudTd>
         <MudTd>
             @(context.IsTournament
-                        ? (context.Tournament!.TournamentMode == TournamentMode.QualificationAndPlayoff
-                        ? $"{context.Tournament!.Participants.Count}" 
-                        : $"{context.Tournament!.Participants.Count}/{GetMaxPlayersFromJson(context.Tournament!.PresetJson)}")
-                        : PlayersFormat(context.Game!) )
+                        ? PlayersFormat(context.Tournament!)
+                        : PlayersFormat(context.Game!))
         </MudTd>
         <MudTd>
             @(context.IsTournament
@@ -122,6 +121,17 @@
         instance.Preset.MaxPlayers <= 0
             ? instance.Players.Count.ToString()
             : $"{instance.Players.Count}/{instance.Preset.MaxPlayers}";
+
+    private string PlayersFormat(TournamentLobby t)
+    {
+        if (t.TournamentMode == TournamentMode.QualificationAndPlayoff)
+            return $"{t.Participants.Count}";
+
+        var max = t.PresetData?.MaxPlayers ?? 0;
+        return max <= 0
+            ? t.Participants.Count.ToString()
+            : $"{t.Participants.Count}/{max}";
+    }
 
     private async Task LoadAll()
     {

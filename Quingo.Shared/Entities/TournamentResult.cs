@@ -1,4 +1,4 @@
-﻿using Quingo.Shared.Constants;
+﻿using Quingo.Shared.Enums;
 
 namespace Quingo.Shared.Entities;
 

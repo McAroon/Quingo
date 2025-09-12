@@ -1,4 +1,4 @@
-﻿namespace Quingo.Shared.Constants;
+﻿namespace Quingo.Shared.Enums;
 
 public enum TournamentMode
 {
