@@ -6,6 +6,7 @@ using Quingo.Infrastructure.Database;
 using Quingo.Shared.Constants;
 using Quingo.Shared.Entities;
 using Quingo.Shared.Enums;
+using System.Text.Json;
 
 namespace Quingo.Application.Core;
 
@@ -335,7 +336,7 @@ public class TournamentLobbyService
             PackId = oldLobby.PackId,
             PackName = oldLobby.PackName,
             Password = oldLobby.Password,
-            PresetData = oldLobby.PresetData,
+            PresetData = ClonePreset(oldLobby.PresetData),
             TournamentMode = oldLobby.TournamentMode,
             Participants = oldLobby.Participants.Select(p => new LobbyParticipant
             {
@@ -355,6 +356,12 @@ public class TournamentLobbyService
             .SendAsync(SignalRConstants.LobbyRestarted, newLobby.Id);
 
         return newLobby.Id;
+    }
+
+    private static PackPresetData ClonePreset(PackPresetData src)
+    {
+        var json = JsonSerializer.Serialize(src);
+        return JsonSerializer.Deserialize<PackPresetData>(json) ?? new PackPresetData();
     }
 
     public async Task KickAsync(int lobbyId, string hostUserId, string targetUserId)

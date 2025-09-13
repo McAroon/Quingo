@@ -27,34 +27,23 @@ else
 {
     <MudText Typo="Typo.h6">Пак: @_lobby.PackName</MudText>
 
-    @if (GetPodium() is var podium && podium.First is not null)
+    @if (AreAllMedalistsKnown())
     {
+        var podium = GetPodium();
+
         @if (_isHost)
         {
-            <MudButton OnClick="CloseLobby"
-                       Color="Color.Error"
-                       Class="mt-2 mb-2">
-                Закрыть лобби
-            </MudButton>
-            <MudButton Color="Color.Warning"
-                       Class="mt-2 mb-2"
-                       OnClick="RestartTournament">
-                🔁 Начать заново
-            </MudButton>
+            <MudButton OnClick="CloseLobby" Color="Color.Error" Class="mt-2 mb-2">Закрыть лобби</MudButton>
+            <MudButton Color="Color.Warning" Class="mt-2 mb-2" OnClick="RestartTournament">🔁 Начать заново</MudButton>
         }
         else
         {
-            <MudButton Color="Color.Default"
-                       Class="mt-2 mb-2"
-                       OnClick="LeaveLobby">
-                Покинуть лобби
-            </MudButton>
+            <MudButton Color="Color.Default" Class="mt-2 mb-2" OnClick="LeaveLobby">Покинуть лобби</MudButton>
         }
 
         <MudText Typo="Typo.h5" Color="Color.Success" Align="Align.Center">
             🏆 Победитель турнира: <b>@podium.First!.UserName</b>
         </MudText>
-
         <MudStack Class="mt-2" Spacing="1">
             @if (podium.Second is not null)
             {
@@ -190,18 +179,19 @@ else
                        Class="mt-2 mb-2">
                 Закрыть лобби
             </MudButton>
-            if (_playerScores is null || _playerScores.Count == 0)
+            @if ((_playerScores is null || _playerScores.Count == 0)
+                && _lobby.TournamentMode != TournamentMode.QualificationAndPlayoff)
             {
                 <MudButton Color="Color.Primary"
                            Class="mt-2 mb-2"
-                           Disabled="!AllReady"
+                           Disabled="!CanStartByCount"
                            OnClick="Shuffle">
                     Перемешать
                 </MudButton>
             }
             <MudButton Color="Color.Success"
                        Class="mt-2 mb-2"
-                       Disabled="@(AllReady == false)"
+                       Disabled="!AllReady"
                        OnClick="OnStartGame">
                 Начать игру
             </MudButton>
@@ -400,39 +390,56 @@ else
     var thirdPairsVm = thirdPairsOnce
         .Select(p => new PairsTable.PairVm { P1 = p.Player1, P2 = p.Player2 })
         .ToList();
-
-    if (thirdPairsVm.Any())
-    {
-        <MudText Typo="Typo.h6" Class="mt-4">Матч за 3-е место</MudText>
-        <PairsTable Pairs="thirdPairsVm"
-                    Participants="_lobby.Participants"
-                    Title="@GetRoundLabel(2, isThirdPlace: true)" />
-    }
+    var drawPairsOnce = GetDrawPairs();
+    var drawPairsVm = drawPairsOnce
+    .Select(p => new PairsTable.PairVm { P1 = p.Player1, P2 = p.Player2 })
+    .ToList();
 
     var nextPairs = GetNextRoundPairs();
     var nextPairsVm = nextPairs
         .Select(p => new PairsTable.PairVm { P1 = p.Player1, P2 = p.Player2 })
         .ToList();
+    bool haveFinal = nextPairsVm.Count == 1
+        && nextPairsVm[0]?.P1 is not null
+        && nextPairsVm[0]?.P2 is not null;
+    bool haveBronze = thirdPairsVm.Any();
+    bool haveDraws = drawPairsVm.Any();
 
-    if (GetDrawPairs().Count == 0 && nextPairsVm.Any() && !thirdPairsVm.Any())
-    {
-        <MudText Typo="Typo.h6" Class="mt-4">Следующий раунд</MudText>
-        <PairsTable Pairs="nextPairsVm"
-                    Participants="_lobby.Participants"
-                    Title="@($"Раунд: {GetRoundLabel(nextPairs.Count * 2)}")" />
-    }
-
-    var drawPairsOnce = GetDrawPairs();
-    var drawPairsVm = drawPairsOnce
-        .Select(p => new PairsTable.PairVm { P1 = p.Player1, P2 = p.Player2 })
-        .ToList();
-
-    if (drawPairsVm.Any())
+    if (haveDraws)
     {
         <MudText Typo="Typo.h6" Class="mt-4">Переигровка (Ничья)</MudText>
         <PairsTable Pairs="drawPairsVm"
                     Participants="_lobby.Participants"
                     Title="Раунд: Переигровка" />
+    }
+    else if (haveFinal || haveBronze)
+    {
+        @if (haveFinal)
+        {
+            <MudText Typo="Typo.h6" Class="mt-4">Финал</MudText>
+            <PairsTable Pairs="nextPairsVm"
+                        Participants="_lobby.Participants"
+                        Title="@($"Раунд: {GetRoundLabel(2)}")" />
+        }
+
+        @if (haveBronze)
+        {
+            <MudText Typo="Typo.h6" Class="mt-4">Матч за 3-е место</MudText>
+            <PairsTable Pairs="thirdPairsVm"
+                        Participants="_lobby.Participants"
+                        Title="@GetRoundLabel(2, isThirdPlace: true)" />
+        }
+    }
+    else
+    {
+        if (nextPairsVm.Any())
+        {
+            var labelCount = nextPairsVm.Count * 2;
+            <MudText Typo="Typo.h6" Class="mt-4">Следующий раунд</MudText>
+            <PairsTable Pairs="nextPairsVm"
+                        Participants="_lobby.Participants"
+                        Title="@($"Раунд: {GetRoundLabel(labelCount)}")" />
+        }
     }
 }
 
@@ -454,6 +461,7 @@ else
     private GameInstance? _currentGame;
     private bool _showPlayersPanel = false;
     private bool _showBanPanel = false;
+    private bool _leavingBySelf = false;
 
     private class PlayerPair
     {
@@ -540,52 +548,33 @@ else
         }
     }
 
+    private int TargetMaxPlayers =>
+        _preset?.Data?.MaxPlayers is > 0 ? _preset.Data.MaxPlayers : 4;
+        
+    private bool CanStartByCount =>
+        _lobby is not null && _lobby.Participants.Count == TargetMaxPlayers;
+
     private bool CanCurrentUserBeReady
     {
         get
         {
-            if (_lobby is null || string.IsNullOrWhiteSpace(_userId))
-                return false;
-
-            if (_historyByGame.Count == 0)
-                return true;
-
-            var thirdPairs = GetThirdPlacePairs();
-            if (thirdPairs.Any())
-            {
-                var (a, b) = thirdPairs.First();
-                return a.UserId == _userId || b.UserId == _userId;
-            }
-
-            int lastKey;
+            if (_lobby is null || string.IsNullOrWhiteSpace(_userId)) return false;
             var positiveKeys = _historyByGame.Keys.Where(k => k > 0).ToList();
             if (positiveKeys.Count > 0)
-                lastKey = positiveKeys.Max();
-            else if (_historyByGame.ContainsKey(0))
-                lastKey = 0;
-            else
-                lastKey = _historyByGame.Keys.Max();
+            {
+                var lastKey = positiveKeys.Max();
+                if (_historyByGame.TryGetValue(lastKey, out var results))
+                {
+                    var drawIds = results
+                        .Where(r => r.Result == GameResult.Draw)
+                        .Select(r => r.UserId)
+                        .ToHashSet();
 
-            if (!_historyByGame.TryGetValue(lastKey, out var results) || results.Count == 0)
-                return true;
-
-            if (lastKey < 0)
-                return true;
-
-            var drawIds = results
-                .Where(r => r.Result == GameResult.Draw)
-                .Select(r => r.UserId)
-                .ToHashSet();
-
-            if (drawIds.Count > 0)
-                return drawIds.Contains(_userId);
-
-            var winners = results
-                .Where(r => r.Result == GameResult.Win)
-                .Select(r => r.UserId)
-                .ToHashSet();
-
-            return winners.Contains(_userId);
+                    if (drawIds.Count > 0)
+                        return drawIds.Contains(_userId);
+                }
+            }
+            return true;
         }
     }
 
@@ -657,45 +646,176 @@ else
         {
             try
             {
-                List<TournamentResult> nextRoundPlayers;
+                var isFirstMatch = _historyByGame.Count == 0;
 
                 var thirdPairs = GetThirdPlacePairs();
-                if (thirdPairs.Any())
+                var nextPairs = GetNextRoundPairs();
+
+                var haveBronze = thirdPairs.Any();
+                var haveFinal = nextPairs.Count == 1 &&
+                                 nextPairs[0].Player1 is not null &&
+                                 nextPairs[0].Player2 is not null;
+
+                var bronzeIds = haveBronze
+                    ? new HashSet<string> { thirdPairs[0].Player1.UserId, thirdPairs[0].Player2.UserId }
+                    : new HashSet<string>();
+
+                var finalIds = haveFinal
+                    ? new HashSet<string> { nextPairs[0].Player1!.UserId, nextPairs[0].Player2!.UserId }
+                    : new HashSet<string>();
+
+                bool bronzeReplay = _historyByGame.TryGetValue(0, out var thirdRound)
+                                    && thirdRound.Any(r => r.Result == GameResult.Draw);
+
+                bool positiveReplay = false;
+                string? positiveRoundLabel = null;
+                {
+                    var positiveKeys = _historyByGame.Keys.Where(k => k > 0).ToList();
+                    if (positiveKeys.Count > 0)
+                    {
+                        var lastKey = positiveKeys.Max();
+                        if (_historyByGame.TryGetValue(lastKey, out var lastResults))
+                        {
+                            positiveReplay = lastResults.Any(r => r.Result == GameResult.Draw);
+                            positiveRoundLabel = GetRoundLabel(lastResults.Count);
+                        }
+                    }
+                }
+
+                List<TournamentResult> eligible;
+
+                if (isFirstMatch)
+                {
+                    eligible = _lobby.Participants
+                        .OrderBy(p => p.Order)
+                        .Select(p => new TournamentResult { UserId = p.UserId, UserName = p.UserName })
+                        .ToList();
+                }
+                else if (bronzeReplay)
                 {
                     var (p1, p2) = thirdPairs.First();
-                    nextRoundPlayers = new() { p1, p2 };
-
-                    if (!nextRoundPlayers.Any(p => p.UserId == _userId))
-                    {
-                        Snackbar.Add("Идёт матч за 3-е место. Ожидайте завершения.", Severity.Info);
-                        return;
-                    }
+                    eligible = new() { p1, p2 };
                 }
                 else
                 {
                     var drawPlayers = await PlayoffService.GetDrawPlayersOfLastRoundAsync(LobbyId);
+                    eligible = drawPlayers.Any()
+                        ? drawPlayers
+                        : await PlayoffService.GetWinnersOfLastRoundAsync(LobbyId);
+                }
 
-                    if (drawPlayers.Any())
+                var eligibleIds = eligible.Select(x => x.UserId).ToHashSet();
+
+                if (haveBronze) eligibleIds.UnionWith(bronzeIds);
+                if (haveFinal) eligibleIds.UnionWith(finalIds);
+
+                string? firstStageLabel = null;
+                if (isFirstMatch)
+                {
+                    if (_lobby.TournamentMode == TournamentMode.QualificationAndPlayoff)
+                        firstStageLabel = "Квалификация";
+                    else
                     {
-                        nextRoundPlayers = drawPlayers;
+                        int n = Math.Max(2, Math.Min(_preset.Data.MaxPlayers, _lobby.Participants.Count));
+                        firstStageLabel = GetRoundLabel(n);
+                    }
+                }
 
-                        if (!nextRoundPlayers.Any(p => p.UserId == _userId))
-                        {
-                            Snackbar.Add("Начались дополнительные матчи для ничьих. Ожидайте следующий раунд.", Severity.Info);
-                            return;
-                        }
+                var myParticipant = _lobby?.Participants.FirstOrDefault(p => p.UserId == _userId);
+                bool userEliminatedOnQual =
+                    _lobby?.TournamentMode == TournamentMode.QualificationAndPlayoff &&
+                    (myParticipant?.Order ?? 0) == 0;
+
+                string? eliminatedRoundLabel = null;
+                {
+                    var lastPositive = _historyByGame.Keys.Where(k => k > 0).DefaultIfEmpty(-1).Max();
+                    if (lastPositive > 0 && _historyByGame.TryGetValue(lastPositive, out var lastPosResults))
+                    {
+                        var myRow = lastPosResults.FirstOrDefault(r => r.UserId == _userId);
+                        if (myRow?.Result == GameResult.Loss)
+                            eliminatedRoundLabel = GetRoundLabel(lastPosResults.Count);
+                    }
+                }
+
+                string? toast = null;
+                bool iAmEligible = eligibleIds.Contains(_userId!);
+
+                if (iAmEligible)
+                {
+                    if (isFirstMatch)
+                    {
+                        toast = _lobby.TournamentMode == TournamentMode.QualificationAndPlayoff
+                            ? "Квалификация: вы в игре."
+                            : $"Стадия: {firstStageLabel} — вы в игре.";
+                    }
+                    else if (bronzeReplay && bronzeIds.Contains(_userId!))
+                    {
+                        toast = "Переигровка матча за 3-е место: решается бронза.";
+                    }
+                    else if (positiveReplay && finalIds.Contains(_userId!) && positiveRoundLabel == GetRoundLabel(2))
+                    {
+                        toast = "Переигровка финала: вы боретесь за золото.";
+                    }
+                    else if (positiveReplay)
+                    {
+                        toast = $"Переигровка: {positiveRoundLabel}. Вы участвуете в переигровке этого раунда.";
+                    }
+                    else if (haveFinal && finalIds.Contains(_userId!))
+                    {
+                        toast = "Финал: вы боретесь за золото. Удачи!";
+                    }
+                    else if (haveBronze && bronzeIds.Contains(_userId!))
+                    {
+                        toast = "Матч за 3-е место: вы боретесь за бронзу.";
                     }
                     else
                     {
-                        nextRoundPlayers = await PlayoffService.GetWinnersOfLastRoundAsync(LobbyId);
-
-                        if (nextRoundPlayers.Any() && !nextRoundPlayers.Any(p => p.UserId == _userId))
-                        {
-                            Snackbar.Add("Вы не прошли в следующий раунд турнира.", Severity.Warning);
-                            return;
-                        }
+                        int stagePlayers = Math.Max(eligible.Count, 2);
+                        toast = $"Стадия: {GetRoundLabel(stagePlayers)} — вы в игре.";
                     }
                 }
+                else
+                {
+                    if (userEliminatedOnQual)
+                    {
+                        toast = "Вы не прошли квалификацию. Можете сыграть тренировочный матч — он не повлияет на турнир.";
+                    }
+                    else if (!string.IsNullOrEmpty(eliminatedRoundLabel))
+                    {
+                        toast = $"Вы выбыли из плей-офф (раунд: {eliminatedRoundLabel}). Можете сыграть тренировочный матч — результат в турнир не пойдёт.";
+                    }
+                    else if (isFirstMatch)
+                    {
+                        toast = "Старт турнира. Идёт первый матч. Вы можете сыграть тренировочный матч — он не повлияет на турнир.";
+                    }
+                    else if (bronzeReplay)
+                    {
+                        toast = "Сейчас идёт переигровка матча за 3-е место. Вы можете сыграть тренировочный матч — его результат не повлияет на турнир.";
+                    }
+                    else if (positiveReplay)
+                    {
+                        toast = $"Сейчас идёт переигровка: {positiveRoundLabel}. Вы можете сыграть тренировочный матч — его результат не повлияет на турнир.";
+                    }
+                    else if (haveFinal && haveBronze)
+                    {
+                        toast = "Сейчас идут финал и матч за 3-е место. В зачёт идут только их участники. Можете сыграть тренировочный матч — он не повлияет на турнир.";
+                    }
+                    else if (haveFinal)
+                    {
+                        toast = "Сейчас идёт финал. В зачёт идут только его участники. Можете сыграть тренировочный матч — он не повлияет на турнир.";
+                    }
+                    else if (haveBronze)
+                    {
+                        toast = "Сейчас идёт матч за 3-е место. В зачёт идут только его участники. Можете сыграть тренировочный матч — он не повлияет на турнир.";
+                    }
+                    else
+                    {
+                        toast = "Сейчас идёт следующий раунд турнира. Вы можете сыграть тренировочный матч — он не повлияет на турнир.";
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(toast))
+                    Snackbar.Add(toast, Severity.Info);
 
                 var player = GameService.JoinGame(gameSessionId, _userId!, _userName!, password);
                 NavigationManager.NavigateTo($"/game/play/{gameSessionId}/{player.PlayerSessionId}");
@@ -820,7 +940,6 @@ else
             var options = new GameOptions { Password = _lobby!.Password };
 
             List<(string UserId, string UserName)> players;
-            string host = _userId;
 
             if (_historyByGame.Count == 0)
             {
@@ -832,15 +951,28 @@ else
             else
             {
                 var thirdPairs = GetThirdPlacePairs();
-                if (thirdPairs.Any())
+                var nextPairs = GetNextRoundPairs();
+                var haveBronze = thirdPairs.Any();
+                var haveFinal = nextPairs.Any() && nextPairs.Count == 1 &&
+                                 nextPairs.First().Player1 != null && nextPairs.First().Player2 != null;
+
+                if (haveBronze && haveFinal)
                 {
-                    var (p1, p2) = thirdPairs.First();
+                    var (f1, f2) = nextPairs.First();
+                    var (b1, b2) = thirdPairs.First();
+
                     players = new()
                     {
-                        (p1.UserId, p1.UserName),
-                        (p2.UserId, p2.UserName)
+                        (f1.UserId, f1.UserName),
+                        (f2.UserId, f2.UserName),
+                        (b1.UserId, b1.UserName),
+                        (b2.UserId, b2.UserName),
                     };
-                    _preset.Data.MaxPlayers = 2;
+                }
+                else if (haveBronze)
+                {
+                    var (p1, p2) = thirdPairs.First();
+                    players = new() { (p1.UserId, p1.UserName), (p2.UserId, p2.UserName) };
                 }
                 else
                 {
@@ -861,7 +993,6 @@ else
                         }
 
                         players = qualified;
-                        _preset.Data.MaxPlayers = players.Count;
                     }
                     else
                     {
@@ -877,39 +1008,59 @@ else
                             .OrderBy(r => r.Id)
                             .ToList();
 
-                        if (draws.Any())
-                        {
-                            players = draws.Select(r => (r.UserId, r.UserName)).ToList();
-                            _preset.Data.MaxPlayers = players.Count;
-                        }
-                        else
-                        {
-                            var winners = lastResults
-                                .Where(r => r.Result == GameResult.Win)
+                        players = draws.Any()
+                            ? draws.Select(r => (r.UserId, r.UserName)).ToList()
+                            : lastResults.Where(r => r.Result == GameResult.Win)
                                 .OrderBy(r => r.Id)
+                                .Select(r => (r.UserId, r.UserName))
                                 .ToList();
-
-                            players = winners.Select(r => (r.UserId, r.UserName)).ToList();
-                            _preset.Data.MaxPlayers = players.Count;
-                        }
                     }
                 }
-
-                if (players.Count == 0)
-                {
-                    Snackbar.Add("Нет доступной пары для запуска матча.", Severity.Warning);
-                    return;
-                }
-
-                host = players[0].UserId;
             }
 
-            var game = await GameService.StartGame(_lobby.PackId, _preset.Data, options, host, _lobby.Id, true);
+            if (players.Count == 0)
+            {
+                Snackbar.Add("Нет доступной пары для запуска матча.", Severity.Warning);
+                return;
+            }
+
+            bool isDrawReplay = false;
+            {
+                var positiveKeys = _historyByGame.Keys.Where(k => k > 0).ToList();
+                if (positiveKeys.Count > 0)
+                {
+                    var lastKey = positiveKeys.Max();
+                    if (_historyByGame.TryGetValue(lastKey, out var lastResults))
+                    {
+                        isDrawReplay = lastResults.Any(r => r.Result == GameResult.Draw);
+                    }
+                }
+            }
+
+            var extraPlayers = new List<(string UserId, string UserName)>();
+            if (!isDrawReplay)
+            {
+                var tournamentIds = players.Select(p => p.UserId).ToHashSet();
+                extraPlayers = _lobby.Participants
+                    .Where(p => !tournamentIds.Contains(p.UserId))
+                    .Select(p => (p.UserId, p.UserName))
+                    .ToList();
+            }
+
+            var gamePreset = DeepClonePreset(_preset.Data);
+            var needCapacity = players.Count + extraPlayers.Count;
+            if (needCapacity > 0 && needCapacity > gamePreset.MaxPlayers)
+                gamePreset.MaxPlayers = needCapacity;
+
+            var host = string.IsNullOrWhiteSpace(_lobby.HostUserId) ? _userId : _lobby.HostUserId;
+
+            var game = await GameService.StartGame(_lobby.PackId, gamePreset, options, host, _lobby.Id, true);
 
             foreach (var p in players)
-            {
                 GameService.JoinGame(game.GameSessionId, p.UserId, p.UserName, options.Password);
-            }
+
+            foreach (var p in extraPlayers)
+                GameService.JoinGame(game.GameSessionId, p.UserId, p.UserName, options.Password);
 
             await _hubConnection.SendAsync("NotifyGameStarted", LobbyId, game.GameSessionId, options.Password);
 
@@ -924,6 +1075,13 @@ else
         {
             _loading = false;
         }
+    }
+
+    private static PackPresetData DeepClonePreset(PackPresetData src)
+    {
+        var json = JsonSerializer.Serialize(src);
+        var clone = JsonSerializer.Deserialize<PackPresetData>(json) ?? new PackPresetData();
+        return clone;
     }
 
     private async Task ToggleReady()
@@ -960,7 +1118,11 @@ else
 
         if (_lobby.Participants?.Any(p => p.UserId == _userId) != true)
         {
-            Snackbar.Add("Вы были исключены из лобби.", Severity.Warning);
+            if (_leavingBySelf)
+                Snackbar.Add("Вы покинули лобби.", Severity.Info);
+            else
+                Snackbar.Add("Вы были исключены из лобби.", Severity.Warning);
+
             if (_hubConnection is not null)
                 await _hubConnection.InvokeAsync(SignalRConstants.LeaveLobbyGroup, LobbyId);
 
@@ -977,11 +1139,13 @@ else
         _playerScores = await PlayoffService.GetLatestScoresAsync(_lobby.Id);
         _historyByGame = await PlayoffService.GetTournamentHistoryAsync(LobbyId);
         _loading = false;
+        _leavingBySelf = false;
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task LeaveLobby()
     {
+        _leavingBySelf = true;
         await LobbyService.LeaveLobby(LobbyId, _userId!);
         NavigationManager.NavigateTo("/game/play");
     }
@@ -1098,28 +1262,39 @@ else
 
     private List<(TournamentResult Player1, TournamentResult Player2)> GetDrawPairs()
     {
+        var pairs = new List<(TournamentResult, TournamentResult)>();
         if (_historyByGame.Count == 0)
-            return new();
+            return pairs;
 
-        var lastRound = _historyByGame.Keys.Max();
-        var results = _historyByGame[lastRound]
+        if (_historyByGame.TryGetValue(0, out var thirdRound)
+            && thirdRound.Any(r => r.Result == GameResult.Draw))
+        {
+            var draws0 = thirdRound
+                .Where(r => r.Result == GameResult.Draw)
+                .OrderBy(r => r.Id)
+                .ToList();
+
+            for (int i = 0; i + 1 < draws0.Count; i += 2)
+                pairs.Add((draws0[i], draws0[i + 1]));
+
+            return pairs;
+        }
+
+        var lastPositive = _historyByGame.Keys.Where(k => k > 0).DefaultIfEmpty(-1).Max();
+        if (lastPositive <= 0)
+            return pairs;
+
+        var results = _historyByGame[lastPositive]
             .Where(r => r.Result != null)
             .OrderBy(r => r.Id)
             .ToList();
 
         var draws = results
             .Where(r => r.Result == GameResult.Draw)
-            .OrderBy(r => r.Id)
             .ToList();
 
-        var pairs = new List<(TournamentResult, TournamentResult)>();
-        for (int i = 0; i < draws.Count; i += 2)
-        {
-            var p1 = draws.ElementAtOrDefault(i);
-            var p2 = draws.ElementAtOrDefault(i + 1);
-            if (p1 != null && p2 != null)
-                pairs.Add((p1, p2));
-        }
+        for (int i = 0; i + 1 < draws.Count; i += 2)
+            pairs.Add((draws[i], draws[i + 1]));
 
         return pairs;
     }
@@ -1154,14 +1329,8 @@ else
         }
     }
 
-    private bool EnoughPlayers
-    {
-        get
-        {
-            return _lobby is not null &&
-                   _lobby.Participants.Count == _preset.Data.MaxPlayers;
-        }
-    }
+    private bool EnoughPlayers =>
+        _lobby is not null && _lobby.Participants.Count == TargetMaxPlayers;
 
     private void Spectate(GameInstance game)
     {
@@ -1352,5 +1521,20 @@ else
             await LoadLobby();
         }
         catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+    }
+
+    private bool AreAllMedalistsKnown()
+    {
+        var (first, second, third) = GetPodium();
+
+        bool thirdExisted = _historyByGame.ContainsKey(0);
+
+        if (first is null || second is null)
+            return false;
+
+        if (thirdExisted && third is null)
+            return false;
+
+        return true;
     }
 }
