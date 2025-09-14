@@ -84,6 +84,8 @@
                                 <MudSelectItem T="PackPresetScoringRules" Value="rule">@rule.GetName()</MudSelectItem>
                             }
                         </MudSelect>
+
+                        <MudCheckBox @bind-Value="_model.ShowTagBadges" Label="Show Tag Badges" />
                     </MudForm>
                 </MudCardContent>
                 <MudCardActions>
@@ -177,6 +179,8 @@
                     <MudText Typo="Typo.subtitle2">Scoring Rules</MudText>
                     <MudText>@GetScoringRuleNames(_model.ScoringRules)</MudText>
                 </MudListItem>
+
+                <MudListItem Text="Show Tag Badges" SecondaryText="@(_model.ShowTagBadges ? "Yes" : "No")" />
             </MudList>
         }
     </MudItem>
