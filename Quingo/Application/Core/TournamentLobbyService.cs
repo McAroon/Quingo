@@ -14,11 +14,16 @@ public class TournamentLobbyService
 {
     private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
     private readonly IHubContext<LobbyHub> _hubContext;
+    private readonly IHttpContextAccessor _http;
 
-    public TournamentLobbyService(IDbContextFactory<ApplicationDbContext> dbFactory, IHubContext<LobbyHub> hubContext)
+    public TournamentLobbyService(
+            IDbContextFactory<ApplicationDbContext> dbFactory,
+            IHubContext<LobbyHub> hubContext,
+            IHttpContextAccessor httpContextAccessor)
     {
         _dbFactory = dbFactory;
         _hubContext = hubContext;
+        _http = httpContextAccessor;
     }
 
     public async Task<TournamentLobby> CreateLobby(int packId, string packName, string hostId, string hostName, string? password, PackPresetData presetData, TournamentMode tournamentMode)
@@ -256,8 +261,11 @@ public class TournamentLobbyService
         if (lobby == null)
             throw new Exception("Лобби не найдено");
 
-        if (lobby.HostUserId != hostUserId)
-            throw new Exception("Только хост может закрыть лобби");
+        var user = _http.HttpContext?.User;
+        var isAdmin = user?.IsInRole("admin") == true || user?.IsInRole("editor") == true;
+
+        if (lobby.HostUserId != hostUserId && !isAdmin)
+            throw new Exception("Только хост или админ может закрыть лобби");
 
         db.LobbyParticipants.RemoveRange(lobby.Participants);
         db.TournamentLobbies.Remove(lobby);
@@ -473,5 +481,44 @@ public class TournamentLobbyService
         await db.SaveChangesAsync();
         await _hubContext.Clients.Group(SignalRConstants.LobbyGroup(lobbyId))
             .SendAsync(SignalRConstants.LobbyUpdated);
+    }
+
+    public async Task<int> RemoveIdleLobbiesAsync(TimeSpan olderThan)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var cutoff = DateTime.UtcNow - olderThan;
+
+        var removeIds = await db.TournamentLobbies
+            .Select(l => new
+            {
+                l.Id,
+                LastActivity =
+                    db.TournamentResults
+                        .Where(r => r.LobbyId == l.Id)
+                        .Select(r => (DateTime?)(r.UpdatedAt ?? r.CreatedAt))
+                        .Max()
+                    ?? db.LobbyParticipants
+                        .Where(p => p.TournamentLobbyId == l.Id)
+                        .Select(p => (DateTime?)(p.UpdatedAt ?? p.CreatedAt))
+                        .Max()
+            })
+            .Where(x => x.LastActivity != null && x.LastActivity < cutoff)
+            .Select(x => x.Id)
+            .ToListAsync();
+
+        if (removeIds.Count == 0) return 0;
+
+        foreach (var id in removeIds)
+        {
+            await _hubContext.Clients.Group(SignalRConstants.LobbyGroup(id))
+                .SendAsync(SignalRConstants.LobbyClosed);
+        }
+
+        var deleted = await db.TournamentLobbies
+            .Where(l => removeIds.Contains(l.Id))
+            .ExecuteDeleteAsync();
+
+        return deleted;
     }
 }
