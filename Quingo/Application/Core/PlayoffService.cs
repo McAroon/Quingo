@@ -134,6 +134,10 @@ public class PlayoffService
                         .ToList();
                 }
             }
+            else
+            {
+                players = finalists;
+            }
         }
 
         var toInsert = new List<TournamentResult>(players.Count);

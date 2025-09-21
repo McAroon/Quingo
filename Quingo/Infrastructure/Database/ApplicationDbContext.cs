@@ -54,6 +54,15 @@ namespace Quingo.Infrastructure.Database
             new EntityBaseConfiguration<UserPackPreset>().Configure(builder.Entity<UserPackPreset>());
             new EntityBaseConfiguration<LobbyBan>().Configure(builder.Entity<LobbyBan>());
 
+            builder.Entity<LobbyParticipant>()
+                .HasIndex(p => new { p.TournamentLobbyId, p.CreatedAt });
+
+            builder.Entity<TournamentResult>()
+                .HasIndex(r => new { r.LobbyId, r.UpdatedAt, r.CreatedAt });
+
+            builder.Entity<TournamentLobby>()
+                .HasIndex(l => l.UpdatedAt);
+
             builder.Entity<LobbyBan>()
                 .HasOne(b => b.Lobby)
                 .WithMany(l => l.Bans)

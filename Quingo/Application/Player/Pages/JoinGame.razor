@@ -65,6 +65,15 @@
                         Join
                     </MudButton>
                 </MudTooltip>
+
+                <AuthorizeView Roles="admin" Context="auth">
+                    <MudButton Size="Size.Small"
+                               Class="ml-2"
+                               Color="Color.Error"
+                               OnClick="@(async () => await CloseTournamentLobby(context.Tournament!.Id))">
+                        Close
+                    </MudButton>
+                </AuthorizeView>
             }
             else
             {
@@ -232,6 +241,20 @@
         catch
         {
             return 0;
+        }
+    }
+
+    private async Task CloseTournamentLobby(int lobbyId)
+    {
+        try
+        {
+            await LobbyService.CloseLobby(lobbyId, _userId!);
+            Snackbar.Add($"Лобби #{lobbyId} закрыто.", Severity.Success);
+            await LoadAll();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 }

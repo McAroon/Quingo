@@ -25,13 +25,16 @@ public class GameService : IDisposable
 
     private readonly UserConnectionTracker _userTracker;
 
-    public GameService(IDbContextFactory<ApplicationDbContext> dbContextFactory, ILogger<GameService> logger,
-        ICacheService cache, UserConnectionTracker userTracker)
+    public GameService(IDbContextFactory<ApplicationDbContext> dbContextFactory, 
+        ILogger<GameService> logger,
+        ICacheService cache, 
+        UserConnectionTracker userTracker,
+        IServiceScopeFactory scopeFactory)
     {
         _dbContextFactory = dbContextFactory;
         _logger = logger;
         _cache = cache;
-        _loop = new GameLoop(logger, _state);
+        _loop = new GameLoop(logger, _state, scopeFactory);
         _userTracker = userTracker;
     }
 

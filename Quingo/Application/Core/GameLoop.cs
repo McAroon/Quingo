@@ -14,10 +14,19 @@ public class GameLoop : IDisposable
     private Timer? _timer;
     private Guid _id;
 
-    public GameLoop(ILogger logger, ConcurrentDictionary<Guid, GameInstance> state)
+    private static readonly TimeSpan LobbyIdleThreshold = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan LobbyCleanupPeriod = TimeSpan.FromMinutes(1);
+
+    private DateTime _lastLobbyCleanupUtc = DateTime.MinValue;
+    private readonly IServiceScopeFactory _scopeFactory;
+
+    public GameLoop(ILogger logger, 
+        ConcurrentDictionary<Guid, GameInstance> state,
+                    IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
         _state = state;
+        _scopeFactory = scopeFactory;
         Start();
     }
 
@@ -93,6 +102,28 @@ public class GameLoop : IDisposable
         else
         {
             Parallel.ForEach(loop._state, gameKv => { RunLoopTick(loop, gameKv.Value); });
+        }
+
+        if (DateTime.UtcNow - loop._lastLobbyCleanupUtc >= LobbyCleanupPeriod)
+        {
+            loop._lastLobbyCleanupUtc = DateTime.UtcNow;
+
+            try
+            {
+                using var scope = loop._scopeFactory.CreateScope();
+                var svc = scope.ServiceProvider.GetRequiredService<TournamentLobbyService>();
+
+                var removed = svc.RemoveIdleLobbiesAsync(LobbyIdleThreshold)
+                                 .GetAwaiter().GetResult();
+
+                if (removed > 0)
+                    loop._logger.LogInformation("Lobby cleanup: removed {count} lobbies idle > {threshold}.",
+                        removed, LobbyIdleThreshold);
+            }
+            catch (Exception ex)
+            {
+                loop._logger.LogError(ex, "Lobby cleanup failed");
+            }
         }
     }
 
