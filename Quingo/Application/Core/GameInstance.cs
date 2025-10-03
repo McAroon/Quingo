@@ -177,6 +177,17 @@ public class GameInstance : IDisposable
         var exclTagIds = Preset.Columns.Where(x => x.ExcludeTags != null).SelectMany(x => x.ExcludeTags).Distinct()
             .ToList();
         QNodes = Pack.Nodes.Where(x => qTagIds.Any(t => x.HasTag(t)) && exclTagIds.All(t => !x.HasTag(t))).ToList();
+        
+        if (Preset.MinDifficulty > 0)
+        {
+            QNodes = QNodes.Where(x => x.Difficulty >= Preset.MinDifficulty).ToList();
+        }
+
+        if (Preset.MaxDifficulty > 0 && Preset.MaxDifficulty >= (Preset.MinDifficulty ?? 0))
+        {
+            QNodes = QNodes.Where(x => x.Difficulty <= Preset.MaxDifficulty).ToList();
+        }
+        
         _bingoPattern = PatternGenerator.GeneratePatterns(Preset.CardSize, Preset.Pattern);
 
         if (!Preset.SeparateDrawPerPlayer)
