@@ -3,7 +3,7 @@
 var sqlPassword = builder.AddParameter("postgresql-password", secret: true);
 var postgres = builder.AddPostgres("postgres", password: sqlPassword)
     .WithImage("postgres")
-    .WithImageTag("latest")
+    .WithImageTag("16")
     .WithDataVolume()
     .WithPgWeb()
     .WithLifetime(ContainerLifetime.Session);
