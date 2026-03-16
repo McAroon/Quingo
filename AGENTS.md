@@ -70,3 +70,7 @@ Example:
 - **Why:** Prevent runtime exception from malformed payloads.
 - **Validated:** `dotnet build` + targeted test project.
 - **Risk:** Low; behavior only changes for invalid input.
+
+## Available MCP Servers
+- Use `microsoft-learn` and `context7` MCPs for Blazor documentation.
+- Use `context7` MCP with `/mudblazor/mudblazor` library for MudBlazor documentation.
