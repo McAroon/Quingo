@@ -28,6 +28,9 @@ dotnet restore Quingo.sln
 # Build solution
 dotnet build Quingo.sln -c Debug
 
+# Build solution, display warnings and errors
+dotnet build Quingo.sln -c Debug -consoleloggerparameters:"Summary;Verbosity=normal" -m -p:"WarnLevel=5;EnforceCodeStyleInBuild=true" -t:"clean,build"
+
 # Starts the application using Aspire
 dotnet run --project Quingo.AppHost/Quingo.AppHost.csproj
 
@@ -48,7 +51,8 @@ dotnet ef database update --project Quingo
 - Use nullable reference types.
 - Prefer async APIs for I/O-bound work.
 - Use dependency injection over static/global state.
-- Follow the code style settings specified in `.editorconfig`
+- Follow the code style settings specified in `.editorconfig`.
+- When null-coalescing a default value for an Enumerable, use `[]` instead of `Enumerable.Empty`. 
 
 ## Safety and Guardrails
 
