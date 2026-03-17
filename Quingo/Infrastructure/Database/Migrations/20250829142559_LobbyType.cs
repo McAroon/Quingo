@@ -5,7 +5,7 @@
 namespace Quingo.Migrations
 {
     /// <inheritdoc />
-    public partial class lobbytype : Migration
+    public partial class LobbyType : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

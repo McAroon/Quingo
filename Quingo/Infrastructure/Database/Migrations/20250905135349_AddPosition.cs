@@ -5,7 +5,7 @@
 namespace Quingo.Migrations
 {
     /// <inheritdoc />
-    public partial class addposition : Migration
+    public partial class AddPosition : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
