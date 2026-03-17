@@ -38,9 +38,7 @@
     private string? message;
 
     [SupplyParameterFromForm]
-    private InputModel? Input { get; set; }
-
-    protected override void OnInitialized() => Input ??= new();
+    private InputModel Input { get; set; } = default!;
 
     private async Task OnValidSubmitAsync()
     {
