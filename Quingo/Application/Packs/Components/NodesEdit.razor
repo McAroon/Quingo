@@ -87,7 +87,7 @@
     
     private PagedResult<Node> _nodes = default!;
     
-    private IEnumerable<int> TagIdsEnumerable
+    private IReadOnlyCollection<int> TagIdsEnumerable
     {
         get => TagIds;
         set => TagIds = value.ToArray();
@@ -158,7 +158,7 @@
         await OnQueryChange(true);
     }
 
-    private string GetTagsSelectText(List<string> selected)
+    private string GetTagsSelectText(IReadOnlyList<string> selected)
     {
         var selectedInts = selected.Select(int.Parse).ToList();
         var tags = Pack.Tags.Where(x => selectedInts.Contains(x.Id)).Select(x => x.Name);

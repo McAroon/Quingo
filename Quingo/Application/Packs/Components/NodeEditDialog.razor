@@ -88,7 +88,8 @@
 
 
 @code {
-    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [CascadingParameter]
+    private IMudDialogInstance Dialog { get; set; } = default!;
 
     [Parameter] public Node Node { get; set; } = default!;
 
@@ -152,7 +153,7 @@
             _model.NodeLinks ??= [];
             _model.ImageFile = _uploadRef?.File;
             await OnSave.Invoke(Node.Id, _model);
-            MudDialog.Close(DialogResult.Ok(true));
+            Dialog.Close(DialogResult.Ok(true));
         }
     }
 
@@ -163,7 +164,7 @@
             await OnCancel.Invoke();
         }
 
-        MudDialog.Cancel();
+        Dialog.Close(DialogResult.Cancel());
     }
 
     private Task<IEnumerable<LinkedNodeInfoModel>> SearchNode(string value, CancellationToken token)
@@ -174,7 +175,7 @@
         return Task.FromResult(nodes);
     }
 
-    private string GetTagsSelectText(List<string> selected)
+    private string GetTagsSelectText(IReadOnlyList<string> selected)
     {
         var selectedInts = selected.Select(int.Parse).ToList();
         var tags = Node.Pack.Tags.Where(x => selectedInts.Contains(x.Id)).Select(x => x.Name);

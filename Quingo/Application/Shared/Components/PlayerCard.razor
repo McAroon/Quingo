@@ -119,8 +119,12 @@
 
     private async void ShowUnmarkConfirmation(PlayerCardCellData cell)
     {
-        var result = await Dialog.ShowMessageBox("Confirmation", "The cell will be unmarked", "OK", null, "Cancel");
-        if (result == true)
+        var result = await ConfirmDialog.CallDialog(Dialog, new ConfirmDialog.ConfirmDialogParams
+        {
+            Title = "Confirmation",
+            Prompt = "The cell will be unmarked"
+        });
+        if (result)
         {
             Player.Mark(cell.Col, cell.Row);
         }

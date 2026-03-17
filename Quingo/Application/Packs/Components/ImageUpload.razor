@@ -11,7 +11,7 @@
                    @ondragenter="@SetDragClass"
                    @ondragleave="@ClearDragClass"
                    @ondragend="@ClearDragClass">
-        <ActivatorContent>
+        <CustomContent>
             <MudPaper Height="150px"
                       Outlined="true"
                       Class="@_dragClass">
@@ -22,17 +22,20 @@
                     Upload Image
                 </MudText>
             </MudPaper>
-        </ActivatorContent>
+        </CustomContent>
+        <SelectedTemplate>
+            @if (context != null)
+            {
+                <MudChip T="string"
+                         Color="Color.Dark"
+                         Text="@ShortenName(context.Name)"
+                         OnClose="ClearAsync"
+                         Class="z-20"
+                         tabindex="-1" />
+            }
+        </SelectedTemplate>
     </MudFileUpload>
-    @if (File != null)
-    {
-        <MudChip T="string"
-                 Color="Color.Dark"
-                 Text="@File.Name"
-                 OnClose="ClearAsync"
-                 Class="z-20"
-                 tabindex="-1" />
-    }
+ 
 </MudStack>
 
 @code {
@@ -65,4 +68,10 @@
 
     private void ClearDragClass()
         => _dragClass = DefaultDragClass;
+
+    private static string? ShortenName(string? name)
+    {
+        if (string.IsNullOrEmpty(name) || name.Length < 12) return name;
+        return name[..12] + '…';
+    }
 }

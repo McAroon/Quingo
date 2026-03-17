@@ -25,7 +25,7 @@ public class PackPresetDataModel
         JoinOnCreate = data.JoinOnCreate;
         Pattern = data.Pattern;
         MatchRule = data.MatchRule;
-        ScoringRules = data.ScoringRules.ToEnumerable();
+        ScoringRules = data.ScoringRules.ToEnumerable().ToList();
         MinDifficulty = data.MinDifficulty;
         MaxDifficulty = data.MaxDifficulty;
         SingleColumnConfig = data.SingleColumnConfig;
@@ -100,7 +100,7 @@ public class PackPresetDataModel
 
     public PackPresetMatchRule MatchRule { get; set; } = PackPresetMatchRule.Default;
 
-    public IEnumerable<PackPresetScoringRules> ScoringRules { get; set; } = [];
+    public IReadOnlyCollection<PackPresetScoringRules> ScoringRules { get; set; } = [];
     
     public int? MinDifficulty { get; set; }
     
@@ -138,17 +138,17 @@ public class PackPresetColumnModel
     {
         Name = col.Name;
         QuestionTags = new List<int>(col.QuestionTags ?? []);
-        AnswerTags = col.ColAnswerTags?.Select(x => new PackPresetTagModel(x)) ?? [];
+        AnswerTags = new List<PackPresetTagModel>(col.ColAnswerTags?.Select(x => new PackPresetTagModel(x)) ?? []);
         ExcludeTags = new List<int>(col.ExcludeTags ?? []);
     }
 
     public string Name { get; set; } = "";
 
-    public IEnumerable<int> QuestionTags { get; set; } = [];
+    public IReadOnlyCollection<int> QuestionTags { get; set; } = [];
 
-    public IEnumerable<PackPresetTagModel> AnswerTags { get; set; } = [];
+    public IReadOnlyCollection<PackPresetTagModel> AnswerTags { get; set; } = [];
 
-    public IEnumerable<int> ExcludeTags { get; set; } = [];
+    public IReadOnlyCollection<int> ExcludeTags { get; set; } = [];
 
     private static string LetterFromIndex(int index)
     {

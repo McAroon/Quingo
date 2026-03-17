@@ -273,7 +273,7 @@
 
     private Variant GetVariantForMax(int value) => (_model.MaxDifficulty ?? 5) == value ? Variant.Filled : Variant.Outlined;
 
-    private string GetTagsSelectText(IList<string> selected)
+    private string GetTagsSelectText(IReadOnlyList<string> selected)
     {
         return GetTagsSelectText(selected.Select(int.Parse));
     }
