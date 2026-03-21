@@ -197,7 +197,7 @@
 
                 var lobby = await LobbyService.CreateLobby(
                     _pack.Id,
-                    _pack.Name,
+                    _pack.Name ?? string.Empty,
                     UserId,
                     _userName ?? "Unknown",
                     _gameOptions.Password,

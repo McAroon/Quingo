@@ -8,7 +8,7 @@
 
 @code {
     [CascadingParameter]
-    private MudDialogInstance MudDialog { get; set; } = default!;
+    private IMudDialogInstance Dialog { get; set; } = default!;
 
     [Parameter]
     public string? Prompt { get; set; }
@@ -19,9 +19,9 @@
     [Parameter]
     public Color ButtonColor { get; set; } = Color.Primary;
 
-    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    private void Submit() => Dialog.Close(DialogResult.Ok(true));
 
-    private void Cancel() => MudDialog.Cancel();
+    private void Cancel() => Dialog.Close(DialogResult.Cancel());
 
     public static async Task<bool> CallDialog(IDialogService service, ConfirmDialogParams dialogParams)
     {

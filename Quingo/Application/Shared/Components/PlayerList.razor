@@ -147,7 +147,7 @@ else
 
 @code {
 
-    private RenderFragment RenderPlayer(PlayerInstance? player) => player == null
+    private RenderFragment? RenderPlayer(PlayerInstance? player) => player == null
         ? null
         : @<CascadingValue Value="player">
               @if (Game.Preset.SeparateDrawPerPlayer)
@@ -161,7 +161,7 @@ else
               <PlayerCard TitleTypo="Typo.h6" ReadOnly ShowDetails="ShowDetails"/>
           </CascadingValue>;
 
-    private RenderFragment RenderPlayerName(PlayerInstance? player, Size iconSize) => player == null
+    private RenderFragment? RenderPlayerName(PlayerInstance? player, Size iconSize) => player == null
         ? null
         : @<span class="d-flex align-center">
               @if (!player.IsPlayerConnected)

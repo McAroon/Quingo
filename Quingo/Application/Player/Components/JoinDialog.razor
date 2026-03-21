@@ -14,7 +14,8 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = default!;
+    [CascadingParameter]
+    private IMudDialogInstance Dialog { get; set; } = default!;
 
     [Parameter] public Func<string, bool>? OnSubmit { get; set; }
 
@@ -34,7 +35,7 @@
             var success = OnSubmit.Invoke(_password!);
             if (success)
             {
-                MudDialog.Close(DialogResult.Ok(true));
+                Dialog.Close(DialogResult.Ok(true));
             }
             else
             {
@@ -50,7 +51,7 @@
             await OnCancel.Invoke();
         }
 
-        MudDialog.Cancel();
+        Dialog.Close(DialogResult.Cancel());
     }
 
     public static async Task<IDialogReference> ShowDialog(IDialogService dialog,

@@ -1,29 +1,28 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Quingo.Migrations
 {
     /// <inheritdoc />
-    public partial class istournement : Migration
+    public partial class IsTournament2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
+            migrationBuilder.RenameColumn(
                 name: "IsTournement",
                 table: "Packs",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
+                newName: "IsTournament");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "IsTournement",
-                table: "Packs");
+            migrationBuilder.RenameColumn(
+                name: "IsTournament",
+                table: "Packs",
+                newName: "IsTournement");
         }
     }
 }

@@ -2,19 +2,23 @@
 
 @implements IDisposable
 
-<MudText Typo="TitleTypo" GutterBottom>Player Card</MudText>
-<MudStack Spacing="1" Row Class="pb-2" Wrap="Wrap.NoWrap">
-    @foreach (var col in Player.GameInstance.Preset.Columns)
-    {
-        <MudCard Outlined Class="node-square node-header">
-            <MudCardContent Class="node-square-content">
-                <MudText Align="Align.Center" Typo="Typo.h5">
-                    <span class="node-text">@col.Name</span>
-                </MudText>
-            </MudCardContent>
-        </MudCard>
-    }
-</MudStack>
+@if (_isInitialized)
+{
+    <MudText Typo="TitleTypo" GutterBottom>Player Card</MudText>
+    <MudStack Spacing="1" Row Class="pb-2" Wrap="Wrap.NoWrap">
+        @foreach (var col in Player.GameInstance.Preset.Columns)
+        {
+            <MudCard Outlined Class="node-square node-header">
+                <MudCardContent Class="node-square-content">
+                    <MudText Align="Align.Center" Typo="Typo.h5">
+                        <span class="node-text">@col.Name</span>
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudStack>
+}
+
 
 @for (int row = 0; row < Player.Card.Cells.GetLength(1); row++)
 {
@@ -115,8 +119,12 @@
 
     private async void ShowUnmarkConfirmation(PlayerCardCellData cell)
     {
-        var result = await Dialog.ShowMessageBox("Confirmation", "The cell will be unmarked", "OK", null, "Cancel");
-        if (result == true)
+        var result = await ConfirmDialog.CallDialog(Dialog, new ConfirmDialog.ConfirmDialogParams
+        {
+            Title = "Confirmation",
+            Prompt = "The cell will be unmarked"
+        });
+        if (result)
         {
             Player.Mark(cell.Col, cell.Row);
         }

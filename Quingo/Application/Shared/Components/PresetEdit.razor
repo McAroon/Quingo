@@ -260,7 +260,7 @@
         OnColumnConfigUpdated(_model.Columns.First());
     }
 
-    private string GetTagsSelectText(IList<string> selected)
+    private string GetTagsSelectText(IReadOnlyList<string> selected)
     {
         return GetTagsSelectText(selected.Select(int.Parse));
     }

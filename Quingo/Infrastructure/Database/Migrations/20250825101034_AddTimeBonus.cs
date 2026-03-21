@@ -5,7 +5,7 @@
 namespace Quingo.Migrations
 {
     /// <inheritdoc />
-    public partial class addtimebonus : Migration
+    public partial class AddTimeBonus : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

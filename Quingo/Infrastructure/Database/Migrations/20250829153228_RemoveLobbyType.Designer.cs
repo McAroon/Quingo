@@ -12,8 +12,8 @@ using Quingo.Infrastructure.Database;
 namespace Quingo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250825101034_addtimebonus")]
-    partial class addtimebonus
+    [Migration("20250829153228_RemoveLobbyType")]
+    partial class RemoveLobbyType
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

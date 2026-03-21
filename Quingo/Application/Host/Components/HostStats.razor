@@ -1,30 +1,33 @@
 ﻿@implements IDisposable
 
-<table class="dl-table">
-    <tr>
-        <th>Game State</th>
-        <td>@Game.StateDisplayValue</td>
-    </tr>
-    @if (Game.WinningPlayers.Count > 0)
-    {
+@if (_isInitialized)
+{
+    <table class="dl-table">
         <tr>
-            <th>@(Game.WinningPlayers.Count == 1 ? "Winner" : "Winners")</th>
-            <td>@string.Join(", ", Game.WinningPlayers.Select(x => x.PlayerName))</td>
+            <th>Game State</th>
+            <td>@Game.StateDisplayValue</td>
         </tr>
-    }
-</table>
+        @if (Game.WinningPlayers.Count > 0)
+        {
+            <tr>
+                <th>@(Game.WinningPlayers.Count == 1 ? "Winner" : "Winners")</th>
+                <td>@string.Join(", ", Game.WinningPlayers.Select(x => x.PlayerName))</td>
+            </tr>
+        }
+    </table>
 
-<MudStack Row Spacing="4" Class="pt-4">
-    @if (Game.ShowTimer)
-    {
-        <GameTimerProgress Timer="Game.Timer" Title="Timer" ColorPercentages="Game.TimerColorPercentages"/>
-    }
+    <MudStack Row Spacing="4" Class="pt-4">
+        @if (Game.ShowTimer)
+        {
+            <GameTimerProgress Timer="Game.Timer" Title="Timer" ColorPercentages="Game.TimerColorPercentages"/>
+        }
 
-    @if (Game.DrawState != null && Game.Preset.AutoDrawTimer > 0 && Game.State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.Paused)
-    {
-        <GameTimerProgress Timer="Game.DrawState.AutoDrawTimer" Title="Next"/>
-    }
-</MudStack>
+        @if (Game.DrawState != null && Game.Preset.AutoDrawTimer > 0 && Game.State is GameStateEnum.Init or GameStateEnum.Active or GameStateEnum.Paused)
+        {
+            <GameTimerProgress Timer="Game.DrawState.AutoDrawTimer" Title="Next"/>
+        }
+    </MudStack>
+}
 
 @code {
     [CascadingParameter] public GameInstance Game { get; set; } = default!;

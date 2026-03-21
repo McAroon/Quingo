@@ -452,7 +452,7 @@ public class TournamentLobbyService
         }
 
         try { await db.SaveChangesAsync(); }
-        catch (Exception ex)
+        catch (Exception)
         {
 
         }

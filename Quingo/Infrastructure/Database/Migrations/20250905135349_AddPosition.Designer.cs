@@ -12,8 +12,8 @@ using Quingo.Infrastructure.Database;
 namespace Quingo.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250829142559_lobbytype")]
-    partial class lobbytype
+    [Migration("20250905135349_AddPosition")]
+    partial class AddPosition
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -808,6 +808,9 @@ namespace Quingo.Migrations
                     b.Property<int>("LobbyId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("Result")
                         .HasColumnType("integer");
 
@@ -871,9 +874,6 @@ namespace Quingo.Migrations
                     b.Property<string>("HostUserName")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("LobbyType")
-                        .HasColumnType("integer");
 
                     b.Property<int>("PackId")
                         .HasColumnType("integer");

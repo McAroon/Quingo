@@ -5,7 +5,7 @@
 namespace Quingo.Migrations
 {
     /// <inheritdoc />
-    public partial class indexnew : Migration
+    public partial class IndexNew : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

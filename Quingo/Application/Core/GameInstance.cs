@@ -56,7 +56,7 @@ public class GameInstance : IDisposable
     private readonly Random _random;
     public Random Random => _random;
 
-    public List<Node> QNodes { get; private set; }
+    public List<Node> QNodes { get; private set; } = [];
 
     private readonly ObservableCollection<PlayerInstance> _players = [];
     public ReadOnlyCollection<PlayerInstance> Players => _players.AsReadOnly();

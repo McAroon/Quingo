@@ -97,7 +97,7 @@ else if (_isInitialized)
             }
             else if (state is GameStateEnum.Canceled && _instance.GameInstance.HostUserId != UserId)
             {
-                await Dialog.ShowMessageBox("The game has ended", $"{_instance.GameInstance.HostName} has stopped the game. Thanks for playing!");      
+                await Dialog.ShowMessageBoxAsync("The game has ended", $"{_instance.GameInstance.HostName} has stopped the game. Thanks for playing!");      
             }
             else if (state is GameStateEnum.Canceled or GameStateEnum.Finished)
             {
@@ -114,7 +114,7 @@ else if (_isInitialized)
                     }
                 }
 
-                await Dialog.ShowMessageBox("The game has ended", "Thanks for playing!");
+                await Dialog.ShowMessageBoxAsync("The game has ended", "Thanks for playing!");
             }
         });
     }

@@ -132,7 +132,7 @@ public class NodeModel : NodeViewModel
         TagIds = node.NodeTags.Where(x => x.DeletedAt == null).Select(x => x.TagId).ToList();
     }
 
-    public IEnumerable<int> TagIds { get; set; } = [];
+    public IReadOnlyCollection<int> TagIds { get; set; } = [];
 
     public IBrowserFile? ImageFile { get; set; }
 

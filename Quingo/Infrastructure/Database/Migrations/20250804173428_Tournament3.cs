@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Quingo.Migrations
 {
     /// <inheritdoc />
-    public partial class tournament3 : Migration
+    public partial class Tournament3 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
