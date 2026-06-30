@@ -102,7 +102,6 @@
                                              <MudSelect T="PackPresetTagModel" MultiSelection Label="Answer Tags"
                                                         @bind-SelectedValues="col.AnswerTags"
                                                         MultiSelectionTextFunc="GetTagsSelectText"
-                                                        Comparer="_tagModelComparer"
                                                         Disabled="@(_model.SingleColumnConfig && _model.Columns.IndexOf(col) > 0)"
                                                         @bind-SelectedValues:after="() => OnColumnConfigUpdated(col)">
                                                 @foreach (var tag in Pack.Tags)
@@ -237,8 +236,6 @@
     private PackPresetDataModel _model = default!;
 
     private readonly int[] _allowedTournamentSizes = [4, 8, 16, 32, 64, 128];
-    
-    private readonly PackPresetTagModel.PackPresetTagModelComparer _tagModelComparer = new();
     
     private PackPreset _preset = default!;
 

@@ -138,7 +138,7 @@ public class PackPresetColumnModel
     {
         Name = col.Name;
         QuestionTags = new List<int>(col.QuestionTags ?? []);
-        AnswerTags = new List<PackPresetTagModel>(col.ColAnswerTags?.Select(x => new PackPresetTagModel(x)) ?? []);
+        AnswerTags = col.ColAnswerTags?.Select(x => new PackPresetTagModel(x))?.ToList() ?? [];
         ExcludeTags = new List<int>(col.ExcludeTags ?? []);
     }
 
@@ -159,7 +159,7 @@ public class PackPresetColumnModel
     }
 }
 
-public class PackPresetTagModel
+public class PackPresetTagModel : IEquatable<PackPresetTagModel>
 {
     public PackPresetTagModel()
     {
@@ -177,7 +177,7 @@ public class PackPresetTagModel
         ItemsMax = tag.ItemsMax;
     }
 
-    public int TagId { get; set; }
+    public int TagId { get; }
 
     public int? ItemsMin { get; set; }
 
@@ -188,20 +188,17 @@ public class PackPresetTagModel
         return TagId.ToString();
     }
 
-    public class PackPresetTagModelComparer : IEqualityComparer<PackPresetTagModel>
+    public bool Equals(PackPresetTagModel? other)
     {
-        public bool Equals(PackPresetTagModel? x, PackPresetTagModel? y)
-        {
-            if (ReferenceEquals(x, y)) return true;
-            if (x is null) return false;
-            if (y is null) return false;
-            if (x.GetType() != y.GetType()) return false;
-            return x.TagId == y.TagId;
-        }
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return TagId == other.TagId;
+    }
 
-        public int GetHashCode(PackPresetTagModel obj)
-        {
-            return obj.TagId;
-        }
+    public override bool Equals(object? obj) => obj is PackPresetTagModel model && Equals(model);
+
+    public override int GetHashCode()
+    {
+        return TagId;
     }
 }
