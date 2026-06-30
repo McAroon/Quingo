@@ -205,10 +205,17 @@
     private PackPresetDataModel _model = default!;
 
     private readonly int[] _allowedTournamentSizes = [4, 8, 16, 32, 64, 128];
+    
+    private PackPreset _preset = default!;
 
     protected override void OnParametersSet()
     {
-        _model = new PackPresetDataModel(Preset.Data);
+        if (Preset != _preset)
+        {
+            _model = new PackPresetDataModel(Preset.Data);
+            _preset = Preset;
+        }
+        
         if (_model.CardSize is < 3 or > 5)
             _model.CardSize = 3;
 

@@ -99,12 +99,12 @@
                                                     <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
                                                 }
                                             </MudSelect>
-                                            <MudSelect T="PackPresetTagModel" MultiSelection Label="Answer Tags"
-                                                       @bind-SelectedValues="col.AnswerTags"
-                                                       MultiSelectionTextFunc="GetTagsSelectText"
-                                                       Comparer="@(new PackPresetTagModel.PackPresetTagModelComparer())"
-                                                       Disabled="@(_model.SingleColumnConfig && _model.Columns.IndexOf(col) > 0)"
-                                                       @bind-SelectedValues:after="() => OnColumnConfigUpdated(col)">
+                                             <MudSelect T="PackPresetTagModel" MultiSelection Label="Answer Tags"
+                                                        @bind-SelectedValues="col.AnswerTags"
+                                                        MultiSelectionTextFunc="GetTagsSelectText"
+                                                        Comparer="_tagModelComparer"
+                                                        Disabled="@(_model.SingleColumnConfig && _model.Columns.IndexOf(col) > 0)"
+                                                        @bind-SelectedValues:after="() => OnColumnConfigUpdated(col)">
                                                 @foreach (var tag in Pack.Tags)
                                                 {
                                                     <MudSelectItem T="PackPresetTagModel"
@@ -237,10 +237,18 @@
     private PackPresetDataModel _model = default!;
 
     private readonly int[] _allowedTournamentSizes = [4, 8, 16, 32, 64, 128];
+    
+    private readonly PackPresetTagModel.PackPresetTagModelComparer _tagModelComparer = new();
+    
+    private PackPreset _preset = default!;
 
     protected override void OnParametersSet()
     {
-        _model = new PackPresetDataModel(Preset.Data);
+        if (Preset != _preset)
+        {
+            _model = new PackPresetDataModel(Preset.Data);
+            _preset = Preset;
+        }
 
         if (SelectedTournamentMode == TournamentMode.ClassicPlayoff &&
             !_allowedTournamentSizes.Contains(_model.MaxPlayers))
